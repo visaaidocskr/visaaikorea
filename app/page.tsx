@@ -1,89 +1,240 @@
 export default function Home() {
   return (
-    <main className="min-h-screen bg-black text-white overflow-hidden">
-      <nav className="flex items-center justify-between px-8 py-6 border-b border-white/10">
-        <h1 className="text-2xl font-bold">VisaAI Korea</h1>
+    <main className="min-h-screen bg-white text-slate-900">
+      <nav className="flex items-center justify-between border-b border-slate-200 px-8 py-6">
+        <h1 className="text-2xl font-extrabold text-blue-700">
+          VisaAI Korea
+        </h1>
 
-        <div className="hidden md:flex gap-6 text-gray-300">
-          <a href="#" className="hover:text-white transition">Home</a>
-          <a href="#" className="hover:text-white transition">Features</a>
-          <a href="#" className="hover:text-white transition">Pricing</a>
-          <a href="#" className="hover:text-white transition">Contact</a>
+        <div className="hidden md:flex items-center gap-8 text-slate-600 font-medium">
+          <a href="#services">Services</a>
+          <a href="#plans">Plans</a>
+          <a href="#countries">Countries</a>
+          <a href="#how">How it works</a>
         </div>
 
-        <button className="bg-white text-black px-5 py-2 rounded-xl font-semibold hover:bg-gray-200 transition">
-          Start
-        </button>
+        <a
+          href="/apply"
+          className="rounded-xl bg-blue-700 px-5 py-2 font-semibold text-white"
+        >
+          Start Now
+        </a>
       </nav>
 
-      <section className="relative flex flex-col items-center justify-center text-center px-6 py-32">
-        <div className="absolute top-20 h-72 w-72 rounded-full bg-blue-500/30 blur-3xl" />
-        <div className="absolute right-20 top-40 h-72 w-72 rounded-full bg-purple-500/20 blur-3xl" />
+      <section className="grid items-center gap-16 px-8 py-20 md:grid-cols-2">
+        <div>
+          <div className="mb-6 inline-flex rounded-full bg-blue-100 px-5 py-2 text-sm font-semibold text-blue-700">
+            AI for foreigners living in South Korea
+          </div>
 
-        <p className="relative mb-6 rounded-full border border-white/10 bg-white/5 px-5 py-2 text-sm text-gray-300">
-          Built for foreigners living in South Korea
-        </p>
+          <h1 className="mb-8 text-6xl font-extrabold leading-tight md:text-7xl">
+            Prepare all tourist visa documents in
+            <span className="text-blue-700"> seconds.</span>
+          </h1>
 
-        <h2 className="relative text-5xl md:text-7xl font-extrabold mb-8 leading-tight">
-          Prepare Visa Documents <br />
-          With AI in Minutes
+          <p className="mb-10 max-w-xl text-xl leading-relaxed text-slate-600">
+            VisaAI Korea helps foreigners in Korea prepare all required embassy
+            documents for tourist visas using AI. Choose your destination
+            country and get your complete document package instantly.
+          </p>
+
+          <a
+            href="/apply"
+            className="inline-block rounded-2xl bg-blue-700 px-8 py-4 text-lg font-semibold text-white shadow-xl"
+          >
+            Generate Documents
+          </a>
+        </div>
+
+        <div className="rounded-[2.5rem] border border-slate-200 bg-slate-50 p-8 shadow-2xl">
+          <div className="mb-6 flex items-center justify-between border-b border-slate-200 pb-5">
+            <div>
+              <h2 className="text-3xl font-bold">AI Document Package</h2>
+              <p className="mt-2 text-slate-500">Tourist Visa Application</p>
+            </div>
+
+            <div className="rounded-full bg-green-100 px-4 py-2 text-sm font-bold text-green-700">
+              ✓ Ready
+            </div>
+          </div>
+
+          <div className="space-y-5">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6">
+              <p className="mb-2 text-sm text-slate-500">Applicant</p>
+              <p className="text-2xl font-bold">Foreigners living in Korea</p>
+              <p className="mt-2 text-slate-500">
+                Any nationality · Any Korean visa status
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6">
+              <p className="mb-2 text-sm text-slate-500">Included documents</p>
+              <p className="text-2xl font-bold">
+                All required tourist visa documents
+              </p>
+              <p className="mt-2 text-slate-500">
+                Generated based on destination country and applicant profile
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-blue-100 bg-blue-50 p-6">
+              <p className="mb-3 text-lg font-bold text-blue-700">
+                AI Assistant
+              </p>
+              <p className="leading-relaxed text-slate-700">
+                Take a rest, choose your dream country, and let AI prepare your
+                embassy documents for you.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="services" className="bg-slate-50 px-8 py-20">
+        <h2 className="mb-4 text-center text-5xl font-bold">
+          Complete embassy document package
         </h2>
 
-        <p className="relative text-gray-400 text-lg md:text-xl max-w-2xl mb-10">
-          VisaAI Korea helps travelers generate embassy cover letters,
-          travel itineraries, document checklists, and application support files instantly.
+        <p className="mx-auto mb-14 max-w-3xl text-center text-xl text-slate-600">
+          AI-powered tourist visa document preparation for foreigners living in Korea.
         </p>
 
-        <div className="relative flex flex-col sm:flex-row gap-4">
-          <button className="bg-white text-black px-8 py-4 rounded-2xl text-lg font-semibold hover:bg-gray-200 transition">
-            Generate Documents
-          </button>
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="rounded-3xl bg-white p-8 shadow-lg">
+            <h3 className="mb-4 text-3xl font-bold">AI Documents</h3>
+            <p className="text-slate-600">
+              Automatically generate embassy-ready tourist visa documents in seconds.
+            </p>
+          </div>
 
-          <button className="border border-white/15 px-8 py-4 rounded-2xl text-lg hover:bg-white/10 transition">
-            See How It Works
-          </button>
+          <div className="rounded-3xl bg-white p-8 shadow-lg">
+            <h3 className="mb-4 text-3xl font-bold">Country Support</h3>
+            <p className="text-slate-600">
+              Documents customized for different embassy requirements and destinations.
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-white p-8 shadow-lg">
+            <h3 className="mb-4 text-3xl font-bold">Smart AI Guidance</h3>
+            <p className="text-slate-600">
+              AI recommendations based on your visa type, travel history, and destination.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="grid md:grid-cols-3 gap-6 px-8 md:px-16 pb-20">
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-          <p className="text-4xl font-bold mb-2">3+</p>
-          <p className="text-gray-400">Countries for MVP launch</p>
-        </div>
+      <section id="plans" className="px-8 py-20">
+        <h2 className="mb-4 text-center text-5xl font-bold">Choose your plan</h2>
+        <p className="mx-auto mb-14 max-w-3xl text-center text-xl text-slate-600">
+          Flexible options for travelers and frequent applicants.
+        </p>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-          <p className="text-4xl font-bold mb-2">5 min</p>
-          <p className="text-gray-400">Average document generation time</p>
-        </div>
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="rounded-3xl border border-slate-200 p-8">
+            <h3 className="mb-4 text-3xl font-bold">Basic</h3>
+            <p className="mb-8 text-slate-600">Best for one-time travelers.</p>
+            <ul className="space-y-4 text-lg text-slate-700">
+              <li>✓ 1 destination country</li>
+              <li>✓ Embassy-ready documents</li>
+              <li>✓ AI recommendations</li>
+              <li>✓ Fast generation</li>
+            </ul>
+          </div>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-          <p className="text-4xl font-bold mb-2">AI</p>
-          <p className="text-gray-400">Personalized documents for each client</p>
+          <div className="rounded-3xl border-2 border-blue-700 p-8 shadow-2xl">
+            <div className="mb-4 inline-block rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
+              Most Popular
+            </div>
+            <h3 className="mb-4 text-3xl font-bold">Standard</h3>
+            <p className="mb-8 text-slate-600">Perfect for regular travelers.</p>
+            <ul className="space-y-4 text-lg text-slate-700">
+              <li>✓ 5 destination countries</li>
+              <li>✓ Full document package</li>
+              <li>✓ AI support system</li>
+              <li>✓ Priority processing</li>
+            </ul>
+          </div>
+
+          <div className="rounded-3xl border border-slate-200 p-8">
+            <h3 className="mb-4 text-3xl font-bold">VIP</h3>
+            <p className="mb-8 text-slate-600">
+              For frequent international travelers.
+            </p>
+            <ul className="space-y-4 text-lg text-slate-700">
+              <li>✓ 30+ destination countries</li>
+              <li>✓ Unlimited document generation</li>
+              <li>✓ Premium AI support</li>
+              <li>✓ Fastest processing</li>
+            </ul>
+          </div>
         </div>
       </section>
 
-      <section className="grid md:grid-cols-3 gap-8 px-8 md:px-16 pb-24">
-        <div className="bg-zinc-900/80 p-8 rounded-3xl border border-zinc-800 hover:border-white/20 transition">
-          <h3 className="text-2xl font-bold mb-4">AI Cover Letters</h3>
-          <p className="text-gray-400">
-            Create personalized embassy cover letters based on the traveler’s profile.
-          </p>
-        </div>
+      <section id="countries" className="bg-slate-50 px-8 py-20">
+        <h2 className="mb-4 text-center text-5xl font-bold">
+          Most selected destinations
+        </h2>
 
-        <div className="bg-zinc-900/80 p-8 rounded-3xl border border-zinc-800 hover:border-white/20 transition">
-          <h3 className="text-2xl font-bold mb-4">Travel Itinerary</h3>
-          <p className="text-gray-400">
-            Generate realistic daily travel plans for Japan, Spain, Italy, and more.
-          </p>
-        </div>
+        <p className="mx-auto mb-14 max-w-3xl text-center text-xl text-slate-600">
+          Popular tourist destinations frequently selected by foreigners living in Korea.
+        </p>
 
-        <div className="bg-zinc-900/80 p-8 rounded-3xl border border-zinc-800 hover:border-white/20 transition">
-          <h3 className="text-2xl font-bold mb-4">Embassy Checklist</h3>
-          <p className="text-gray-400">
-            Get destination-specific document checklists for visa applications.
-          </p>
+        <div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-4">
+          <div className="rounded-3xl bg-white p-10 text-center shadow-lg">
+            <p className="text-6xl">🇯🇵</p>
+            <h3 className="mt-6 text-3xl font-bold">Japan</h3>
+          </div>
+
+          <div className="rounded-3xl bg-white p-10 text-center shadow-lg">
+            <p className="text-6xl">🇪🇸</p>
+            <h3 className="mt-6 text-3xl font-bold">Spain</h3>
+          </div>
+
+          <div className="rounded-3xl bg-white p-10 text-center shadow-lg">
+            <p className="text-6xl">🇹🇼</p>
+            <h3 className="mt-6 text-3xl font-bold">Taiwan</h3>
+          </div>
+
+          <div className="rounded-3xl bg-white p-10 text-center shadow-lg">
+            <p className="text-6xl">🇸🇬</p>
+            <h3 className="mt-6 text-3xl font-bold">Singapore</h3>
+          </div>
         </div>
       </section>
+
+      <section id="how" className="px-8 py-20">
+        <h2 className="mb-14 text-center text-5xl font-bold">How it works</h2>
+
+        <div className="grid gap-8 md:grid-cols-3">
+          <div className="rounded-3xl bg-slate-50 p-8">
+            <div className="mb-5 text-5xl font-extrabold text-blue-700">01</div>
+            <h3 className="mb-4 text-3xl font-bold">Enter Information</h3>
+            <p className="text-slate-600">
+              Add nationality, Korean visa type, destination country, and travel details.
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-slate-50 p-8">
+            <div className="mb-5 text-5xl font-extrabold text-blue-700">02</div>
+            <h3 className="mb-4 text-3xl font-bold">AI Generates Documents</h3>
+            <p className="text-slate-600">
+              The AI prepares all required tourist visa documents automatically.
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-slate-50 p-8">
+            <div className="mb-5 text-5xl font-extrabold text-blue-700">03</div>
+            <h3 className="mb-4 text-3xl font-bold">Download & Submit</h3>
+            <p className="text-slate-600">
+              Download your files and prepare them for embassy submission.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200 px-8 py-8 text-center text-slate-500">
+        © 2026 VisaAI Korea · AI-powered tourist visa document preparation
+      </footer>
     </main>
   );
 }
