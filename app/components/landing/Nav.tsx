@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GenerateButton } from "@/app/components/GenerateButton";
 
+// Only the sections that actually exist on the page — the Services and
+// Pricing sections were removed, so their anchors went with them.
 const LINKS = [
-  { href: "#services", label: "Services" },
+  { href: "#countries", label: "Destinations" },
   { href: "#how", label: "How it works" },
-  { href: "#countries", label: "Countries" },
-  { href: "#pricing", label: "Pricing" },
 ];
 
 export function Nav() {

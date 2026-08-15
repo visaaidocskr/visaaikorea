@@ -7,18 +7,21 @@ import { GenerateButton } from "@/app/components/GenerateButton";
 const STEPS = [
   {
     n: "01",
-    title: "Enter Information",
-    blurb: "Tell us your nationality, Korean visa status, destination, and travel dates.",
+    title: "Tell us about your trip",
+    blurb:
+      "Your nationality, Korean visa status, destination and travel dates. Upload your passport and we read the details for you.",
   },
   {
     n: "02",
-    title: "AI Generates Documents",
-    blurb: "Our engine prepares your cover letter, itinerary, and embassy checklist.",
+    title: "We prepare your documents",
+    blurb:
+      "Your travel purpose statement, day-by-day itinerary and the exact checklist for your visa status — all generated from what you entered.",
   },
   {
     n: "03",
-    title: "Download & Submit",
-    blurb: "Download polished PDFs and follow clear, embassy-ready submission steps.",
+    title: "We check, then you download",
+    blurb:
+      "Our team reviews everything before release, so you never submit a document with a mistake in it. Flight and hotel reservations may take up to 16 hours.",
   },
 ];
 
@@ -36,7 +39,7 @@ export function HowItWorks() {
             Three steps to embassy-ready
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            Click each step to preview exactly what happens.
+            Click each step to see exactly what happens.
           </p>
         </Reveal>
 
@@ -128,10 +131,18 @@ function FormPreview() {
 }
 
 function DocsPreview() {
-  const docs = ["Cover Letter", "Travel Itinerary", "Embassy Checklist"];
+  const docs = ["Travel Purpose Statement", "Daily Travel Itinerary", "Document Checklist"];
+  // Absorbed from the old standalone "Services" section — the same points,
+  // shown where they're actually relevant instead of in a separate block.
+  const included = [
+    "Destination-specific forms and checklist",
+    "Details kept consistent across every document",
+    "Companions included when you travel together",
+    "Embassy submission notes for your route",
+  ];
   return (
     <div className="space-y-3">
-      <p className="text-sm font-bold text-slate-900">Generating documents…</p>
+      <p className="text-sm font-bold text-slate-900">Preparing documents…</p>
       {docs.map((d, i) => (
         <div
           key={d}
@@ -147,19 +158,35 @@ function DocsPreview() {
           <span className="text-xs font-bold text-emerald-600">✓ Ready</span>
         </div>
       ))}
+      <div className="rounded-xl bg-slate-50 px-4 py-3">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          Also included
+        </p>
+        <ul className="mt-2 space-y-1.5">
+          {included.map((item) => (
+            <li key={item} className="flex gap-2 text-xs leading-relaxed text-slate-600">
+              <span className="text-blue-600">✓</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
 
 function DownloadPreview() {
   const files = [
-    { name: "cover-letter.pdf", size: "82 KB" },
-    { name: "itinerary.pdf", size: "146 KB" },
-    { name: "checklist.pdf", size: "61 KB" },
+    { name: "travel-purpose-statement.docx", size: "82 KB" },
+    { name: "daily-itinerary.docx", size: "146 KB" },
+    { name: "document-checklist.docx", size: "61 KB" },
   ];
   return (
     <div className="space-y-3">
       <p className="text-sm font-bold text-slate-900">Your document package</p>
+      <div className="rounded-xl bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-800">
+        ✓ Reviewed by our team before release
+      </div>
       {files.map((f) => (
         <div
           key={f.name}
