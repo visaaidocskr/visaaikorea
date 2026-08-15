@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local verification scratch files (safe to delete)
+buildcss.js
+_verify_render.html
+.tmp_test/
+
+# local agent/editor settings
+.claude/
+
+# Tesseract OCR language data — downloaded at runtime by tesseract.js,
+# not referenced anywhere in source. 5 MB, no reason to version it.
+eng.traineddata

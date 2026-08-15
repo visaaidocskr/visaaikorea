@@ -1,0 +1,1964 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  documentsForStatus,
+  patronymicRule,
+} from "@/lib/visa/config";
+import type { VisaRuleset } from "@/lib/visa/ruleset";
+import {
+  getDestinationRule,
+  getRecommendation,
+  getCountryGuidance,
+  travelStartWindow,
+  toISO,
+  validateDates,
+  japanRouteForRegion,
+  KOREA_REGIONS,
+  type DateValidation,
+  type AppointmentInfo,
+} from "@/lib/visa/destinations";
+import {
+  evaluateEligibility,
+  stepsForOutcome,
+  requiresApplication,
+  type EligibilityResult,
+} from "@/lib/visa/eligibility";
+import {
+  formatName,
+  isValidEmail,
+  containsHangul,
+  hasNonLatinScript,
+  isCompleteAddress,
+} from "@/lib/visa/forms";
+import { isSubmissionDateBlocked } from "@/lib/visa/japanEmbassy";
+import type { ApplyFormData, CompanionInput } from "@/lib/visa/types";
+import { saveApplication, submitApplication } from "@/app/apply/actions";
+import { UploadField } from "@/app/apply/UploadField";
+import { PassportScanPanel } from "@/app/apply/PassportScanPanel";
+import { GuidanceModal } from "@/app/apply/GuidanceModal";
+import { DatePicker } from "@/app/apply/DatePicker";
+import { Input, Select, BooleanChoice, Textarea } from "@/app/apply/fields";
+import { SupportContactCard } from "@/app/apply/japan/SupportContactCard";
+import { PersonalStep } from "@/app/apply/japan/PersonalStep";
+import { PassportStep } from "@/app/apply/japan/PassportStep";
+import { KoreaStatusStep, employmentKind } from "@/app/apply/japan/KoreaStatusStep";
+import { JapanTripStep } from "@/app/apply/japan/JapanTripStep";
+import { TravelBookingsStep } from "@/app/apply/TravelBookingsStep";
+import { PreviousVisitsStep } from "@/app/apply/japan/PreviousVisitsStep";
+import { HostStep } from "@/app/apply/japan/HostStep";
+import { BackgroundStep } from "@/app/apply/japan/BackgroundStep";
+import { JapanGuidanceStep } from "@/app/apply/japan/JapanGuidanceStep";
+import { SeoulChecklistModal } from "@/app/apply/japan/SeoulChecklistModal";
+import {
+  JapanReview,
+  type ReviewSection,
+  type SectionStatus,
+} from "@/app/apply/japan/JapanReview";
+import { TaiwanTripStep } from "@/app/apply/taiwan/TaiwanTripStep";
+import { TaiwanBackgroundStep } from "@/app/apply/taiwan/TaiwanBackgroundStep";
+import { TAIWAN_MARITAL_OPTIONS } from "@/app/apply/fields";
+
+// Japan AND Taiwan use the same richer step sequence (Phase 2a/3: steps 1–4 +
+// Documents + Guidance). Other destinations keep the generic stepsForOutcome()
+// flow. Identity documents come right after Destination — the passport photo
+// is scanned (MRZ auto-read) before the applicant types anything, so the name
+// / passport number / dates below can be pre-filled instead of hand-typed.
+// Personal → Guarantor/Trip used to be several separate steps; they're now
+// one single "Application Details" page (still built from the same
+// per-section components, just rendered together instead of gated one at a
+// time).
+// "Documents" (status-specific uploads, e.g. Enrollment Certificate) is no
+// longer its own step — those uploads now render inline inside
+// KoreaStatusStep, right next to the university/employer fields that make
+// them relevant (see "Application Details" below).
+const RICH_APPLICATION_STEPS = [
+  "Destination",
+  "Identity Documents",
+  "Application Details",
+  "Background",
+  "Review",
+  "Guidance",
+];
+
+type Props = {
+  applicationId: string;
+  userId: string;
+  initialForm: ApplyFormData;
+  initialUploads: Record<string, string>;
+  // Resolved server-side (DB overrides over code defaults) and passed down so
+  // the engine selectors read live rules without the client fetching anything.
+  ruleset: VisaRuleset;
+};
+
+export function ApplyWizard({
+  applicationId,
+  userId,
+  initialForm,
+  initialUploads,
+  ruleset,
+}: Props) {
+  const router = useRouter();
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState<ApplyFormData>(initialForm);
+  const [uploads, setUploads] =
+    useState<Record<string, string>>(initialUploads);
+  const [consent, setConsent] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
+  const [saving, startSaving] = useTransition();
+  const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(
+    null
+  );
+
+  // Guidance modal: opens only on first travel-date interaction (or the ⓘ button).
+  const [modalOpen, setModalOpen] = useState(false);
+  const seenGuidance = useRef<Set<string>>(new Set());
+
+  // Japan document checklist: shown once, right after "Destination" is
+  // confirmed (Korea province tells us the route — sticker/Busan or
+  // eVisa/Seoul — immediately). The exact Korean visa status isn't known yet
+  // at this point (that's collected in "Korea Status", a later step), so the
+  // status-specific document (item 4) is described generically here rather
+  // than named precisely.
+  const [seoulChecklistOpen, setSeoulChecklistOpen] = useState(false);
+  const seoulChecklistShown = useRef(false);
+
+  function set<K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  }
+  function onUploaded(fileType: string, filename: string) {
+    setUploads((prev) => {
+      const next = { ...prev };
+      if (filename) next[fileType] = filename;
+      else delete next[fileType]; // removal
+      return next;
+    });
+  }
+
+  const cities = ruleset.cities[form.destination_country] ?? [];
+  const pRule = patronymicRule(form.nationality, ruleset.patronymic);
+  const fatherRequired = pRule === "required"; // Uzbekistan
+  const rule = getDestinationRule(form.destination_country, ruleset.dateRules);
+  const isJapan = form.destination_country === "Japan";
+  const isTaiwan = form.destination_country === "Taiwan";
+
+  // Real-time field validity (used for both inline errors and gating).
+  const emailValid = isValidEmail(form.client_email);
+  const addressValid =
+    form.current_korea_address.trim() !== "" &&
+    containsHangul(form.current_korea_address);
+
+  // Auto-calculated recommendations + selectable date windows.
+  const recommendation = useMemo(
+    () =>
+      getRecommendation(
+        form.destination_country,
+        form.planned_submission_date,
+        ruleset.dateRules
+      ),
+    [form.destination_country, form.planned_submission_date, ruleset.dateRules]
+  );
+  const startWindow = useMemo(
+    () =>
+      travelStartWindow(
+        form.destination_country,
+        form.planned_submission_date,
+        ruleset.dateRules
+      ),
+    [form.destination_country, form.planned_submission_date, ruleset.dateRules]
+  );
+  const todayISO = toISO(new Date());
+
+  const guidance = getCountryGuidance(
+    form.destination_country,
+    ruleset.countryGuidance
+  );
+
+  // Guidance is NOT shown on the page. It appears as a modal only when the user
+  // interacts with a travel-date field (once per destination), or reopens it
+  // via the small ⓘ button.
+  function openGuidance() {
+    if (!rule) return;
+    seenGuidance.current.add(form.destination_country);
+    setModalOpen(true);
+  }
+  function onDateFocus() {
+    if (rule && !seenGuidance.current.has(form.destination_country)) {
+      seenGuidance.current.add(form.destination_country);
+      setModalOpen(true);
+    }
+  }
+  function applyRecommendedDates() {
+    if (recommendation?.recommendedStartISO)
+      set("travel_start_date", recommendation.recommendedStartISO);
+    if (recommendation?.recommendedEndISO)
+      set("travel_end_date", recommendation.recommendedEndISO);
+  }
+
+  // --- Eligibility: runs automatically once nationality + destination are set.
+  const eligibility: EligibilityResult | null = useMemo(
+    () =>
+      evaluateEligibility(
+        form.nationality,
+        form.destination_country,
+        ruleset.eligibility,
+        ruleset.demonyms
+      ),
+    [form.nationality, form.destination_country, ruleset.eligibility, ruleset.demonyms]
+  );
+  const outcome = eligibility?.outcome ?? null;
+
+  // The workflow itself changes shape based on the eligibility result.
+  // Japan and Taiwan (when an application is actually required) get their own
+  // richer flow; every other destination keeps the generic outcome-based steps.
+  const useJapanFlow = isJapan && outcome != null && requiresApplication(outcome);
+  const useTaiwanFlow = isTaiwan && outcome != null && requiresApplication(outcome);
+  const useRichFlow = useJapanFlow || useTaiwanFlow;
+  const steps = useMemo(
+    () => (useRichFlow ? RICH_APPLICATION_STEPS : stepsForOutcome(outcome)),
+    [useRichFlow, outcome]
+  );
+  const stepIndex = Math.min(step, steps.length - 1);
+  const current = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length - 1;
+
+  // The wizard steps live entirely in React state (`step`), so by default the
+  // browser back button has nothing to pop through: it jumps straight past
+  // the whole wizard to whatever page was open before /apply. Fix: every
+  // step change also pushes a history entry carrying the step index, and a
+  // popstate listener syncs `step` back when the browser Back/Forward
+  // buttons are used — so Back walks the wizard one step at a time, and only
+  // leaves it once you're already on step 0.
+  useEffect(() => {
+    window.history.replaceState({ step }, "");
+    // Only on mount — this just annotates the current entry, it must not
+    // re-run (and re-stamp) every time `step` changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    function onPopState(e: PopStateEvent) {
+      const idx = typeof e.state?.step === "number" ? e.state.step : 0;
+      setStep(Math.min(Math.max(idx, 0), steps.length - 1));
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [steps.length]);
+  function changeStep(idx: number) {
+    const next = Math.min(Math.max(idx, 0), steps.length - 1);
+    setStep(next);
+    window.history.pushState({ step: next }, "");
+  }
+
+  const dateCheck: DateValidation = useMemo(
+    () =>
+      validateDates(
+        form.destination_country,
+        {
+          planned_submission_date: form.planned_submission_date,
+          travel_start_date: form.travel_start_date,
+          travel_end_date: form.travel_end_date,
+        },
+        ruleset.dateRules
+      ),
+    [
+      form.destination_country,
+      form.planned_submission_date,
+      form.travel_start_date,
+      form.travel_end_date,
+      ruleset.dateRules,
+    ]
+  );
+
+  // Japan visa route is derived from the Step 1 province selection.
+  const japanRoute =
+    isJapan && form.korea_region ? japanRouteForRegion(form.korea_region) : null;
+
+  const statusDocs = useMemo(
+    () =>
+      form.korean_visa_status
+        ? documentsForStatus(
+            form.korean_visa_status,
+            ruleset.baseDocuments,
+            ruleset.statusDocuments,
+            form.marital_status
+          ).filter((d) => !ruleset.baseDocuments.some((b) => b.key === d.key))
+        : [],
+    [
+      form.korean_visa_status,
+      form.marital_status,
+      ruleset.baseDocuments,
+      ruleset.statusDocuments,
+    ]
+  );
+
+  // --- per-step validation (keyed by step name, since steps are dynamic) ----
+  // Flight + hotel bookings are asked right here, on Destination — before the
+  // applicant invests time filling out the rest of the application — because
+  // they're critical for document generation. Without a confirmed booking we
+  // block progress and show our contacts instead of letting the applicant
+  // fill everything out only to get stuck later.
+  const bookingsRequired = outcome != null && requiresApplication(outcome);
+  const bookingsConfirmed = form.flight_booked === true && form.accommodation_booked === true;
+  const destinationValid =
+    form.nationality !== "" &&
+    form.destination_country !== "" &&
+    form.destination_city !== "" &&
+    (!isJapan || form.korea_region !== "") &&
+    eligibility !== null &&
+    (!bookingsRequired || bookingsConfirmed);
+  // Flight/accommodation booking details — shared by every destination.
+  // Japan/Taiwan collect these on their rich-flow "Application Details"
+  // page; Singapore/Spain collect the same TravelBookingsStep inline on the
+  // generic "Applicant" page (see applicantValid below).
+  const fl = form.flight;
+  const flightValid =
+    form.flight_booked === false ||
+    (form.flight_booked === true &&
+      fl.airline.trim() !== "" &&
+      form.port_of_entry.trim() !== "" &&
+      fl.arrival_date !== "");
+  const accommodationValid =
+    form.accommodation_booked === false ||
+    (form.accommodation_booked === true &&
+      form.accommodations.length > 0 &&
+      form.accommodations.every(
+        (a) =>
+          a.name.trim() !== "" &&
+          a.address.trim() !== "" &&
+          !hasNonLatinScript(a.address) &&
+          a.check_in !== "" &&
+          a.check_out !== "" &&
+          a.check_out >= a.check_in
+      ));
+  const statusDocsValid = statusDocs
+    .filter((d) => d.required)
+    .every((d) => Boolean(uploads[d.key]));
+  // Base identity uploads (passport + ARC). Named for reuse below —
+  // Japan/Taiwan's "Identity Documents" step and the generic flow's
+  // "Applicant" step both gate on this.
+  const baseUploadsValid =
+    Boolean(uploads["passport"]) &&
+    Boolean(uploads["arc_front"]) &&
+    Boolean(uploads["arc_back"]);
+
+  // --- Japan step validity (Phase 2a: steps 1–4) ---------------------------
+  const japanEmploymentKind = employmentKind(form.korean_visa_status);
+  const personalValid =
+    form.surname.trim() !== "" &&
+    form.given_name.trim() !== "" &&
+    form.full_name_as_passport.trim() !== "" &&
+    form.date_of_birth !== "" &&
+    form.gender !== "" &&
+    form.marital_status !== "" &&
+    form.country_of_birth.trim() !== "" &&
+    // Father's name / patronymic — required + Latin-only for Uzbekistan.
+    (!fatherRequired ||
+      (form.middle_name_or_patronymic.trim() !== "" &&
+        !hasNonLatinScript(form.middle_name_or_patronymic)));
+  const passportValid =
+    form.passport_number.trim() !== "" &&
+    (form.passport_type || "ordinary") !== "" &&
+    form.passport_place_of_issue.trim() !== "" &&
+    form.passport_issuing_authority.trim() !== "" &&
+    form.passport_issue_date !== "" &&
+    form.passport_expiry_date !== "" &&
+    // Expiry must be after issue (ISO strings compare chronologically).
+    form.passport_issue_date < form.passport_expiry_date;
+  // Japan requires the FULL Korea address in Romanized English (not Hangul) —
+  // not just a city/district name.
+  const koreaAddressValid =
+    !hasNonLatinScript(form.current_korea_address) &&
+    isCompleteAddress(form.current_korea_address);
+  const koreaBaseValid =
+    form.korean_visa_status !== "" &&
+    koreaAddressValid &&
+    emailValid &&
+    form.client_phone.trim() !== "" &&
+    form.occupation.trim() !== "";
+  const orgFieldsFilled =
+    form.employer_or_school_name.trim() !== "" &&
+    form.employer_phone.trim() !== "" &&
+    form.employer_or_school_address.trim() !== "" &&
+    !hasNonLatinScript(form.employer_or_school_address);
+  // University + employer require the full org block (employer also needs a
+  // position); D-10 (jobseeking) and other statuses don't force it.
+  const koreaStatusValid =
+    koreaBaseValid &&
+    (japanEmploymentKind === "university"
+      ? orgFieldsFilled
+      : japanEmploymentKind === "employer"
+        ? orgFieldsFilled && form.position_title.trim() !== ""
+        : true);
+  // Same organization-based logic as koreaStatusValid, but WITHOUT
+  // koreaBaseValid's address/phone/email re-check — the generic (Singapore/
+  // Spain) flow already validates those separately via `addressValid`
+  // (which requires Hangul, unlike koreaBaseValid's Romanized-English
+  // requirement for Japan/Taiwan) inside `applicantValid` below. Only the
+  // genuinely new fields KoreaStatusStep adds to that flow — occupation and
+  // the employer/university block — belong here.
+  const koreaOrgValid =
+    form.occupation.trim() !== "" &&
+    (japanEmploymentKind === "university"
+      ? orgFieldsFilled
+      : japanEmploymentKind === "employer"
+        ? orgFieldsFilled && form.position_title.trim() !== ""
+        : true);
+  // The merged generic-flow "Applicant" page = every field from what used to
+  // be separate Applicant/Korea-Status/Documents steps, all valid at once.
+  const applicantValid =
+    form.full_name_as_passport.trim() !== "" &&
+    form.surname.trim() !== "" &&
+    form.given_name.trim() !== "" &&
+    (!fatherRequired || form.middle_name_or_patronymic.trim() !== "") &&
+    emailValid &&
+    form.client_phone.trim() !== "" &&
+    form.korean_visa_status !== "" &&
+    addressValid &&
+    dateCheck.ok &&
+    baseUploadsValid &&
+    flightValid &&
+    accommodationValid &&
+    koreaOrgValid &&
+    statusDocsValid;
+  // Planned submission date (if set) must be an embassy business day.
+  const submissionDateOk =
+    !form.planned_submission_date ||
+    !isSubmissionDateBlocked(form.planned_submission_date);
+  const japanTripValid =
+    form.travel_purpose.trim() !== "" && dateCheck.ok && submissionDateOk;
+
+  // --- Japan steps 5–9 validity --------------------------------------------
+  const previousVisitsValid =
+    form.has_previous_japan_visits === false ||
+    (form.has_previous_japan_visits === true &&
+      form.previous_japan_visits.length > 0 &&
+      form.previous_japan_visits.every((v) => v.visited_from !== ""));
+  const hostValid =
+    form.host_type === "none" ||
+    ((form.host_type === "inviter" || form.host_type === "guarantor") &&
+      form.host.name.trim() !== "" &&
+      form.host.address.trim() !== "" &&
+      !hasNonLatinScript(form.host.address) &&
+      form.host.phone.trim() !== "" &&
+      form.host.relationship.trim() !== "");
+  // Identity docs (passport + ARC) now form their own first step.
+  const identityDocsValid = baseUploadsValid;
+  // The merged "Application Details" page = every field from the old
+  // Personal / Passport / Korea Status / Japan Trip / Travel Bookings /
+  // Previous Visits / Guarantor steps, all valid at once.
+  const applicationDetailsValid =
+    personalValid &&
+    passportValid &&
+    koreaStatusValid &&
+    statusDocsValid &&
+    japanTripValid &&
+    flightValid &&
+    accommodationValid &&
+    previousVisitsValid &&
+    hostValid;
+  const bg = form.background_answers;
+  const backgroundAnswered =
+    bg.crime !== null &&
+    bg.imprisonment !== null &&
+    bg.drugs !== null &&
+    bg.deported !== null &&
+    bg.prostitution !== null &&
+    bg.trafficking !== null;
+  const anyBackgroundYes = Boolean(
+    bg.crime || bg.imprisonment || bg.drugs || bg.deported || bg.prostitution || bg.trafficking
+  );
+  const backgroundValid =
+    backgroundAnswered && (!anyBackgroundYes || form.remarks.trim() !== "");
+
+  // --- Taiwan step validity --------------------------------------------------
+  const taiwanTripValid =
+    form.taiwan_travel_purpose !== "" &&
+    (form.taiwan_travel_purpose !== "other" || form.taiwan_travel_purpose_other.trim() !== "") &&
+    dateCheck.ok &&
+    form.home_country_address.trim() !== "" &&
+    !hasNonLatinScript(form.home_country_address);
+  // The Taiwan reference document (lib/docs/taiwanData.ts REQUIRED_FIELDS)
+  // requires the applicant's city of birth to generate — Japan's does not,
+  // so this is gated here rather than folded into the shared personalValid.
+  const taiwanApplicationDetailsValid =
+    personalValid &&
+    form.birth_city.trim() !== "" &&
+    passportValid &&
+    koreaStatusValid &&
+    statusDocsValid &&
+    taiwanTripValid &&
+    flightValid &&
+    accommodationValid;
+  const twBg = form.taiwan_background_answers;
+  const taiwanBackgroundAnswered =
+    twBg.criminalRecord !== null &&
+    twBg.illegalEntry !== null &&
+    twBg.communicableDisease !== null &&
+    twBg.overstayedOrIllegalWork !== null &&
+    twBg.drugTrafficking !== null &&
+    twBg.visaRefused !== null &&
+    twBg.differentName !== null &&
+    twBg.workedInTaiwan !== null;
+  const anyTaiwanBackgroundYes = Boolean(
+    twBg.criminalRecord ||
+      twBg.illegalEntry ||
+      twBg.communicableDisease ||
+      twBg.overstayedOrIllegalWork ||
+      twBg.drugTrafficking ||
+      twBg.visaRefused ||
+      twBg.differentName ||
+      twBg.workedInTaiwan
+  );
+  const taiwanBackgroundValid =
+    taiwanBackgroundAnswered && (!anyTaiwanBackgroundYes || form.remarks.trim() !== "");
+
+  // --- Review sections (status + summary + jump target) --------------------
+  const st = (valid: boolean, notBooked = false): SectionStatus =>
+    notBooked ? "attention" : valid ? "complete" : "incomplete";
+  const yn = (v: boolean | null) => (v === null ? "—" : v ? "Yes" : "No");
+  const japanSections: ReviewSection[] = useJapanFlow
+    ? [
+        {
+          key: "personal",
+          title: "Personal Information",
+          step: "Application Details",
+          status: st(personalValid),
+          rows: [
+            ["Name", [form.surname, form.given_name].filter(Boolean).join(" ")],
+            ["Date of birth", form.date_of_birth],
+            ["Sex", form.gender],
+            ["Marital status", form.marital_status],
+            ["Nationality", form.nationality],
+            ...(fatherRequired
+              ? ([["Father's name", form.middle_name_or_patronymic]] as [string, string][])
+              : []),
+          ],
+        },
+        {
+          key: "passport",
+          title: "Passport",
+          step: "Application Details",
+          status: st(passportValid),
+          rows: [
+            ["Number", form.passport_number],
+            ["Type", form.passport_type || "ordinary"],
+            ["Issued", form.passport_issue_date],
+            ["Expires", form.passport_expiry_date],
+          ],
+        },
+        {
+          key: "korea",
+          title: "Status in Korea",
+          step: "Application Details",
+          status: st(koreaStatusValid),
+          rows: [
+            ["Visa status", form.korean_visa_status],
+            ["Address", form.current_korea_address],
+            ["Phone", form.client_phone],
+            [japanEmploymentKind === "university" ? "Field of study" : "Occupation", form.occupation],
+            [
+              japanEmploymentKind === "university" ? "University" : "Employer",
+              form.employer_or_school_name,
+            ],
+          ],
+        },
+        {
+          key: "trip",
+          title: "Japan Trip",
+          step: "Application Details",
+          status: st(japanTripValid),
+          rows: [
+            ["Purpose", form.travel_purpose],
+            ["Submission date", form.planned_submission_date],
+            ["Arrival", form.travel_start_date],
+            ["Departure", form.travel_end_date],
+            ["Stay", dateCheck.stayDays != null ? `${dateCheck.stayDays} days` : "—"],
+          ],
+        },
+        {
+          key: "flight",
+          title: "Flight",
+          step: "Application Details",
+          status: st(flightValid, form.flight_booked === false),
+          rows: [
+            ["Booked", yn(form.flight_booked)],
+            ["Airline", fl.airline],
+            ["Port of entry", form.port_of_entry],
+            ["Arrival date", fl.arrival_date],
+          ],
+        },
+        {
+          key: "accommodation",
+          title: "Accommodation",
+          step: "Application Details",
+          status: st(accommodationValid, form.accommodation_booked === false),
+          rows: [
+            ["Booked", yn(form.accommodation_booked)],
+            ["Places", form.accommodations.length ? String(form.accommodations.length) : "—"],
+            ["First hotel", form.accommodations[0]?.name ?? "—"],
+          ],
+        },
+        {
+          key: "previous",
+          title: "Previous Japan Travel",
+          step: "Application Details",
+          status: st(previousVisitsValid),
+          rows: [
+            ["Visited before", yn(form.has_previous_japan_visits)],
+            ["Visits recorded", form.previous_japan_visits.length ? String(form.previous_japan_visits.length) : "—"],
+          ],
+        },
+        {
+          key: "host",
+          title: "Inviter / Guarantor",
+          step: "Application Details",
+          status: st(hostValid),
+          rows: [
+            ["Type", form.host_type === "none" ? "Independent tourist" : form.host_type || "—"],
+            ...(form.host_type === "inviter" || form.host_type === "guarantor"
+              ? ([
+                  ["Name", form.host.name],
+                  ["Relationship", form.host.relationship],
+                ] as [string, string][])
+              : []),
+          ],
+        },
+        {
+          key: "background",
+          title: "Additional Questions",
+          step: "Background",
+          status: st(backgroundValid),
+          rows: [
+            ["All answered", backgroundAnswered ? "Yes" : "No"],
+            ["Any “Yes” answers", anyBackgroundYes ? "Yes — see remarks" : "No"],
+          ],
+        },
+        {
+          key: "documents",
+          title: "Identity Documents",
+          step: "Identity Documents",
+          status: st(identityDocsValid),
+          rows: [
+            ["Passport", uploads["passport"] ? "Uploaded" : "Missing"],
+            ["ARC front", uploads["arc_front"] ? "Uploaded" : "Missing"],
+            ["ARC back", uploads["arc_back"] ? "Uploaded" : "Missing"],
+          ],
+        },
+        {
+          key: "status_documents",
+          title: "Status Documents",
+          step: "Application Details",
+          status: st(statusDocsValid),
+          rows: [
+            [
+              "Required documents uploaded",
+              `${statusDocs.filter((d) => d.required && uploads[d.key]).length} / ${
+                statusDocs.filter((d) => d.required).length
+              }`,
+            ],
+          ],
+        },
+      ]
+    : [];
+
+  const taiwanSections: ReviewSection[] = useTaiwanFlow
+    ? [
+        {
+          key: "personal",
+          title: "Personal Information",
+          step: "Application Details",
+          status: st(personalValid),
+          rows: [
+            ["Name", [form.surname, form.given_name].filter(Boolean).join(" ")],
+            ["Date of birth", form.date_of_birth],
+            ["Sex", form.gender],
+            ["Marital status", form.marital_status],
+            ["Nationality", form.nationality],
+            ...(fatherRequired
+              ? ([["Father's name", form.middle_name_or_patronymic]] as [string, string][])
+              : []),
+          ],
+        },
+        {
+          key: "passport",
+          title: "Passport",
+          step: "Application Details",
+          status: st(passportValid),
+          rows: [
+            ["Number", form.passport_number],
+            ["Type", form.passport_type || "ordinary"],
+            ["Issued", form.passport_issue_date],
+            ["Expires", form.passport_expiry_date],
+          ],
+        },
+        {
+          key: "korea",
+          title: "Status in Korea",
+          step: "Application Details",
+          status: st(koreaStatusValid),
+          rows: [
+            ["Visa status", form.korean_visa_status],
+            ["Address", form.current_korea_address],
+            ["Phone", form.client_phone],
+            [japanEmploymentKind === "university" ? "Field of study" : "Occupation", form.occupation],
+            [
+              japanEmploymentKind === "university" ? "University" : "Employer",
+              form.employer_or_school_name,
+            ],
+          ],
+        },
+        {
+          key: "trip",
+          title: "Taiwan Trip",
+          step: "Application Details",
+          status: st(taiwanTripValid),
+          rows: [
+            [
+              "Purpose",
+              form.taiwan_travel_purpose === "other"
+                ? form.taiwan_travel_purpose_other
+                : form.taiwan_travel_purpose,
+            ],
+            ["Submission date", form.planned_submission_date],
+            ["Arrival", form.travel_start_date],
+            ["Departure", form.travel_end_date],
+            ["Stay", dateCheck.stayDays != null ? `${dateCheck.stayDays} days` : "—"],
+            ["Home-country address", form.home_country_address],
+          ],
+        },
+        {
+          key: "flight",
+          title: "Flight",
+          step: "Application Details",
+          status: st(flightValid, form.flight_booked === false),
+          rows: [
+            ["Booked", yn(form.flight_booked)],
+            ["Airline", fl.airline],
+          ],
+        },
+        {
+          key: "accommodation",
+          title: "Accommodation in Taiwan",
+          step: "Application Details",
+          status: st(accommodationValid, form.accommodation_booked === false),
+          rows: [
+            ["Booked", yn(form.accommodation_booked)],
+            ["Places", form.accommodations.length ? String(form.accommodations.length) : "—"],
+            ["First hotel", form.accommodations[0]?.name ?? "—"],
+          ],
+        },
+        {
+          key: "background",
+          title: "Additional Questions",
+          step: "Background",
+          status: st(taiwanBackgroundValid),
+          rows: [
+            ["All answered", taiwanBackgroundAnswered ? "Yes" : "No"],
+            ["Any “Yes” answers", anyTaiwanBackgroundYes ? "Yes — see remarks" : "No"],
+          ],
+        },
+        {
+          key: "documents",
+          title: "Identity Documents",
+          step: "Identity Documents",
+          status: st(identityDocsValid),
+          rows: [
+            ["Passport", uploads["passport"] ? "Uploaded" : "Missing"],
+            ["ARC front", uploads["arc_front"] ? "Uploaded" : "Missing"],
+            ["ARC back", uploads["arc_back"] ? "Uploaded" : "Missing"],
+          ],
+        },
+        {
+          key: "status_documents",
+          title: "Status Documents",
+          step: "Application Details",
+          status: st(statusDocsValid),
+          rows: [
+            [
+              "Required documents uploaded",
+              `${statusDocs.filter((d) => d.required && uploads[d.key]).length} / ${
+                statusDocs.filter((d) => d.required).length
+              }`,
+            ],
+          ],
+        },
+      ]
+    : [];
+
+  const activeSections = useJapanFlow ? japanSections : taiwanSections;
+  const reviewValid =
+    acknowledged && activeSections.every((s) => s.status !== "incomplete");
+
+  function goToStep(name: string) {
+    const idx = steps.indexOf(name);
+    if (idx >= 0) changeStep(idx);
+  }
+
+  const stepValidity: Record<string, boolean> = {
+    Destination: destinationValid,
+    Applicant: applicantValid,
+    Companions: true,
+    Guidance: true,
+    Result: true,
+    // Japan / Taiwan rich flow
+    "Identity Documents": identityDocsValid,
+    "Application Details": useTaiwanFlow ? taiwanApplicationDetailsValid : applicationDetailsValid,
+    Background: useTaiwanFlow ? taiwanBackgroundValid : backgroundValid,
+    Review: reviewValid,
+  };
+  const canAdvance = stepValidity[current] ?? true;
+
+  // --- persistence ---------------------------------------------------------
+  // Runs saveApplication and calls `then` only on a successful save. Network
+  // failures (e.g. Supabase unreachable) are caught so they never surface as an
+  // uncaught "fetch failed".
+  function persist(then?: () => void) {
+    setNotice(null);
+    startSaving(async () => {
+      try {
+        const res = await saveApplication(applicationId, form);
+        if (!res.ok) return setNotice({ kind: "err", text: res.error });
+        then?.();
+      } catch {
+        setNotice({
+          kind: "err",
+          text: "Could not reach the server to save your progress.",
+        });
+      }
+    });
+  }
+  function advanceAndPersist() {
+    setNotice(null);
+    changeStep(Math.min(stepIndex + 1, steps.length - 1));
+    void saveApplication(applicationId, form)
+      .then((res) => {
+        if (!res.ok) setNotice({ kind: "err", text: res.error });
+      })
+      .catch(() => {
+        setNotice({
+          kind: "err",
+          text: "Progress could not be saved — the server is unreachable.",
+        });
+      });
+  }
+  function next() {
+    const advance = () => changeStep(Math.min(stepIndex + 1, steps.length - 1));
+    // Visa-free travellers aren't building an application — just show guidance.
+    if (outcome === "visa_free") return advance();
+    // Right as the applicant leaves "Destination", show the document-prep
+    // checklist once — the Korea province (chosen on this step) already
+    // tells us the route (sticker/Busan or eVisa/Seoul), so the checklist
+    // content can be tailored to it. Advancing happens when the modal is
+    // closed.
+    if (current === "Destination" && japanRoute != null && !seoulChecklistShown.current) {
+      seoulChecklistShown.current = true;
+      setSeoulChecklistOpen(true);
+      return;
+    }
+    // Advance immediately — the current step is already validated client-side —
+    // and persist in the background. This keeps navigation working (and never
+    // throws) even when the server/Supabase is slow or unavailable.
+    advanceAndPersist();
+  }
+  function closeSeoulChecklist() {
+    setSeoulChecklistOpen(false);
+    advanceAndPersist();
+  }
+  function back() {
+    changeStep(Math.max(stepIndex - 1, 0));
+  }
+  function saveDraft() {
+    persist(() => setNotice({ kind: "ok", text: "Draft saved." }));
+  }
+  function submit() {
+    setNotice(null);
+    startSaving(async () => {
+      try {
+        const saved = await saveApplication(applicationId, form);
+        if (!saved.ok) return setNotice({ kind: "err", text: saved.error });
+        const res = await submitApplication(applicationId, consent);
+        if (!res.ok) return setNotice({ kind: "err", text: res.error });
+        router.push("/dashboard");
+      } catch {
+        setNotice({
+          kind: "err",
+          text: "Could not reach the server to submit. Please try again once you are back online.",
+        });
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+      <Stepper steps={steps} step={stepIndex} />
+
+      {notice && (
+        <p
+          role={notice.kind === "ok" ? "status" : "alert"}
+          className={`mt-6 rounded-2xl px-5 py-3 text-sm font-semibold ${
+            notice.kind === "ok"
+              ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border border-red-200 bg-red-50 text-red-600"
+          }`}
+        >
+          {notice.text}
+        </p>
+      )}
+
+      <div className="mt-8">
+        {current === "Destination" && (
+          <div className="space-y-6">
+            <p className="text-slate-600">
+              Tell us where you&rsquo;re going and which passport you hold.
+              We&rsquo;ll instantly check whether you even need a visa before you
+              fill anything out.
+            </p>
+            <div className="grid gap-6 md:grid-cols-2">
+              <Select
+                label="Nationality"
+                value={form.nationality}
+                onChange={(v) => set("nationality", v)}
+                options={ruleset.nationalities}
+              />
+              <Select
+                label="Destination country"
+                value={form.destination_country}
+                onChange={(v) => {
+                  set("destination_country", v);
+                  set("destination_city", "");
+                  set("korea_region", "");
+                }}
+                options={ruleset.destinations}
+              />
+              {isJapan && (
+                <Select
+                  label="Korea province / region"
+                  value={form.korea_region}
+                  onChange={(v) => set("korea_region", v)}
+                  options={[...KOREA_REGIONS]}
+                />
+              )}
+              {cities.length > 0 && (
+                <Select
+                  label="Destination city"
+                  value={form.destination_city}
+                  onChange={(v) => set("destination_city", v)}
+                  options={cities}
+                />
+              )}
+            </div>
+
+            {eligibility && <EligibilityBanner result={eligibility} />}
+
+            {japanRoute && outcome !== "visa_free" && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-800">
+                Detected route: {japanRoute.label}
+              </div>
+            )}
+
+            {isTaiwan && outcome !== "visa_free" && (
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-900">
+                <p className="font-semibold">Taiwan has two mission offices in Korea — Seoul and Busan.</p>
+                <p className="mt-1 text-blue-800">
+                  You may submit through either one, regardless of where you live — there&rsquo;s no
+                  mandatory routing like Japan&rsquo;s. Their bank-statement requirement differs though:
+                  the <span className="font-semibold">Busan office</span> only needs a 1-day bank
+                  balance certificate (min. 5,000,000 KRW), while the{" "}
+                  <span className="font-semibold">Seoul office</span> additionally requires a 3-month
+                  bank transaction history showing at least 5,000,000 KRW maintained for the last 10+
+                  days.
+                </p>
+              </div>
+            )}
+
+            {bookingsRequired && (
+              <div className="space-y-5 rounded-2xl border border-slate-200 p-5">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Flight &amp; hotel bookings</h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    These are essential for your visa documents, so we ask up front —
+                    before you spend time filling out the rest of the application.
+                  </p>
+                  <p className="mt-2 rounded-xl bg-amber-50 px-4 py-2.5 text-xs font-semibold leading-relaxed text-amber-800">
+                    You don&rsquo;t need to actually purchase a real ticket or pay for a
+                    hotel stay — a reservation / booking confirmation from a licensed
+                    travel agent is enough for the visa application.
+                  </p>
+                </div>
+
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <BooleanChoice
+                    label="Have you booked your flight ticket?"
+                    value={form.flight_booked}
+                    onChange={(v) => set("flight_booked", v)}
+                  />
+                  <BooleanChoice
+                    label="Have you booked your hotel / accommodation?"
+                    value={form.accommodation_booked}
+                    onChange={(v) => set("accommodation_booked", v)}
+                  />
+                </div>
+
+                {(form.flight_booked === false || form.accommodation_booked === false) && (
+                  <SupportContactCard
+                    title="Let's get your booking sorted first."
+                    message="You'll need a confirmed flight and hotel reservation before we can prepare your visa documents. Reach out and we'll help arrange it — then come back and continue your application."
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {current === "Result" && eligibility && (
+          <VisaFreeResult result={eligibility} />
+        )}
+
+        {current === "Identity Documents" && (
+          <div>
+            <h3 className="text-xl font-bold">Identity documents</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Upload your passport first — we can auto-read your name, passport
+              number and dates from it so you don&rsquo;t have to type them.
+            </p>
+            <div className="mt-4 grid gap-6 md:grid-cols-3">
+              {ruleset.baseDocuments.map((doc) => (
+                <UploadField
+                  key={doc.key}
+                  applicationId={applicationId}
+                  userId={userId}
+                  fileType={doc.key}
+                  label={doc.labelEn}
+                  required={doc.required}
+                  initialFilename={uploads[doc.key]}
+                  onUploaded={onUploaded}
+                />
+              ))}
+            </div>
+            {uploads["passport"] && (
+              <PassportScanPanel
+                applicationId={applicationId}
+                passportFilename={uploads["passport"]}
+                set={set}
+              />
+            )}
+          </div>
+        )}
+
+        {current === "Application Details" && (
+          <div className="space-y-10">
+            <p className="text-sm text-slate-600">
+              If you scanned your passport on the previous step, some fields
+              below are already filled in — please double-check them.
+            </p>
+
+            <PersonalStep
+              form={form}
+              set={set}
+              fatherRequired={fatherRequired}
+              maritalOptions={useTaiwanFlow ? TAIWAN_MARITAL_OPTIONS : undefined}
+              birthCityRequired={useTaiwanFlow}
+            />
+
+            <div className="border-t border-slate-200 pt-8">
+              <PassportStep form={form} set={set} />
+            </div>
+
+            <div className="border-t border-slate-200 pt-8">
+              <KoreaStatusStep
+                form={form}
+                set={set}
+                koreanVisaTypes={ruleset.koreanVisaTypes}
+                applicationId={applicationId}
+                userId={userId}
+                uploads={uploads}
+                onUploaded={onUploaded}
+                statusDocs={statusDocs}
+              />
+            </div>
+
+            {useTaiwanFlow ? (
+              <div className="border-t border-slate-200 pt-8">
+                <TaiwanTripStep
+                  form={form}
+                  set={set}
+                  rule={rule}
+                  dateCheck={dateCheck}
+                  startWindow={startWindow}
+                  recommendation={recommendation}
+                  onDateFocus={onDateFocus}
+                  openGuidance={openGuidance}
+                  applyRecommendedDates={applyRecommendedDates}
+                />
+              </div>
+            ) : (
+              <div className="border-t border-slate-200 pt-8">
+                <JapanTripStep
+                  form={form}
+                  set={set}
+                  rule={rule}
+                  dateCheck={dateCheck}
+                  startWindow={startWindow}
+                  recommendation={recommendation}
+                  onDateFocus={onDateFocus}
+                  openGuidance={openGuidance}
+                  applyRecommendedDates={applyRecommendedDates}
+                />
+              </div>
+            )}
+
+            <div className="border-t border-slate-200 pt-8">
+              <TravelBookingsStep
+                form={form}
+                set={set}
+                applicationId={applicationId}
+                userId={userId}
+                uploads={uploads}
+                onUploaded={onUploaded}
+                countryLabel={useTaiwanFlow ? "Taiwan" : "Japan"}
+              />
+            </div>
+
+            {!useTaiwanFlow && (
+              <>
+                <div className="border-t border-slate-200 pt-8">
+                  <PreviousVisitsStep form={form} set={set} />
+                </div>
+
+                <div className="border-t border-slate-200 pt-8">
+                  <HostStep form={form} set={set} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {current === "Background" &&
+          (useTaiwanFlow ? (
+            <TaiwanBackgroundStep form={form} set={set} />
+          ) : (
+            <BackgroundStep form={form} set={set} />
+          ))}
+
+        {current === "Review" && (
+          <JapanReview
+            form={form}
+            sections={activeSections}
+            goToStep={goToStep}
+            acknowledged={acknowledged}
+            onAcknowledge={setAcknowledged}
+          />
+        )}
+
+        {current === "Applicant" && (
+          <div className="space-y-8">
+            <section className="space-y-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">
+                  Applicant information
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Enter your details exactly as they appear on your passport and ARC.
+                </p>
+              </div>
+              <div className="grid gap-6 md:grid-cols-2">
+                <Input
+                  label="Full name exactly as written in passport"
+                  value={form.full_name_as_passport}
+                  onChange={(v) => set("full_name_as_passport", formatName(v))}
+                  autoComplete="name"
+                  helpText="Latin capitals, as in the passport."
+                />
+                <Input
+                  label="Surname"
+                  value={form.surname}
+                  onChange={(v) => set("surname", formatName(v))}
+                  autoComplete="family-name"
+                />
+                <Input
+                  label="Given name"
+                  value={form.given_name}
+                  onChange={(v) => set("given_name", formatName(v))}
+                  autoComplete="given-name"
+                />
+                <Input
+                  label="Father's Name"
+                  value={form.middle_name_or_patronymic}
+                  onChange={(v) => set("middle_name_or_patronymic", formatName(v))}
+                  required={fatherRequired}
+                  placeholder="e.g. Odil Ugli / Odil Kizi / Odilovich / Odilovna"
+                  helpText={fatherRequired ? "Required for Uzbekistan passports." : "Optional."}
+                />
+                <Input
+                  label="Phone number"
+                  value={form.client_phone}
+                  onChange={(v) => set("client_phone", v)}
+                  placeholder="010-0000-0000"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+                <Input
+                  label="Email"
+                  value={form.client_email}
+                  onChange={(v) => set("client_email", v)}
+                  placeholder="you@example.com"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  error={
+                    form.client_email.trim() !== "" && !emailValid
+                      ? "Enter a valid email address, e.g. name@example.com."
+                      : undefined
+                  }
+                />
+              </div>
+
+              <Input
+                label="Current full address in Korea (as on your ARC)"
+                value={form.current_korea_address}
+                onChange={(v) => set("current_korea_address", v)}
+                placeholder="예: 충청북도 청주시 서원구 …"
+                helpText="Type it in Korean (Hangul), exactly as written on your ARC."
+                error={
+                  form.current_korea_address.trim() !== "" && !addressValid
+                    ? "Please enter your address exactly as written on your Korean Residence Card (ARC), using Korean characters."
+                    : undefined
+                }
+              />
+            </section>
+
+            <section className="space-y-6 border-t border-slate-200 pt-8">
+              <KoreaStatusStep
+                form={form}
+                set={set}
+                koreanVisaTypes={ruleset.koreanVisaTypes}
+                applicationId={applicationId}
+                userId={userId}
+                uploads={uploads}
+                onUploaded={onUploaded}
+                statusDocs={statusDocs}
+                showContactFields={false}
+              />
+            </section>
+
+            <section className="space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-xl font-bold text-slate-900">Travel dates</h3>
+                {rule && (
+                  <button
+                    type="button"
+                    onClick={openGuidance}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                  >
+                    <span aria-hidden>ⓘ</span> {form.destination_country} guidance
+                  </button>
+                )}
+              </div>
+
+              {rule?.requiresAppointment && rule.appointmentInfo && (
+                <AppointmentCard
+                  info={rule.appointmentInfo}
+                  confirmed={form.planned_submission_date !== ""}
+                />
+              )}
+
+              {(() => {
+                // For appointment/submission-anchored destinations (Taiwan,
+                // Singapore, Spain) the travel window can't be computed until the
+                // anchor date is set — so gate the travel fields behind it. Spain's
+                // "appointment first → then dates" flow falls out of this.
+                const anchorNeeded = Boolean(rule?.anchorRequired);
+                const startGated = anchorNeeded && !form.planned_submission_date;
+                const endGated = startGated || !form.travel_start_date;
+                return (
+                  <>
+                    <div className="grid gap-6 md:grid-cols-3">
+                      <DatePicker
+                        label={rule?.anchorLabel ?? "Planned submission date"}
+                        value={form.planned_submission_date}
+                        onChange={(v) => set("planned_submission_date", v)}
+                        required={anchorNeeded}
+                        minISO={todayISO}
+                        error={dateCheck.errors.anchor}
+                        onOpen={onDateFocus}
+                      />
+                      <DatePicker
+                        label="Travel start date"
+                        value={form.travel_start_date}
+                        onChange={(v) => set("travel_start_date", v)}
+                        minISO={startWindow.minISO}
+                        maxISO={startWindow.maxISO}
+                        error={dateCheck.errors.travel_start}
+                        disabled={startGated}
+                        onOpen={onDateFocus}
+                      />
+                      <DatePicker
+                        label="Travel end date"
+                        value={form.travel_end_date}
+                        onChange={(v) => set("travel_end_date", v)}
+                        minISO={form.travel_start_date || null}
+                        error={dateCheck.errors.travel_end}
+                        disabled={endGated}
+                        onOpen={onDateFocus}
+                      />
+                    </div>
+                    {startGated && rule && (
+                      <p className="text-sm text-slate-500">
+                        Enter your {rule.anchorLabel.toLowerCase()} first to choose
+                        your travel dates.
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
+
+              {dateCheck.errors.stay && (
+                <p
+                  role="alert"
+                  className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600"
+                >
+                  {dateCheck.errors.stay}
+                </p>
+              )}
+              {dateCheck.stayDays != null && !dateCheck.errors.stay && (
+                <p className="text-sm font-semibold text-slate-600">
+                  Planned stay: {dateCheck.stayDays} day
+                  {dateCheck.stayDays === 1 ? "" : "s"}.
+                </p>
+              )}
+
+              <Textarea
+                label={`Why did you choose ${form.destination_country || "this destination"} for your trip?`}
+                value={form.trip_reason}
+                onChange={(v) => set("trip_reason", v)}
+                maxWords={150}
+                placeholder={`In your own words — what made you want to visit ${form.destination_country || "this country"}?`}
+                helpText="Optional, but a fuller answer helps us write a stronger Travel Purpose Statement."
+              />
+            </section>
+
+            <div>
+              <h3 className="text-xl font-bold">Identity documents</h3>
+              <div className="mt-4 grid gap-6 md:grid-cols-3">
+                {ruleset.baseDocuments.map((doc) => (
+                  <UploadField
+                    key={doc.key}
+                    applicationId={applicationId}
+                    userId={userId}
+                    fileType={doc.key}
+                    label={doc.labelEn}
+                    required={doc.required}
+                    initialFilename={uploads[doc.key]}
+                    onUploaded={onUploaded}
+                  />
+                ))}
+              </div>
+              {uploads["passport"] && (
+                <PassportScanPanel
+                  applicationId={applicationId}
+                  passportFilename={uploads["passport"]}
+                  set={set}
+                />
+              )}
+            </div>
+
+            <div className="border-t border-slate-200 pt-8">
+              <TravelBookingsStep
+                form={form}
+                set={set}
+                applicationId={applicationId}
+                userId={userId}
+                uploads={uploads}
+                onUploaded={onUploaded}
+                countryLabel={form.destination_country || "Japan"}
+              />
+            </div>
+          </div>
+        )}
+
+        {current === "Companions" && (
+          <CompanionsStep
+            companions={form.companions}
+            onChange={(c) => set("companions", c)}
+          />
+        )}
+
+        {current === "Guidance" && useRichFlow && (
+          <JapanGuidanceStep
+            sections={activeSections}
+            uploads={uploads}
+            consent={consent}
+            onConsentChange={setConsent}
+            countryLabel={useTaiwanFlow ? "Taiwan" : "Japan"}
+          />
+        )}
+
+        {current === "Guidance" && !useRichFlow && (
+          <GuidanceConsentStep
+            form={form}
+            uploads={uploads}
+            eligibility={eligibility}
+            stayDays={dateCheck.stayDays}
+            detectedRoute={japanRoute?.type ?? null}
+            consent={consent}
+            onConsentChange={setConsent}
+            dateRules={ruleset.dateRules}
+          />
+        )}
+      </div>
+
+      {/* Footer controls */}
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-slate-200 pt-6">
+        <div className="flex gap-3">
+          {stepIndex > 0 && (
+            <button
+              type="button"
+              onClick={back}
+              className="min-h-[2.75rem] rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            >
+              Back
+            </button>
+          )}
+          {/* No draft to save on the visa-free path — there's no application. */}
+          {outcome !== "visa_free" && (
+            <button
+              type="button"
+              onClick={saveDraft}
+              disabled={saving}
+              className="min-h-[2.75rem] rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save draft"}
+            </button>
+          )}
+        </div>
+
+        {!isLastStep ? (
+          <button
+            type="button"
+            onClick={next}
+            disabled={!canAdvance || saving}
+            aria-busy={saving}
+            className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-xl bg-blue-700 px-8 py-3 font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {saving && <Spinner />}
+            {current === "Destination" && outcome === "visa_free"
+              ? "See travel guidance"
+              : "Continue"}
+          </button>
+        ) : outcome === "visa_free" ? (
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="min-h-[2.75rem] rounded-xl bg-emerald-600 px-8 py-3 font-bold text-white transition hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+          >
+            Back to dashboard
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={submit}
+            disabled={saving || !consent || !dateCheck.ok}
+            aria-busy={saving}
+            className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-xl bg-blue-700 px-8 py-3 font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {saving && <Spinner />}
+            {saving ? "Submitting…" : "Submit application"}
+          </button>
+        )}
+      </div>
+
+      {!canAdvance && !isLastStep && (
+        <p className="mt-4 text-right text-sm font-semibold text-red-500">
+          {current === "Destination" && !eligibility
+            ? "Select your nationality and destination to check visa requirements."
+            : current === "Destination" && eligibility && bookingsRequired && !bookingsConfirmed
+              ? "Please confirm your flight and hotel bookings above to continue."
+              : "Please complete the required fields on this step."}
+        </p>
+      )}
+
+      <GuidanceModal
+        open={modalOpen}
+        destination={form.destination_country}
+        rule={rule}
+        guidance={guidance}
+        eligibility={eligibility}
+        recommendation={recommendation}
+        onApplyRecommended={applyRecommendedDates}
+        onClose={() => setModalOpen(false)}
+      />
+
+      {useJapanFlow && japanRoute && (
+        <SeoulChecklistModal
+          open={seoulChecklistOpen}
+          route={japanRoute.type}
+          statusDocs={statusDocs}
+          onClose={closeSeoulChecklist}
+        />
+      )}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------------------
+function Stepper({ steps, step }: { steps: string[]; step: number }) {
+  const total = steps.length;
+  const pct = total > 0 ? Math.round(((step + 1) / total) * 100) : 0;
+  return (
+    <nav aria-label="Application progress" className="space-y-3">
+      {/* Step counter + current step name (always visible, mobile-friendly) */}
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-bold uppercase tracking-wide text-blue-700">
+          Step {Math.min(step + 1, total)} of {total}
+        </span>
+        <span className="truncate text-sm font-semibold text-slate-600">{steps[step]}</span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div
+          className="h-full rounded-full bg-blue-700 transition-all duration-300"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+
+      {/* Step chips — shown on larger screens */}
+      <ol className="hidden flex-wrap gap-2 pt-1 sm:flex">
+        {steps.map((label, i) => {
+          const stateClass =
+            i === step
+              ? "border-blue-700 bg-blue-700 text-white"
+              : i < step
+                ? "border-blue-200 bg-blue-50 text-blue-700"
+                : "border-slate-200 bg-white text-slate-500";
+          return (
+            <li
+              key={label}
+              aria-current={i === step ? "step" : undefined}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-semibold ${stateClass}`}
+            >
+              <span
+                aria-hidden
+                className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${
+                  i === step ? "bg-white/25" : i < step ? "bg-blue-200/70" : "bg-slate-100"
+                }`}
+              >
+                {i < step ? "✓" : i + 1}
+              </span>
+              <span>{label}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+function Spinner() {
+  return (
+    <span
+      aria-hidden
+      className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+    />
+  );
+}
+
+// --- Eligibility presentation ---------------------------------------------
+const OUTCOME_META = {
+  visa_free: {
+    badge: "✓ No visa required",
+    tone: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    dot: "text-emerald-600",
+  },
+  evisa: {
+    badge: "✓ Electronic Visa Available",
+    tone: "border-blue-200 bg-blue-50 text-blue-800",
+    dot: "text-blue-600",
+  },
+  visa_required: {
+    badge: "✓ Visa Required",
+    tone: "border-amber-200 bg-amber-50 text-amber-900",
+    dot: "text-amber-600",
+  },
+} as const;
+
+// Compact result shown live on the Destination step the moment we can decide.
+function EligibilityBanner({ result }: { result: EligibilityResult }) {
+  const meta = OUTCOME_META[result.outcome];
+  return (
+    <div className={`rounded-3xl border px-6 py-5 ${meta.tone}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-lg font-extrabold">{meta.badge}</span>
+        {result.outcome === "visa_free" && (
+          <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-wide">
+            No application needed
+          </span>
+        )}
+      </div>
+      <p className="mt-2 text-sm font-semibold leading-relaxed">
+        {result.summary}
+      </p>
+      {result.note && (
+        <p className="mt-1 text-sm leading-relaxed opacity-80">{result.note}</p>
+      )}
+    </div>
+  );
+}
+
+// Terminal screen for visa-free travellers — guidance instead of an application.
+function VisaFreeResult({ result }: { result: EligibilityResult }) {
+  return (
+    <div className="space-y-8">
+      <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-6 py-6 text-emerald-900">
+        <h3 className="text-2xl font-extrabold">✓ No visa required</h3>
+        <p className="mt-2 font-semibold leading-relaxed">{result.summary}</p>
+        {result.note && (
+          <p className="mt-1 text-sm leading-relaxed opacity-80">{result.note}</p>
+        )}
+      </div>
+
+      {result.maxStayDays != null && (
+        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5">
+          <p className="text-sm font-semibold text-slate-500">
+            Maximum stay duration
+          </p>
+          <p className="mt-1 text-3xl font-extrabold text-slate-900">
+            {result.maxStayDays} days
+          </p>
+          <p className="mt-1 text-sm text-slate-600">per visa-free entry</p>
+        </div>
+      )}
+
+      <ResultList
+        title="Entry conditions"
+        items={result.entryConditions}
+        dot="text-emerald-600"
+      />
+      <ResultList
+        title="Travel guidance"
+        items={result.travelGuidance}
+        dot="text-blue-600"
+      />
+
+      <p className="rounded-2xl border border-slate-300 bg-slate-50 px-5 py-4 text-xs leading-relaxed text-slate-500">
+        Visa policies can change. These details are guidance only — always
+        confirm the latest entry rules with the destination&rsquo;s official
+        sources before you travel.
+      </p>
+    </div>
+  );
+}
+
+function ResultList({
+  title,
+  items,
+  dot,
+}: {
+  title: string;
+  items: string[];
+  dot: string;
+}) {
+  return (
+    <div>
+      <h4 className="text-lg font-bold text-slate-900">{title}</h4>
+      <ul className="mt-3 space-y-2">
+        {items.map((item) => (
+          <li key={item} className="flex gap-3 text-slate-700">
+            <span className={`mt-0.5 font-bold ${dot}`}>✓</span>
+            <span className="leading-relaxed">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// Spain-only: appointment-first information card with official + support links.
+function AppointmentCard({
+  info,
+  confirmed,
+}: {
+  info: AppointmentInfo;
+  confirmed: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-5">
+      <div className="flex items-start gap-3">
+        <span className="text-xl" aria-hidden>🗓️</span>
+        <div>
+          <h4 className="font-bold text-indigo-900">{info.title}</h4>
+          <p className="mt-1 text-sm leading-relaxed text-indigo-800">
+            {info.message}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+            <a
+              href={info.officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Official appointment information ↗
+            </a>
+            <a
+              href={info.supportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-slate-600 underline underline-offset-2 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
+            >
+              Can&rsquo;t get an appointment? Contact administrator ↗
+            </a>
+          </div>
+          {confirmed && (
+            <p className="mt-3 text-sm font-semibold text-emerald-700">
+              ✓ Appointment date set — recommendations are shown below.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompanionsStep({
+  companions,
+  onChange,
+}: {
+  companions: CompanionInput[];
+  onChange: (c: CompanionInput[]) => void;
+}) {
+  function add() {
+    onChange([
+      ...companions,
+      {
+        full_name: "",
+        nationality: "",
+        relationship: "",
+        passport_number: "",
+        is_family_member: false,
+      },
+    ]);
+  }
+  function update(i: number, patch: Partial<CompanionInput>) {
+    onChange(companions.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  }
+  function remove(i: number) {
+    onChange(companions.filter((_, idx) => idx !== i));
+  }
+
+  return (
+    <div>
+      <h3 className="text-xl font-bold">Travel companions</h3>
+      <p className="mt-2 text-slate-600">
+        Add anyone traveling with you. Their name and relationship may appear in
+        your itinerary and applicant list. Leave empty if traveling alone.
+      </p>
+
+      <div className="mt-6 space-y-6">
+        {companions.map((c, i) => (
+          <div key={i} className="rounded-3xl border border-slate-200 p-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Full name as passport"
+                value={c.full_name}
+                onChange={(v) => update(i, { full_name: v })}
+              />
+              <Input
+                label="Nationality"
+                value={c.nationality}
+                onChange={(v) => update(i, { nationality: v })}
+                required={false}
+              />
+              <Input
+                label="Relationship with applicant"
+                value={c.relationship}
+                onChange={(v) => update(i, { relationship: v })}
+                required={false}
+              />
+              <Input
+                label="Passport number (optional)"
+                value={c.passport_number ?? ""}
+                onChange={(v) => update(i, { passport_number: v })}
+                required={false}
+              />
+            </div>
+            <div className="mt-4 flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={c.is_family_member}
+                  onChange={(e) => update(i, { is_family_member: e.target.checked })}
+                  className="h-4 w-4"
+                />
+                Family member
+              </label>
+              <button
+                onClick={() => remove(i)}
+                className="text-sm font-semibold text-red-500 hover:underline"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={add}
+        className="mt-6 rounded-2xl border border-blue-300 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50"
+      >
+        + Add companion
+      </button>
+    </div>
+  );
+}
+
+function GuidanceConsentStep({
+  form,
+  uploads,
+  eligibility,
+  stayDays,
+  detectedRoute,
+  consent,
+  onConsentChange,
+  dateRules,
+}: {
+  form: ApplyFormData;
+  uploads: Record<string, string>;
+  eligibility: EligibilityResult | null;
+  stayDays: number | null;
+  detectedRoute: "sticker" | "evisa" | null;
+  consent: boolean;
+  onConsentChange: (v: boolean) => void;
+  dateRules: VisaRuleset["dateRules"];
+}) {
+  const rule = getDestinationRule(form.destination_country, dateRules);
+  const krw = rule ? rule.bankRecommendationKRW.toLocaleString("en-US") : "5,000,000";
+
+  const reviewRows: [string, string][] = [
+    [
+      "Destination",
+      [form.destination_country, form.destination_city].filter(Boolean).join(" · "),
+    ],
+    ["Nationality", form.nationality],
+    ["Korean visa status", form.korean_visa_status],
+    ["Full name (passport)", form.full_name_as_passport],
+    ["Email", form.client_email],
+    ["Phone", form.client_phone],
+    [
+      "Travel dates",
+      [form.travel_start_date, form.travel_end_date].filter(Boolean).join(" → "),
+    ],
+    ["Planned stay", stayDays != null ? `${stayDays} day${stayDays === 1 ? "" : "s"}` : "—"],
+    ["Companions", String(form.companions.filter((c) => c.full_name.trim()).length)],
+    ["Documents uploaded", String(Object.keys(uploads).length)],
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h3 className="text-xl font-bold">
+          {form.destination_country || "Destination"} guidance
+        </h3>
+
+        {eligibility && eligibility.outcome === "evisa" && (
+          <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-800">
+            ✓ Electronic Visa Available — {eligibility.summary} You can complete
+            the simplified e-Visa workflow online.
+          </div>
+        )}
+
+        {detectedRoute && (
+          <div
+            className={`mt-4 rounded-2xl border px-5 py-3 text-sm font-semibold ${
+              detectedRoute === "sticker"
+                ? "border-amber-200 bg-amber-50 text-amber-800"
+                : "border-blue-200 bg-blue-50 text-blue-800"
+            }`}
+          >
+            Japan route: {detectedRoute === "sticker" ? "Sticker visa" : "eVisa"}.{" "}
+            {detectedRoute === "sticker"
+              ? "Print and sign the application form, prepare one recent 3.5 × 4.5 cm photo, and submit the original passport through a designated travel agency."
+              : "You do not need to send your original passport unless instructed."}
+          </div>
+        )}
+
+        {rule && (
+          <div className="mt-4 space-y-4">
+            <p className="leading-relaxed text-slate-700">{rule.guidance}</p>
+            <p className="rounded-2xl bg-slate-50 px-5 py-3 text-sm text-slate-700">
+              <strong>Processing:</strong> {rule.processingText}
+            </p>
+            <p className="rounded-2xl bg-slate-50 px-5 py-3 text-sm text-slate-700">
+              <strong>Recommended bank balance:</strong> at least {krw} KRW per
+              applicant.
+            </p>
+
+            {rule.contacts.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {rule.contacts.map((c) => (
+                  <div
+                    key={c.office}
+                    className="rounded-2xl border border-slate-200 p-5 text-sm"
+                  >
+                    <p className="font-bold text-slate-900">{c.office}</p>
+                    <p className="mt-1 text-slate-600">{c.address}</p>
+                    <p className="mt-1 text-slate-600">{c.phone}</p>
+                    {c.email && <p className="text-blue-700">{c.email}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <details className="rounded-2xl border border-slate-200 p-5">
+              <summary className="cursor-pointer font-semibold text-slate-800">
+                Standard document checklist
+              </summary>
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                {rule.documents.map((d) => (
+                  <li key={d}>{d}</li>
+                ))}
+              </ul>
+            </details>
+
+            <p className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800">
+              After submission, your document package will be prepared. Air ticket
+              and hotel booking reservations may be sent to your email within 16
+              hours after admin review.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-xl font-bold">Review</h3>
+        <dl className="mt-4 divide-y divide-slate-200 rounded-3xl border border-slate-200">
+          {reviewRows.map(([k, v]) => (
+            <div key={k} className="flex justify-between gap-4 px-6 py-3.5">
+              <dt className="text-sm font-semibold text-slate-500">{k}</dt>
+              <dd className="text-right font-semibold text-slate-900">{v || "—"}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      <div className="rounded-2xl border border-slate-300 bg-slate-50 p-5">
+        <p className="text-xs leading-relaxed text-slate-500">
+          Vitamin VisaAI prepares documents based on information provided by the
+          client. Visa approval is decided only by the embassy / consulate /
+          immigration authority. This service does not guarantee visa approval.
+        </p>
+        <label className="mt-4 flex items-start gap-3 text-sm font-semibold text-slate-800">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => onConsentChange(e.target.checked)}
+            className="mt-0.5 h-5 w-5"
+          />
+          I understand the above rules and agree to continue.
+        </label>
+      </div>
+    </div>
+  );
+}
