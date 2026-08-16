@@ -1,40 +1,22 @@
-// Token-protected print route. Rendered headlessly by the PDF generator so the
-// Taiwan visa reference form is produced with the real React component +
-// Tailwind styles. Not linked anywhere in the UI; access requires a valid
-// short-lived token. Mirrors app/print/japan/[id]/page.tsx.
+// Retired route.
+//
+// This used to render a replica of the "Visa Application Form for Entry into
+// Taiwan, R.O.C." for PDF generation. It has been switched off because the
+// R.O.C. accepts only the form produced by its own portal
+// (visawebapp.boca.gov.tw): that printout carries a scannable barcode linking
+// the paper to the record in Taiwan's system, and the mission declines any
+// other form. Producing a lookalike would be rejected on submission and, if
+// it imitated the barcode, would amount to forging an official document.
+//
+// Taiwan applications are now handled by our staff entering the collected
+// data on the portal and emailing the official PDF to the client to sign.
+//
+// The route is kept (rather than deleted) only because removing files in this
+// workspace needs the owner's explicit approval; it always 404s.
 import { notFound } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyPrintToken } from "@/lib/docs/printToken";
-import { toTaiwanVisaData } from "@/lib/docs/taiwanData";
-import TaiwanVisaForm from "@/components/forms/TaiwanVisaForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function TaiwanPrintPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ token?: string }>;
-}) {
-  const { id } = await params;
-  const { token } = await searchParams;
-
-  if (!token || !verifyPrintToken(id, token)) notFound();
-
-  const admin = createAdminClient();
-  const [{ data: application }, { data: details }, { data: accommodations }] =
-    await Promise.all([
-      admin.from("applications").select("*").eq("id", id).maybeSingle(),
-      admin.from("applicant_details").select("*").eq("application_id", id).maybeSingle(),
-      admin.from("accommodations").select("*").eq("application_id", id).order("sort_order"),
-    ]);
-  if (!application) notFound();
-
-  const data = toTaiwanVisaData({
-    application,
-    details,
-    accommodations: accommodations ?? undefined,
-  });
-  return <TaiwanVisaForm data={data} />;
+export default async function TaiwanPrintPage() {
+  notFound();
 }

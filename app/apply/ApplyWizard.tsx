@@ -478,9 +478,10 @@ export function ApplyWizard({
     dateCheck.ok &&
     form.home_country_address.trim() !== "" &&
     !hasNonLatinScript(form.home_country_address);
-  // The Taiwan reference document (lib/docs/taiwanData.ts REQUIRED_FIELDS)
-  // requires the applicant's city of birth to generate — Japan's does not,
-  // so this is gated here rather than folded into the shared personalValid.
+  // Taiwan's portal form (lib/docs/taiwanData.ts REQUIRED_FIELDS) asks for the
+  // applicant's city of birth — Japan's does not — so it is gated here rather
+  // than folded into the shared personalValid. Collecting it up front means
+  // staff never have to go back to the client mid portal entry.
   const taiwanApplicationDetailsValid =
     personalValid &&
     form.birth_city.trim() !== "" &&

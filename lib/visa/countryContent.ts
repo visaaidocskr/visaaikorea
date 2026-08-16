@@ -67,6 +67,7 @@ const DISPLAY: Record<
     overview:
       "A Taiwan tourist visa package with itinerary and travel purpose statement, prepared for the Taipei Mission in Korea (Seoul or Busan office), including the 2026 bank-history checklist.",
     notes: [
+      "The application form itself comes from Taiwan's official portal — we complete it there with your details and email you the barcoded form to sign. No other version of the form is accepted.",
       "Sticker visa — the original passport is held during processing.",
       "From 1 June 2026: include recent bank transaction history, not just a one-day balance.",
       "Keep your stay within 7 days for this service flow.",

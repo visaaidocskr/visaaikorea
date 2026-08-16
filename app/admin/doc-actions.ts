@@ -18,7 +18,6 @@ import { createPrintToken } from "@/lib/docs/printToken";
 import { getJapanDocumentPlan } from "@/lib/docs/japanRouting";
 import { getJapanDocumentData } from "@/lib/docs/japanData";
 import { fillJapanEvisaExcel } from "@/lib/docs/japanExcel";
-import { getTaiwanDocumentData } from "@/lib/docs/taiwanData";
 import { sendEmail } from "@/lib/email/send";
 import { documentsReady } from "@/lib/email/templates";
 import { headers } from "next/headers";
@@ -634,77 +633,20 @@ export async function generateJapanPackage(
   return { ok: true, data: { route: plan.route, generated } };
 }
 
-// Generates the Taiwan visa reference document (see components/forms/
-// TaiwanVisaForm.tsx for why this is a reference sheet, not the document
-// submitted to the mission — Taiwan's own portal produces the final filled
-// form only after the data is re-entered there). All-or-nothing: if required
-// fields are missing, nothing is generated and the exact missing fields are
-// reported — never a half-filled or fabricated document.
-export async function generateTaiwanDocument(
-  applicationId: string
-): Promise<DocResult<{ documentType: string }>> {
-  await requireAdmin();
-  const admin = createAdminClient();
-  const supabase = await createClient();
-
-  const [{ data: application }, { data: details }, { data: accommodations }] =
-    await Promise.all([
-      admin.from("applications").select("*").eq("id", applicationId).maybeSingle(),
-      admin.from("applicant_details").select("*").eq("application_id", applicationId).maybeSingle(),
-      admin.from("accommodations").select("*").eq("application_id", applicationId).order("sort_order"),
-    ]);
-  if (!application) return { ok: false, error: "Application not found." };
-  if (application.destination_country !== "Taiwan") {
-    return { ok: false, error: "This action is for Taiwan applications only." };
-  }
-  const userId = application.user_id as string;
-
-  const doc = getTaiwanDocumentData({
-    application,
-    details,
-    accommodations: accommodations ?? undefined,
-  });
-  if (doc.needsAttention.length > 0) {
-    return {
-      ok: false,
-      error: `Needs attention — the Taiwan Visa Application reference is missing required information: ${doc.needsAttention.join(", ")}.`,
-    };
-  }
-
-  const who = nameSlug(doc.visa.surname, doc.visa.givenName);
-  let buffer: Buffer;
-  try {
-    const base = await resolveBaseUrl();
-    const token = createPrintToken(applicationId);
-    const url = `${base}/print/taiwan/${applicationId}?token=${encodeURIComponent(token)}`;
-    buffer = await renderRouteToPdf(url);
-  } catch (e) {
-    return { ok: false, error: `PDF rendering failed: ${(e as Error).message}` };
-  }
-
-  const documentType = "Taiwan Visa Application (Reference)";
-  const filename = `Taiwan_Visa_Application_${who}.pdf`;
-  const path = `${userId}/${applicationId}/${filename}`;
-  const { error: upErr } = await admin.storage
-    .from(GENERATED_BUCKET)
-    .upload(path, buffer, { contentType: PDF_MIME, upsert: true });
-  if (upErr) return { ok: false, error: upErr.message };
-
-  const { error: rowErr } = await supabase.from("generated_documents").upsert(
-    {
-      application_id: applicationId,
-      document_type: documentType,
-      file_format: "pdf",
-      storage_path: path,
-      generated_by: "system",
-    },
-    { onConflict: "application_id,document_type" }
-  );
-  if (rowErr) return { ok: false, error: rowErr.message };
-
-  revalidatePath(`/admin/applications/${applicationId}`);
-  return { ok: true, data: { documentType } };
-}
+// NOTE: there is deliberately no Taiwan visa-application generator here.
+//
+// The R.O.C. has accepted only its own portal-generated form since 2012:
+// the applicant's data is entered at visawebapp.boca.gov.tw, and the printout
+// carries a scannable barcode that links the paper to the record in Taiwan's
+// system. The mission declines "any other type of form". So a self-generated
+// lookalike is useless (rejected on submission) and, if it imitated the
+// barcode, would be forgery of an official document.
+//
+// The working process for Taiwan is therefore: the wizard collects every
+// field, our staff enter them on the portal, and the resulting official PDF
+// is emailed to the client to sign. Taiwan applications still receive the
+// generic support documents (travel purpose statement, itinerary, checklist)
+// through generateDocuments() like every other non-Japan destination.
 
 // ONE-BUTTON generator. Auto-detects the destination and produces every
 // document this application needs, with no manual choice required:
@@ -761,15 +703,15 @@ export async function generateAllDocuments(
     } catch (e) {
       return { ok: false, error: `Support documents failed: ${(e as Error).message}` };
     }
-  } else if (bundle.application.destination_country === "Taiwan") {
-    const twDoc = await generateTaiwanDocument(applicationId);
-    if (!twDoc.ok) return { ok: false, error: twDoc.error };
-    generated.push(twDoc.data?.documentType ?? "Taiwan Visa Application (Reference)");
-
-    const res = await generateDocuments(applicationId);
-    if (!res.ok) return { ok: false, error: res.error };
-    generated.push(`${res.data?.count ?? 0} document(s)`);
   } else {
+    // Taiwan note: we deliberately do NOT produce a visa application form.
+    // Since 2012 the R.O.C. accepts only the form generated by its own portal
+    // (visawebapp.boca.gov.tw) — it carries a scannable barcode tying the
+    // printout to the application record, and the mission declines any other
+    // form. A lookalike would be rejected at best and forgery at worst, so the
+    // application form is filled by our staff on the portal and emailed to the
+    // client. The wizard still collects every Taiwan field, because that data
+    // is what staff type into the portal.
     const res = await generateDocuments(applicationId);
     if (!res.ok) return { ok: false, error: res.error };
     generated.push(`${res.data?.count ?? 0} document(s)`);

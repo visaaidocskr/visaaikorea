@@ -25,9 +25,8 @@ export function PersonalStep({
   // Taiwan's form lists two more options (Separated, Other) than Japan's;
   // defaults to Japan's set so every existing call site is unaffected.
   maritalOptions?: { value: string; label: string }[];
-  // Taiwan's reference document (lib/docs/taiwanData.ts REQUIRED_FIELDS)
-  // requires the city of birth to generate; Japan's does not, so this stays
-  // optional there by default.
+  // Taiwan's portal form (lib/docs/taiwanData.ts REQUIRED_FIELDS) asks for the
+  // city of birth; Japan's does not, so this stays optional there by default.
   birthCityRequired?: boolean;
 }) {
   // Pre-fill country of birth from the selected nationality (only when empty, so

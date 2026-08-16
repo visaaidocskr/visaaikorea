@@ -1,6 +1,14 @@
 // Maps a stored application + applicant_details (+ accommodations) into the
-// TaiwanVisaData shape consumed by components/forms/TaiwanVisaForm.tsx.
-// Mirrors lib/docs/japanData.ts's structure and "never fabricate" rules.
+// TaiwanVisaData shape. Mirrors lib/docs/japanData.ts's structure and the
+// "never fabricate" rules.
+//
+// STATUS: no longer used to generate a document. We stopped producing a
+// Taiwan application form because the R.O.C. accepts only the barcoded form
+// its own portal (visawebapp.boca.gov.tw) generates — see the note in
+// app/admin/doc-actions.ts. What remains useful here is REQUIRED_FIELDS: it
+// is the canonical list of what staff must have in hand before they can
+// complete the portal entry, and the wizard's Taiwan validation is kept in
+// sync with it.
 import type { TaiwanVisaData } from "@/components/forms/TaiwanVisaForm";
 
 // Permissive row shapes — there are no generated DB types yet.
