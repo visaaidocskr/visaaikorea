@@ -6,27 +6,52 @@ import { Input, Select, ChoiceGroup, Textarea, SEX_OPTIONS, countWords } from "@
 import { DatePicker } from "@/app/apply/DatePicker";
 import { KOREAN_VISA_STATUSES } from "@/lib/visa/config";
 import { requirementsForStatus } from "@/lib/invite/requirements";
+import {
+  submissionDateBlock,
+  earliestVisitStart,
+  guaranteeEnd,
+  isWorkingDay,
+  TYPICAL_DECISION_DAYS,
+} from "@/lib/invite/schedule";
 import { EMPTY_INVITEE, type InviteFormData, type InviteeInput } from "@/lib/invite/types";
 import { saveInvitation, submitInvitation } from "@/app/invite/actions";
 
 const STEPS = ["About you", "Who you're inviting", "The visit", "Documents", "Review"] as const;
 type Step = (typeof STEPS)[number];
 
-const REASON_MAX_WORDS = 200;
+const REASON_MAX_WORDS = 250;
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
-// The guarantee has to cover the whole invitation window — a guarantee that
-// ends before the visit does is the single most common reason these get
-// bounced back, so it is computed and shown rather than left to the client.
-function guaranteeEndISO(startISO: string, months: number): string | null {
-  if (!startISO) return null;
-  const d = new Date(startISO);
-  if (Number.isNaN(d.getTime())) return null;
-  d.setMonth(d.getMonth() + months);
-  return d.toISOString().slice(0, 10);
+// How the invited people are referred to in the questions. With one person we
+// can say "your mother"; with several, "them". Getting this wrong is small but
+// it makes the form feel like it isn't reading what you entered.
+function subjectWords(invitees: InviteeInput[]) {
+  if (invitees.length === 1) {
+    const p = invitees[0];
+    const rel = p.relationship.trim().toLowerCase();
+    const name = [p.given_name, p.surname].filter(Boolean).join(" ").trim();
+    const object = p.sex === "female" ? "her" : p.sex === "male" ? "him" : "them";
+    return {
+      // "your mother" reads better than a bare name when we have the relation
+      subject: rel ? `your ${rel}` : name || "this person",
+      object,
+      possessive: p.sex === "female" ? "her" : p.sex === "male" ? "his" : "their",
+      areIs: "is",
+      plural: false,
+      count: 1,
+    };
+  }
+  return {
+    subject: invitees.length > 1 ? "them" : "this person",
+    object: "them",
+    possessive: "their",
+    areIs: "are",
+    plural: invitees.length > 1,
+    count: invitees.length,
+  };
 }
 
 export function InviteWizard({
@@ -67,6 +92,9 @@ export function InviteWizard({
     [form.korean_visa_status]
   );
 
+  // Wording that follows how many people were actually added on step 2.
+  const who = useMemo(() => subjectWords(form.invitees), [form.invitees]);
+
   // --- validity -----------------------------------------------------------
   const inviterValid =
     form.inviter_full_name.trim() !== "" &&
@@ -91,13 +119,26 @@ export function InviteWizard({
   const inviteesValid =
     form.invitees.length > 0 && form.invitees.every(inviteeValid);
 
+  const earliestStart = earliestVisitStart(form.submission_date);
+
   const datesValid =
+    form.submission_date !== "" &&
+    isWorkingDay(form.submission_date) &&
     form.invitation_start_date !== "" &&
     form.invitation_end_date !== "" &&
-    form.invitation_end_date >= form.invitation_start_date;
+    form.invitation_end_date >= form.invitation_start_date &&
+    (!earliestStart || form.invitation_start_date >= earliestStart);
 
-  const reasonOverLimit = countWords(form.invitation_reason) > REASON_MAX_WORDS;
-  const visitValid = datesValid && !reasonOverLimit;
+  const overLimit = (t: string) => countWords(t) > REASON_MAX_WORDS;
+  const lettersValid =
+    form.reason_invitation.trim() !== "" &&
+    form.reason_statement.trim() !== "" &&
+    form.reason_guarantee.trim() !== "" &&
+    !overLimit(form.reason_invitation) &&
+    !overLimit(form.reason_statement) &&
+    !overLimit(form.reason_guarantee);
+
+  const visitValid = datesValid && lettersValid;
 
   const docsValid = form.requirements_ack;
 
@@ -398,26 +439,52 @@ export function InviteWizard({
         )}
 
         {current === "The visit" && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h2 className="text-xl font-bold">The visit</h2>
               <p className="mt-1 text-sm text-slate-600">
-                When they are coming, and why you are inviting them.
+                When {who.subject} {who.areIs} coming, and what you want the
+                documents to say.
               </p>
             </div>
+
+            <div className="space-y-4">
+              <DatePicker
+                label="Documents handed in at the embassy"
+                value={form.submission_date}
+                onChange={(v) => set("submission_date", v)}
+                minISO={todayISO()}
+                blockedDate={submissionDateBlock}
+              />
+              <p className="text-xs text-slate-500">
+                Weekends can&rsquo;t be chosen — the agency and the embassy are
+                both closed.
+              </p>
+            </div>
+
+            {form.submission_date && earliestStart && (
+              <p className="rounded-2xl bg-blue-50 px-5 py-4 text-sm text-blue-800">
+                A C-3-1 decision takes about {TYPICAL_DECISION_DAYS} days, so
+                the visit can start from <strong>{earliestStart}</strong> at the
+                earliest. Planning it sooner risks the visa not arriving in
+                time.
+              </p>
+            )}
 
             <div className="grid gap-6 md:grid-cols-2">
               <DatePicker
                 label="Visit starts"
                 value={form.invitation_start_date}
                 onChange={(v) => set("invitation_start_date", v)}
-                minISO={todayISO()}
+                minISO={earliestStart ?? todayISO()}
+                disabled={!form.submission_date}
               />
               <DatePicker
                 label="Visit ends"
                 value={form.invitation_end_date}
                 onChange={(v) => set("invitation_end_date", v)}
-                minISO={form.invitation_start_date || todayISO()}
+                minISO={form.invitation_start_date || earliestStart || todayISO()}
+                disabled={!form.invitation_start_date}
                 error={
                   form.invitation_end_date &&
                   form.invitation_start_date &&
@@ -428,24 +495,76 @@ export function InviteWizard({
               />
             </div>
 
-            {form.invitation_start_date && (
-              <p className="rounded-2xl bg-blue-50 px-5 py-4 text-sm text-blue-800">
-                Your guarantee will run for {form.guarantee_months} months, to{" "}
-                <strong>{guaranteeEndISO(form.invitation_start_date, form.guarantee_months)}</strong>
-                . The guarantee period has to cover the whole visit — this is
-                one of the most common reasons documents get sent back.
+            {!form.submission_date && (
+              <p className="text-sm text-slate-500">
+                Choose the submission date first — it decides how early the
+                visit can begin.
               </p>
             )}
 
-            <Textarea
-              label="Why are you inviting them?"
-              value={form.invitation_reason}
-              onChange={(v) => set("invitation_reason", v)}
-              maxWords={REASON_MAX_WORDS}
-              rows={7}
-              placeholder="In your own words: who they are, why you want them to visit, what they will do here, and what they are returning home to."
-              helpText="This becomes your 초청 사유서. The more concrete you are — their job, family and commitments at home — the stronger it reads."
-            />
+            {form.invitation_start_date && (
+              <p className="rounded-2xl bg-slate-50 px-5 py-4 text-sm text-slate-600">
+                Your guarantee will run for {form.guarantee_months} months, to{" "}
+                <strong>
+                  {guaranteeEnd(form.invitation_start_date, form.guarantee_months)}
+                </strong>
+                . It has to cover the whole visit — a guarantee that ends too
+                early is one of the most common reasons documents come back.
+              </p>
+            )}
+
+            <div className="space-y-6 border-t border-slate-100 pt-8">
+              <div>
+                <h3 className="text-lg font-bold">Three short answers</h3>
+                <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                  Each document makes a different argument, so please answer
+                  all three. <strong>Write in whatever language you like</strong>{" "}
+                  — Uzbek, Russian, English. We translate it into formal Korean
+                  and write it the way a consular officer expects to read it.
+                  Write plainly; you don&rsquo;t need to sound official.
+                </p>
+              </div>
+
+              <Textarea
+                label={`1. Why are you inviting ${who.subject}?`}
+                value={form.reason_invitation}
+                onChange={(v) => set("reason_invitation", v)}
+                maxWords={REASON_MAX_WORDS}
+                rows={5}
+                required
+                placeholder={`Who ${who.subject} ${who.areIs} to you, why you want ${who.object} to come, and what ${who.subject} will do while here.`}
+                helpText="Goes into the 초청장 (invitation letter)."
+              />
+
+              <Textarea
+                label={`2. Tell us about ${who.possessive} life at home`}
+                value={form.reason_statement}
+                onChange={(v) => set("reason_statement", v)}
+                maxWords={REASON_MAX_WORDS}
+                rows={8}
+                required
+                placeholder={`Work, family, property, anything ${who.subject} must return to. Countries ${who.subject} ${who.areIs} visited before and returned from. This is the part that shows ${who.subject} will go home.`}
+                helpText="Goes into the 초청 사유서 (statement of reasons) — the most important of the three."
+              />
+
+              <Textarea
+                label="3. What are you undertaking to cover?"
+                value={form.reason_guarantee}
+                onChange={(v) => set("reason_guarantee", v)}
+                maxWords={REASON_MAX_WORDS}
+                rows={5}
+                required
+                placeholder={`For example: accommodation, living costs, the return ticket, or that ${who.subject} will cover ${who.possessive} own expenses and you are supporting in other ways.`}
+                helpText="Goes into the 신원보증서 (guarantee). Say only what is true — you are signing this."
+              />
+
+              <p className="rounded-2xl bg-amber-50 px-5 py-4 text-xs leading-relaxed text-amber-900">
+                We translate and rewrite what you give us. We never add facts —
+                if you don&rsquo;t mention a job, a business or a trip, it
+                won&rsquo;t appear in the Korean text. An invented detail that a
+                consular officer catches costs you the application.
+              </p>
+            </div>
           </div>
         )}
 
@@ -578,7 +697,8 @@ export function InviteWizard({
               title="The visit"
               onEdit={() => setStep(2)}
               rows={[
-                ["Dates", `${form.invitation_start_date} → ${form.invitation_end_date}`],
+                ["Documents handed in", form.submission_date],
+                ["Visit", `${form.invitation_start_date} → ${form.invitation_end_date}`],
                 ["Guarantee", `${form.guarantee_months} months`],
                 ["Documents go to", form.destination_mission],
               ]}

@@ -35,6 +35,10 @@ export type InviteFormData = {
   inviter_org_address: string;
 
   // --- The visit -----------------------------------------------------------
+  // The day the relative hands the papers in. Drives everything else: a
+  // C-3-1 decision takes about 24 days, so the visit cannot start sooner
+  // than roughly a month after this.
+  submission_date: string;
   invitation_start_date: string;
   invitation_end_date: string;
   // The guarantee must cover the whole invitation window; 3 months is the
@@ -42,8 +46,12 @@ export type InviteFormData = {
   guarantee_months: number;
   destination_mission: string;
 
-  // Applicant's own words for 초청 사유서. Never auto-filled.
-  invitation_reason: string;
+  // One answer per document — each letter argues something different, so
+  // reusing a single text three times would produce three weak documents.
+  // Written in any language; translated into formal Korean at generation.
+  reason_invitation: string;
+  reason_statement: string;
+  reason_guarantee: string;
 
   // --- Requirements acknowledgement ---------------------------------------
   requirements_ack: boolean;

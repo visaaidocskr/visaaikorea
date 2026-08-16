@@ -65,8 +65,14 @@ export type InviteDocData = {
   invitation_end_date: string;
   guarantee_months: number;
   destination_mission: string;
-  /** The inviter's own words. Used verbatim in 초청 사유서 when present. */
-  invitation_reason: string;
+  submission_date: string;
+  // One body per document, already translated into formal Korean by
+  // lib/ai/koreanLetter.ts. Empty when the client left it blank or the API
+  // was unavailable — in which case the document falls back to the fixed
+  // sentences below rather than printing untranslated text at the embassy.
+  body_invitation: string;
+  body_statement: string;
+  body_guarantee: string;
 };
 
 // --- small helpers ---------------------------------------------------------
@@ -141,6 +147,15 @@ function relationshipKo(raw: string): string {
   // Already Korean — use as written.
   if (/[ㄱ-힝]/.test(t)) return t;
   return RELATIONSHIP_KO[t.toLowerCase()] ?? "가족";
+}
+
+// Turns a block of Korean prose into paragraphs, keeping the writer's breaks.
+function bodyParagraphs(text: string): Paragraph[] {
+  return text
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => para(line, { after: 120 }));
 }
 
 // Two-column label/value grid, bordered like the official forms.
@@ -255,19 +270,29 @@ export async function generateInvitationLetter(d: InviteDocData): Promise<Buffer
     para(
       `저는 현재 대한민국에 ${statusCode(d.inviter.korean_visa_status)} 자격으로 체류 중인 ${d.inviter.nationality} 국적의 ${d.inviter.full_name}입니다.`
     ),
-    para(
-      `저는 저의 ${relationshipKo(d.invitee.relationship)}인 ${inviteeName} 님을 단기 가족 방문 목적으로 대한민국에 초청하고자 합니다.`
-    ),
-    para(
-      `이번 방문의 목적은 가족 방문이며, 방문 종료 후 ${inviteeName} 님은 예정대로 본국으로 귀국할 예정입니다.`
-    ),
+  ];
+
+  if (d.body_invitation.trim()) {
+    children.push(...bodyParagraphs(d.body_invitation));
+  } else {
+    // Nothing written — state only what the form already tells us.
+    children.push(
+      para(
+        `저는 저의 ${relationshipKo(d.invitee.relationship)}인 ${inviteeName} 님을 단기 가족 방문 목적으로 대한민국에 초청하고자 합니다.`
+      ),
+      para(
+        `방문 종료 후 ${inviteeName} 님은 예정대로 본국으로 귀국할 예정입니다.`
+      )
+    );
+  }
+
+  children.push(
     para(
       `이에 ${inviteeName} 님의 사증 발급을 긍정적으로 검토하여 주시기를 정중히 요청드립니다.`,
       { after: 200 }
     ),
-
-    ...signatureBlock(d.inviter.full_name),
-  ];
+    ...signatureBlock(d.inviter.full_name)
+  );
   return pack(children);
 }
 
@@ -293,14 +318,9 @@ export async function generateInvitationReason(d: InviteDocData): Promise<Buffer
     ),
   ];
 
-  if (d.invitation_reason.trim()) {
+  if (d.body_statement.trim()) {
     children.push(sectionHeading("초청 사유"));
-    // Keep the applicant's paragraphing rather than collapsing it.
-    d.invitation_reason
-      .split(/\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .forEach((line) => children.push(para(line, { after: 120 })));
+    children.push(...bodyParagraphs(d.body_statement));
   }
 
   children.push(
@@ -337,16 +357,26 @@ export async function generateGuaranteeLetter(d: InviteDocData): Promise<Buffer>
     para(`${d.guarantee_months}개월 (초청 기간 ${d.invitation_start_date} ~ ${d.invitation_end_date} 포함)`),
 
     sectionHeading("다. 보증내용"),
+    // The three clauses are fixed by the form itself and are not ours to
+    // reword — they are what the guarantor is signing up to.
     para("(1) 체류 중 제반 법규를 준수하도록 한다."),
     para("(2) 출국여비 및 이와 관련된 비용에 대한 지불책임을 부담한다."),
-    para("(3) 체류 또는 보호 중 발생되는 비용에 대한 지불책임을 부담한다.", { after: 200 }),
+    para("(3) 체류 또는 보호 중 발생되는 비용에 대한 지불책임을 부담한다.", { after: 160 }),
+  ];
 
+  // What the inviter specifically undertakes, in their own words, on top of
+  // the standard clauses.
+  if (d.body_guarantee.trim()) {
+    children.push(sectionHeading("라. 초청인의 부담 사항"));
+    children.push(...bodyParagraphs(d.body_guarantee));
+  }
+
+  children.push(
     para(
       "위 신원보증인은 피보증 외국인이 대한민국에 체류함에 있어서 그 신원에 이상이 없음을 확인하고 위 사항을 보증합니다.",
       { after: 160 }
     ),
-
-    ...signatureBlock(d.inviter.full_name),
-  ];
+    ...signatureBlock(d.inviter.full_name)
+  );
   return pack(children);
 }

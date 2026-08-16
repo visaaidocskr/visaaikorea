@@ -45,12 +45,15 @@ export default async function InvitePage() {
     inviter_org_name: inv?.inviter_org_name ?? "",
     inviter_position: inv?.inviter_position ?? "",
     inviter_org_address: inv?.inviter_org_address ?? "",
+    submission_date: inv?.submission_date ?? "",
     invitation_start_date: inv?.invitation_start_date ?? "",
     invitation_end_date: inv?.invitation_end_date ?? "",
     guarantee_months: inv?.guarantee_months ?? 3,
     destination_mission:
       inv?.destination_mission ?? "Embassy of the Republic of Korea in Uzbekistan",
-    invitation_reason: inv?.invitation_reason ?? "",
+    reason_invitation: inv?.reason_invitation ?? "",
+    reason_statement: inv?.reason_statement ?? "",
+    reason_guarantee: inv?.reason_guarantee ?? "",
     requirements_ack: inv?.requirements_ack ?? false,
     client_email: inv?.client_email ?? user.user.email ?? "",
     invitees: (invitees ?? []).map(
