@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Nav } from "@/app/components/landing/Nav";
 import { CountriesSection } from "@/app/components/landing/CountriesSection";
+import { InviteSection } from "@/app/components/landing/InviteSection";
 import { HowItWorks } from "@/app/components/landing/HowItWorks";
 import { Reveal } from "@/app/components/Reveal";
 import { GenerateButton } from "@/app/components/GenerateButton";
@@ -16,6 +17,7 @@ export default function Home() {
       <Nav />
       <Hero />
       <CountriesSection />
+      <InviteSection />
       <HowItWorks />
       <Footer />
     </div>

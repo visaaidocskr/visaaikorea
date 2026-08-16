@@ -8,6 +8,7 @@ import { GenerateButton } from "@/app/components/GenerateButton";
 // Pricing sections were removed, so their anchors went with them.
 const LINKS = [
   { href: "#countries", label: "Destinations" },
+  { href: "#invite", label: "Invite family" },
   { href: "#how", label: "How it works" },
 ];
 
