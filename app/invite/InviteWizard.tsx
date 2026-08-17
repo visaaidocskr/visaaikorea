@@ -40,6 +40,7 @@ function subjectWords(invitees: InviteeInput[]) {
       object,
       possessive: p.sex === "female" ? "her" : p.sex === "male" ? "his" : "their",
       areIs: "is",
+      hasHave: "has",
       plural: false,
       count: 1,
     };
@@ -49,6 +50,7 @@ function subjectWords(invitees: InviteeInput[]) {
     object: "them",
     possessive: "their",
     areIs: "are",
+    hasHave: "have",
     plural: invitees.length > 1,
     count: invitees.length,
   };
@@ -543,7 +545,7 @@ export function InviteWizard({
                 maxWords={REASON_MAX_WORDS}
                 rows={8}
                 required
-                placeholder={`Work, family, property, anything ${who.subject} must return to. Countries ${who.subject} ${who.areIs} visited before and returned from. This is the part that shows ${who.subject} will go home.`}
+                placeholder={`Work, family, property, anything ${who.subject} must return to. Countries ${who.subject} ${who.hasHave} visited before and returned from. This is the part that shows ${who.subject} will go home.`}
                 helpText="Goes into the 초청 사유서 (statement of reasons) — the most important of the three."
               />
 
