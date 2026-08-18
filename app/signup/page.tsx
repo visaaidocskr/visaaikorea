@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AuthShell } from "@/app/auth/AuthShell";
-import { SignupForm } from "@/app/auth/AuthForms";
+import { SignupForm, GoogleButton } from "@/app/auth/AuthForms";
 
 export const metadata: Metadata = { title: "Create Account · VisaAI Korea" };
 
@@ -19,6 +19,7 @@ export default function SignupPage() {
         </p>
       }
     >
+      <GoogleButton />
       <SignupForm />
     </AuthShell>
   );

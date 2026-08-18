@@ -65,6 +65,25 @@ function yymmddToIso(yymmdd: string, kind: "birth" | "expiry"): string {
   return `${century + yy}-${mm}-${dd}`;
 }
 
+// OCR regularly misreads the MRZ's "<" filler characters as letters (most
+// often L, K, I, C, E or T), which the MRZ parser then hands back as an extra
+// one-letter "name" — e.g. "SHAKHNOZA ABDURAUFOVNA L".
+//
+// Single letters are NOT always noise though: some names genuinely have a
+// one-letter element (Vietnamese "NGUYEN VAN A"). So this only drops a
+// trailing single letter when at least two real words remain without it —
+// the shape that real names essentially never take, and that trailing OCR
+// filler always does. Anything more aggressive risks silently deleting a
+// real name, which is worse than leaving visible noise the applicant can
+// see in the filled field and correct.
+function dropStrayInitials(raw: string): string {
+  const words = raw.trim().split(/\s+/).filter(Boolean);
+  if (words.length >= 3 && words[words.length - 1].length === 1) {
+    return words.slice(0, -1).join(" ");
+  }
+  return words.join(" ");
+}
+
 // Pulls the two bottom MRZ lines (TD3 passport format, 44 chars each) out of
 // raw OCR text. OCR also picks up other printed text on the photo page, so we
 // look for lines that are almost entirely A-Z / 0-9 / "<" — that's the
@@ -136,10 +155,13 @@ export async function scanPassportMrz(
     : undefined;
   const nationality = icaoName ? normalizeStateName(nationalityCode, icaoName) : "";
 
+  const surname = dropStrayInitials(f.lastName ?? "");
+  const givenName = dropStrayInitials(f.firstName ?? "");
+
   const fields: PassportMrzFields = {
-    surname: f.lastName ?? "",
-    givenName: f.firstName ?? "",
-    fullName: [f.lastName, f.firstName].filter(Boolean).join(" "),
+    surname,
+    givenName,
+    fullName: [surname, givenName].filter(Boolean).join(" "),
     passportNumber: f.documentNumber ?? "",
     nationality,
     nationalityCode,

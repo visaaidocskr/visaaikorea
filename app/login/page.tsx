@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AuthShell } from "@/app/auth/AuthShell";
-import { LoginForm } from "@/app/auth/AuthForms";
+import { LoginForm, GoogleButton } from "@/app/auth/AuthForms";
+import { safeNextPath } from "@/lib/auth-redirect";
 
 export const metadata: Metadata = { title: "Sign In · VisaAI Korea" };
 
@@ -12,7 +13,7 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; error?: string }>;
 }) {
   const { next, error } = await searchParams;
-  const safeNext = next?.startsWith("/") ? next : "/dashboard";
+  const safeNext = safeNextPath(next);
 
   return (
     <AuthShell
@@ -34,11 +35,16 @@ export default async function LoginPage({
         </>
       }
     >
-      {error === "auth_callback" && (
+      {error && (
         <p className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600">
-          That link was invalid or expired. Please sign in again.
+          {error === "auth_callback"
+            ? "That link was invalid or expired. Please sign in again."
+            : // Real reason from the provider, so a misconfiguration is
+              // diagnosable instead of hiding behind a generic message.
+              error}
         </p>
       )}
+      <GoogleButton next={safeNext} />
       <LoginForm next={safeNext} />
     </AuthShell>
   );

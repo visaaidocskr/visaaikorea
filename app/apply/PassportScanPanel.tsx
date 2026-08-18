@@ -13,21 +13,47 @@ import type { PassportMrzFields } from "@/lib/ocr/passportMrz";
 
 type Setter = <K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) => void;
 
-// Central Asian passports (Uzbekistan and neighbors) have no separate MRZ
-// field for the patronymic — it's appended to the given names instead, e.g.
-// "SHUKHRATBEK AZIZBEK UGLI" (given name "Shukhratbek", father's name
-// "Azizbek", suffix "ugli" = son of). Split it off so it lands in "Father's
-// name / Patronymic" instead of being glued onto the given name.
-const PATRONYMIC_SUFFIXES = new Set(["UGLI", "OGLI", "O'G'LI", "QIZI", "KIZI"]);
+// Central Asian and post-Soviet passports have no separate MRZ field for the
+// patronymic — it's appended to the given names instead, in one of two shapes:
+//
+//   • Turkic form, two words: "SHUKHRATBEK AZIZBEK UGLI"
+//     (given "Shukhratbek", father's name "Azizbek Ugli" = son of Azizbek)
+//   • Slavic form, one word:  "SHAKHNOZA ABDURAUFOVNA"
+//     (given "Shakhnoza", father's name "Abduraufovna" = daughter of Abdurauf)
+//
+// Split either off so it lands in "Father's name / Patronymic" instead of
+// being glued onto the given name. Both forms only apply when there's more
+// than one word left over, so a single-word given name is never emptied out.
+const PATRONYMIC_WORDS = new Set([
+  "UGLI", "OGLI", "O'G'LI", "QIZI", "KIZI", // Uzbek
+  "UULU", "KYZY", // Kyrgyz
+]);
+// Slavic patronymic endings, as transliterated in passports.
+const PATRONYMIC_ENDINGS = [
+  "OVICH", "EVICH", "IEVICH", "YEVICH",
+  "OVNA", "EVNA", "IEVNA", "YEVNA",
+];
+
 function splitGivenName(raw: string): { givenName: string; patronymic: string } {
-  const words = raw.trim().split(/\s+/);
-  const last = words[words.length - 1]?.toUpperCase();
-  if (words.length >= 3 && last && PATRONYMIC_SUFFIXES.has(last)) {
+  const words = raw.trim().split(/\s+/).filter(Boolean);
+  const last = words[words.length - 1]?.toUpperCase() ?? "";
+
+  // Turkic: the marker word plus the father's name before it ("AZIZBEK UGLI").
+  if (words.length >= 3 && PATRONYMIC_WORDS.has(last)) {
     return {
       givenName: words.slice(0, -2).join(" "),
       patronymic: words.slice(-2).join(" "),
     };
   }
+
+  // Slavic: a single trailing word ending in -ovich/-ovna etc.
+  if (words.length >= 2 && PATRONYMIC_ENDINGS.some((e) => last.endsWith(e))) {
+    return {
+      givenName: words.slice(0, -1).join(" "),
+      patronymic: words[words.length - 1],
+    };
+  }
+
   return { givenName: raw, patronymic: "" };
 }
 
