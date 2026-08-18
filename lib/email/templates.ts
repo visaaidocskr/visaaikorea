@@ -23,19 +23,34 @@ export function submissionConfirmation(opts: {
   name: string;
   destination: string;
 }) {
+  // Vietnam is an e-Visa, not a document-preparation service: there is no
+  // package to assemble and no flight/hotel reservation to send on, so the
+  // standard wording would promise the wrong thing.
+  const isVietnam = opts.destination === "Vietnam";
+  const body = isVietnam
+    ? p(`Hello ${opts.name || "there"},`) +
+      p(
+        `Your Vietnam e-Visa application has been received. It will be submitted to the <strong>Vietnam Immigration Department</strong> through its official e-Visa portal.`
+      ) +
+      p(
+        `The Immigration Department decides the outcome, normally within <strong>3–4 business days</strong>. Saturdays and Sundays are not counted.`
+      ) +
+      p(`Once approved, your e-Visa will be sent to this email address as a PDF.`) +
+      p(`You can track your application status in your dashboard at any time.`)
+    : p(`Hello ${opts.name || "there"},`) +
+      p(
+        `We have received your tourist visa document request for <strong>${opts.destination}</strong>. Our team will review your information and prepare your document package.`
+      ) +
+      p(
+        `Your air ticket reservation and hotel booking reservation may be sent to your email within 16 hours after admin review.`
+      ) +
+      p(`You can track your application status in your dashboard at any time.`);
+
   return {
-    subject: "We received your visa document request",
-    html: shell(
-      "Application received",
-      p(`Hello ${opts.name || "there"},`) +
-        p(
-          `We have received your tourist visa document request for <strong>${opts.destination}</strong>. Our team will review your information and prepare your document package.`
-        ) +
-        p(
-          `Your air ticket reservation and hotel booking reservation may be sent to your email within 16 hours after admin review.`
-        ) +
-        p(`You can track your application status in your dashboard at any time.`)
-    ),
+    subject: isVietnam
+      ? "We received your Vietnam e-Visa application"
+      : "We received your visa document request",
+    html: shell("Application received", body),
   };
 }
 
@@ -55,6 +70,76 @@ export function adminNotification(opts: {
             `<strong>Email:</strong> ${opts.email}<br/>` +
             `<strong>Destination:</strong> ${opts.destination}<br/>` +
             `<strong>ID:</strong> ${opts.applicationId}`
+        )
+    ),
+  };
+}
+
+// A message written by the team to the applicant — most often "this document
+// is missing / unreadable, please re-upload it". The message itself is shown
+// verbatim, since it's specific to their case; the surrounding text just
+// tells them where to act on it.
+export function clientMessage(opts: {
+  name: string;
+  destination: string;
+  message: string;
+  needsAction: boolean;
+}) {
+  return {
+    subject: opts.needsAction
+      ? `Action needed on your ${opts.destination} application`
+      : `An update on your ${opts.destination} application`,
+    html: shell(
+      opts.needsAction ? "Action needed" : "Update on your application",
+      p(`Hello ${opts.name || "there"},`) +
+        p(`Regarding your <strong>${opts.destination}</strong> application:`) +
+        `<div style="border-left:3px solid #1d4ed8;background:#f8fafc;padding:12px 16px;margin:0 0 12px;font-size:14px;line-height:1.7;color:#0f172a;white-space:pre-wrap">${escapeHtml(
+          opts.message
+        )}</div>` +
+        (opts.needsAction
+          ? p(
+              `Please sign in to your dashboard, open this application and use <strong>Edit application</strong> to upload the corrected document.`
+            )
+          : p(`You can see the full details in your dashboard at any time.`))
+    ),
+  };
+}
+
+// The message is admin-written free text going into an HTML email — escape it
+// so a stray "<" can't break the layout or inject markup.
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// The visa itself came through. Deliberately does NOT congratulate on behalf
+// of the authority or restate conditions we can't verify — it says what
+// arrived and what to do with it.
+export function visaGranted(opts: {
+  name: string;
+  destination: string;
+  attached: boolean;
+}) {
+  return {
+    subject: `Your ${opts.destination} visa has been granted`,
+    html: shell(
+      "Your visa has been granted",
+      p(`Hello ${opts.name || "there"},`) +
+        p(
+          `Good news — your visa for <strong>${opts.destination}</strong> has been granted.`
+        ) +
+        (opts.attached
+          ? p(
+              `A copy is attached to this email. It is also available in your dashboard at any time.`
+            )
+          : p(
+              `Please sign in to your dashboard to download it — the file was too large to attach here.`
+            )) +
+        p(
+          `Print a copy and carry it with you when you travel, together with the passport used in this application.`
         )
     ),
   };

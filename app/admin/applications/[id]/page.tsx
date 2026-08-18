@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { documentsForStatus } from "@/lib/visa/config";
+import { documentsForStatus, BASE_DOCUMENTS } from "@/lib/visa/config";
 import { STATUS_LABELS, STATUS_BADGE } from "@/lib/visa/status";
 import type { ApplicationStatus } from "@/lib/visa/types";
 import { StatusControl } from "./StatusControl";
 import { AddNoteForm } from "./AddNoteForm";
+import { ClientMessageForm } from "./ClientMessageForm";
 import { FileViewerButton } from "./FileViewerButton";
 import { DocsPanel } from "./DocsPanel";
 
@@ -63,15 +64,21 @@ export default async function AdminApplicationDetail({
     (files ?? []).map((f) => [f.file_type, f] as const)
   );
   // marital_status lives on applicant_details (already fetched above as
-  // `details`), not applications.
-  const checklist = app.korean_visa_status
-    ? documentsForStatus(
-        app.korean_visa_status,
-        undefined,
-        undefined,
-        details?.marital_status ?? undefined
-      )
-    : [];
+  // `details`), not applications. Vietnam never asks for a Korean visa
+  // status, so there's no status-specific checklist to build — fall back to
+  // just the base identity documents (passport + ARC) so those still show
+  // up here instead of the section going empty.
+  const checklist =
+    app.destination_country === "Vietnam"
+      ? BASE_DOCUMENTS
+      : app.korean_visa_status
+        ? documentsForStatus(
+            app.korean_visa_status,
+            undefined,
+            undefined,
+            details?.marital_status ?? undefined
+          )
+        : [];
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
@@ -127,6 +134,67 @@ export default async function AdminApplicationDetail({
           ]}
         />
       </Section>
+
+      {/* Vietnam e-Visa details */}
+      {app.destination_country === "Vietnam" && (
+        <Section title="Vietnam e-Visa details">
+          <Grid
+            rows={[
+              ["Family member (name)", details?.vietnam_family_member_name ?? "—"],
+              ["Family member (phone)", details?.vietnam_family_member_phone ?? "—"],
+              ["Family member (address)", details?.vietnam_family_member_address ?? "—"],
+              [
+                "Family member (relationship)",
+                details?.vietnam_family_member_relationship === "other"
+                  ? details?.vietnam_family_member_relationship_other || "Other"
+                  : details?.vietnam_family_member_relationship || "—",
+              ],
+              [
+                "Travel insurance bought",
+                app.vietnam_insurance_purchased === true
+                  ? "Yes"
+                  : app.vietnam_insurance_purchased === false
+                    ? "No"
+                    : "—",
+              ],
+              [
+                "Financed by",
+                details?.vietnam_financing_source === "other"
+                  ? "Someone else"
+                  : details?.vietnam_financing_source === "personal"
+                    ? "Personal"
+                    : "—",
+              ],
+              [
+                "Express (10h) requested",
+                app.vietnam_express_requested === true
+                  ? "YES — follow up"
+                  : app.vietnam_express_requested === false
+                    ? "No"
+                    : "—",
+              ],
+              ...(details?.vietnam_financing_source === "other"
+                ? ([
+                    ["Financier name", details?.vietnam_financier_name ?? "—"],
+                    ["Financier relationship", details?.vietnam_financier_relationship ?? "—"],
+                    ["Financier phone", details?.vietnam_financier_phone ?? "—"],
+                    ["Financier address", details?.vietnam_financier_address ?? "—"],
+                  ] as [string, string][])
+                : []),
+            ]}
+          />
+          <div className="mt-4 flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+            <span className="text-sm font-semibold text-slate-800">
+              Photo (4 × 6 cm)
+            </span>
+            {fileByType.get("vietnam_photo") ? (
+              <FileViewerButton storagePath={fileByType.get("vietnam_photo")!.storage_path} />
+            ) : (
+              <span className="text-xs font-semibold text-amber-600">Not uploaded</span>
+            )}
+          </div>
+        </Section>
+      )}
 
       {/* Companions */}
       {(companions ?? []).length > 0 && (
@@ -192,6 +260,15 @@ export default async function AdminApplicationDetail({
           userId={app.user_id}
           documents={generated ?? []}
           templates={templates ?? []}
+        />
+      </Section>
+
+      {/* Message to the client */}
+      <Section title="Message to client">
+        <ClientMessageForm
+          applicationId={id}
+          initialMessage={app.client_message ?? ""}
+          sentAt={app.client_message_at ?? null}
         />
       </Section>
 
