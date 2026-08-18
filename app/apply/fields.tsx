@@ -5,6 +5,12 @@
 // ChoiceGroup is added for enum fields (sex, marital status, passport type).
 import { useId } from "react";
 
+// Every "this field isn't done yet" message carries this attribute, so the
+// wizard can jump the applicant to the first unfinished field when they press
+// Continue — without any field needing to register itself. See
+// FIELD_ERROR_ATTR / scrollToFirstIncompleteField in ApplyWizard.tsx.
+export const FIELD_ERROR_ATTR = "data-field-incomplete";
+
 export function Input({
   label,
   value,
@@ -58,16 +64,31 @@ export function Input({
         }`}
       />
       {error ? (
-        <p id={errorId} role="alert" className="mt-1 text-xs font-semibold text-red-500">
+        <p
+          id={errorId}
+          role="alert"
+          {...{ [FIELD_ERROR_ATTR]: "" }}
+          className="mt-1 text-xs font-semibold text-red-500"
+        >
           {error}
         </p>
       ) : helpText ? (
-        <p id={helpId} className="mt-1 text-xs text-slate-500">
-          {helpText}
-        </p>
+        <>
+          <p id={helpId} className="mt-1 text-xs text-slate-500">
+            {helpText}
+          </p>
+          {/* A field can be both explained and unfinished — keep the marker
+              so "jump to the first incomplete field" doesn't skip it. */}
+          {showRequired && <span {...{ [FIELD_ERROR_ATTR]: "" }} className="hidden" />}
+        </>
       ) : (
         showRequired && (
-          <p className="mt-1 text-xs font-semibold text-red-500">Required.</p>
+          <p
+            {...{ [FIELD_ERROR_ATTR]: "" }}
+            className="mt-1 text-xs font-semibold text-red-500"
+          >
+            Required.
+          </p>
         )
       )}
     </div>
@@ -133,7 +154,11 @@ export function Textarea({
         }`}
       />
       {overLimit ? (
-        <p role="alert" className="mt-1 text-xs font-semibold text-red-500">
+        <p
+          role="alert"
+          {...{ [FIELD_ERROR_ATTR]: "" }}
+          className="mt-1 text-xs font-semibold text-red-500"
+        >
           Please shorten this to {maxWords} words or fewer.
         </p>
       ) : (
@@ -178,7 +203,12 @@ export function Select({
         ))}
       </select>
       {required && value === "" && (
-        <p className="mt-1 text-xs font-semibold text-red-500">Required.</p>
+        <p
+          {...{ [FIELD_ERROR_ATTR]: "" }}
+          className="mt-1 text-xs font-semibold text-red-500"
+        >
+          Required.
+        </p>
       )}
     </div>
   );
@@ -225,7 +255,12 @@ export function ChoiceGroup({
         })}
       </div>
       {required && value === "" && (
-        <p className="mt-1 text-xs font-semibold text-red-500">Required.</p>
+        <p
+          {...{ [FIELD_ERROR_ATTR]: "" }}
+          className="mt-1 text-xs font-semibold text-red-500"
+        >
+          Required.
+        </p>
       )}
     </div>
   );
@@ -277,7 +312,12 @@ export function BooleanChoice({
       </div>
       {helpText && <p className="mt-1 text-xs text-slate-500">{helpText}</p>}
       {required && value === null && (
-        <p className="mt-1 text-xs font-semibold text-red-500">Please choose an option.</p>
+        <p
+          {...{ [FIELD_ERROR_ATTR]: "" }}
+          className="mt-1 text-xs font-semibold text-red-500"
+        >
+          Please choose an option.
+        </p>
       )}
     </div>
   );

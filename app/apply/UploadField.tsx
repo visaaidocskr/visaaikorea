@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { uploadApplicantFile, removeUploadedFile } from "@/app/apply/actions";
+import { FIELD_ERROR_ATTR } from "@/app/apply/fields";
 
 const ALLOWED = ["image/jpeg", "image/png", "application/pdf"];
 // Configurable via env; falls back to 10 MB.
@@ -216,7 +217,10 @@ export function UploadField({
           </div>
 
           {!done && required && status !== "uploading" && (
-            <p className="mt-2 text-xs font-semibold text-red-500">
+            <p
+              {...{ [FIELD_ERROR_ATTR]: "" }}
+              className="mt-2 text-xs font-semibold text-red-500"
+            >
               This document is required.
             </p>
           )}

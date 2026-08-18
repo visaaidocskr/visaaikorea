@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { toISO } from "@/lib/visa/destinations";
+import { FIELD_ERROR_ATTR } from "@/app/apply/fields";
 
 // ---- date helpers (local, to keep this component self-contained) ----------
 function parse(iso: string): Date | null {
@@ -214,10 +215,21 @@ export function DatePicker({
         <span aria-hidden className="text-slate-400">📅</span>
       </button>
 
-      {error && (
-        <p id={errorId} role="alert" className="mt-1 text-xs font-semibold text-red-500">
+      {error ? (
+        <p
+          id={errorId}
+          role="alert"
+          {...{ [FIELD_ERROR_ATTR]: "" }}
+          className="mt-1 text-xs font-semibold text-red-500"
+        >
           {error}
         </p>
+      ) : (
+        // Unfilled required date — marked (invisibly) so "jump to the first
+        // incomplete field" finds it, since a blank date shows no error text.
+        required &&
+        !disabled &&
+        !value && <span {...{ [FIELD_ERROR_ATTR]: "" }} className="hidden" />
       )}
 
       {open && (
