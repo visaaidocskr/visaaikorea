@@ -8,6 +8,7 @@ import {
   toggleDocumentReleased,
   getGeneratedDocSignedUrl,
   registerReservation,
+  registerApprovedVisa,
   sendDocumentsReadyEmail,
 } from "@/app/admin/doc-actions";
 
@@ -91,8 +92,66 @@ export function DocsPanel({
     });
   }
 
+  // Uploading the issued visa also releases it, flips the status to
+  // "Visa granted" and emails the client — see registerApprovedVisa.
+  function onApprovedVisa(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setMsg(null);
+    // generated_documents.file_format only permits pdf/docx, and an issued
+    // e-Visa is a PDF — reject anything else here with a clear reason rather
+    // than letting it fail on a database constraint.
+    if (file.type !== "application/pdf") {
+      setMsg({ kind: "err", text: "Please upload the visa as a PDF file." });
+      e.target.value = "";
+      return;
+    }
+    start(async () => {
+      const supabase = createClient();
+      const path = `${userId}/${applicationId}/approved-visa.pdf`;
+      const { error } = await supabase.storage
+        .from("generated-documents")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) {
+        setMsg({ kind: "err", text: error.message });
+        return;
+      }
+      const res = await registerApprovedVisa({
+        applicationId,
+        storagePath: path,
+        fileFormat: "pdf",
+      });
+      notify(
+        res,
+        res.ok
+          ? `Visa uploaded, released to the client and status set to "Visa granted". Email: ${res.data?.emailStatus}.`
+          : ""
+      );
+    });
+  }
+
   return (
     <div className="space-y-6">
+      {/* The issued visa itself — the one document the client is actually
+          waiting for, so it gets its own control rather than being buried
+          among the drafts we generate. */}
+      <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-emerald-300 bg-emerald-50/50 px-5 py-4 transition hover:bg-emerald-50">
+        <span className="font-bold text-emerald-900">
+          ⬆ Upload the approved visa / e-Visa
+        </span>
+        <span className="mt-0.5 block text-sm text-emerald-800">
+          PDF only. Releases it to the client, sets the status to &ldquo;Visa
+          granted&rdquo;, and emails it to them with the file attached.
+        </span>
+        <input
+          type="file"
+          accept=".pdf,application/pdf"
+          className="hidden"
+          disabled={pending}
+          onChange={onApprovedVisa}
+        />
+      </label>
+
       <div className="flex flex-wrap gap-3">
         <button
           onClick={genAll}

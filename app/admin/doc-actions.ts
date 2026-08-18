@@ -19,7 +19,8 @@ import { getJapanDocumentPlan } from "@/lib/docs/japanRouting";
 import { getJapanDocumentData } from "@/lib/docs/japanData";
 import { fillJapanEvisaExcel } from "@/lib/docs/japanExcel";
 import { sendEmail } from "@/lib/email/send";
-import { documentsReady } from "@/lib/email/templates";
+import { documentsReady, visaGranted } from "@/lib/email/templates";
+import { APPROVED_VISA_DOC_TYPE } from "@/lib/docs/documentTypes";
 import { headers } from "next/headers";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -722,6 +723,95 @@ export async function generateAllDocuments(
 }
 
 // Records a reservation file the admin uploaded directly to storage.
+/**
+ * Registers an uploaded, already-issued visa (the e-Visa PDF the authority
+ * sent us) and hands it to the client in one step:
+ *   1. stored as a released document, so it shows in their dashboard;
+ *   2. the application status becomes "visa_granted";
+ *   3. the client is emailed, with the file attached when it's small enough.
+ *
+ * Released immediately on purpose — unlike a draft we prepare, there is no
+ * reason to withhold a visa that has already been granted, and a two-step
+ * "upload then remember to release" is exactly where it would get stranded.
+ */
+export async function registerApprovedVisa(input: {
+  applicationId: string;
+  storagePath: string;
+  fileFormat: string;
+}): Promise<DocResult<{ emailStatus: string }>> {
+  await requireAdmin();
+  const supabase = await createClient();
+  const admin = createAdminClient();
+
+  const { error } = await supabase.from("generated_documents").upsert(
+    {
+      application_id: input.applicationId,
+      document_type: APPROVED_VISA_DOC_TYPE,
+      file_format: input.fileFormat,
+      storage_path: input.storagePath,
+      generated_by: "admin",
+      released: true,
+    },
+    { onConflict: "application_id,document_type" }
+  );
+  if (error) return { ok: false, error: error.message };
+
+  const { error: statusErr } = await supabase
+    .from("applications")
+    .update({ status: "visa_granted" })
+    .eq("id", input.applicationId);
+  if (statusErr) return { ok: false, error: statusErr.message };
+
+  // Notify the client. A failure here must not undo the upload — the visa is
+  // already in their dashboard either way, so it's reported, not thrown.
+  const { data: app } = await supabase
+    .from("applications")
+    .select("client_email, destination_country")
+    .eq("id", input.applicationId)
+    .maybeSingle();
+  const { data: details } = await supabase
+    .from("applicant_details")
+    .select("full_name_as_passport")
+    .eq("application_id", input.applicationId)
+    .maybeSingle();
+
+  let emailStatus = "no_recipient";
+  if (app?.client_email) {
+    let attachments: { filename: string; content: Buffer; contentType?: string }[] = [];
+    const { data: file } = await admin.storage
+      .from(GENERATED_BUCKET)
+      .download(input.storagePath);
+    if (file) {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      if (buffer.length <= MAX_ATTACHMENTS_BYTES) {
+        attachments = [
+          {
+            filename: attachmentFilename(APPROVED_VISA_DOC_TYPE, input.storagePath),
+            content: buffer,
+            contentType: CONTENT_TYPE_BY_FORMAT[input.fileFormat] ?? undefined,
+          },
+        ];
+      }
+    }
+    const mail = visaGranted({
+      name: details?.full_name_as_passport ?? "",
+      destination: app.destination_country ?? "your destination",
+      attached: attachments.length > 0,
+    });
+    const res = await sendEmail({
+      ...mail,
+      to: app.client_email,
+      applicationId: input.applicationId,
+      attachments,
+    });
+    emailStatus = res.status;
+  }
+
+  revalidatePath(`/admin/applications/${input.applicationId}`);
+  revalidatePath(`/dashboard/applications/${input.applicationId}`);
+  return { ok: true, data: { emailStatus } };
+}
+
 export async function registerReservation(input: {
   applicationId: string;
   documentType: string;

@@ -8,6 +8,7 @@ export const APPLICATION_STATUSES: ApplicationStatus[] = [
   "documents_generating",
   "waiting_manual_reservations",
   "completed",
+  "visa_granted",
   "rejected",
   "cancelled",
 ];
@@ -20,6 +21,7 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   documents_generating: "Generating documents",
   waiting_manual_reservations: "Waiting on reservations",
   completed: "Completed",
+  visa_granted: "Visa granted",
   rejected: "Rejected",
   cancelled: "Cancelled",
 };
@@ -33,6 +35,7 @@ export const STATUS_BADGE: Record<ApplicationStatus, string> = {
   documents_generating: "bg-violet-100 text-violet-700",
   waiting_manual_reservations: "bg-cyan-100 text-cyan-700",
   completed: "bg-emerald-100 text-emerald-700",
+  visa_granted: "bg-emerald-600 text-white",
   rejected: "bg-red-100 text-red-700",
   cancelled: "bg-slate-200 text-slate-500",
 };
