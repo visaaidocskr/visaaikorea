@@ -10,9 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  generateInvitationLetter,
-  generateInvitationReason,
-  generateGuaranteeLetter,
+  generateInvitationPackage,
   type InviteDocData,
 } from "../lib/docs/inviteDocs";
 
@@ -60,9 +58,7 @@ async function run() {
   fs.mkdirSync(out, { recursive: true });
 
   const files: [string, Buffer][] = [
-    ["1_invitation_letter.docx", await generateInvitationLetter(data)],
-    ["2_invitation_reason.docx", await generateInvitationReason(data)],
-    ["3_guarantee_letter.docx", await generateGuaranteeLetter(data)],
+    ["invitation_package.docx", await generateInvitationPackage(data)],
   ];
   for (const [name, buf] of files) {
     fs.writeFileSync(path.join(out, name), buf);

@@ -5,9 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { writeKoreanLetter, type LetterContext } from "@/lib/ai/koreanLetter";
 import {
-  generateInvitationLetter,
-  generateInvitationReason,
-  generateGuaranteeLetter,
+  generateInvitationPackage,
   type InviteDocData,
 } from "@/lib/docs/inviteDocs";
 
@@ -32,7 +30,8 @@ function nameSlug(...parts: string[]): string {
 }
 
 /**
- * Produces the three Korea-side documents for every person on an invitation.
+ * Produces the one combined Korea-side document (신원보증서 + 초청장, the
+ * mission's own two-form package) for every person on an invitation.
  *
  * All-or-nothing per person: if a document fails we stop and report it,
  * rather than releasing a partial set that looks complete.
@@ -123,19 +122,9 @@ export async function generateInvitationDocuments(
     const who = nameSlug(s(p.surname), s(p.given_name));
     const docs: { type: string; file: string; buffer: Buffer }[] = [
       {
-        type: `초청장 — ${inviteeName}`,
-        file: `Invitation_Letter_${who}.docx`,
-        buffer: await generateInvitationLetter(data),
-      },
-      {
-        type: `초청 사유서 — ${inviteeName}`,
-        file: `Statement_Of_Reasons_${who}.docx`,
-        buffer: await generateInvitationReason(data),
-      },
-      {
-        type: `신원보증서 — ${inviteeName}`,
-        file: `Guarantee_Letter_${who}.docx`,
-        buffer: await generateGuaranteeLetter(data),
+        type: `신원보증서·초청장 — ${inviteeName}`,
+        file: `Invitation_Package_${who}.docx`,
+        buffer: await generateInvitationPackage(data),
       },
     ];
 
