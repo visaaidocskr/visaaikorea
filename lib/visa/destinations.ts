@@ -41,6 +41,12 @@ export type DestinationRule = {
   // Spain only: a confirmed embassy appointment is required before planning.
   requiresAppointment?: boolean;
   appointmentInfo?: AppointmentInfo;
+  // Vietnam only: `leadMinDays` counts BUSINESS days, not calendar days, and
+  // travel starts the day after processing finishes. An application filed on
+  // a Friday isn't worked on over the weekend, so counting calendar days
+  // would promise the visa days earlier than it can actually arrive. See
+  // earliestTravelStart() below.
+  leadCountsBusinessDays?: boolean;
 };
 
 // --- Japan address → processing-type detection ----------------------------
@@ -174,6 +180,51 @@ function addMonths(date: Date, months: number): Date {
 }
 function dayDiff(a: Date, b: Date): number {
   return Math.round((a.getTime() - b.getTime()) / 86_400_000);
+}
+
+// Vietnam's e-Visa grants a flat 30-day stay — not a calendar month, so the
+// length never varies with the month entered. Counted inclusively (the entry
+// day is day 1), the last day in Vietnam is 29 days after entry: enter 26 Aug
+// → leave by 24 Sep. Exported so the wizard can auto-fill (and lock) the
+// travel end date once the start date is chosen, instead of letting the
+// applicant pick an arbitrary stay length.
+export const VIETNAM_EVISA_STAY_DAYS = 30;
+
+export function vietnamStayEndISO(startISO: string): string {
+  const start = parseISO(startISO);
+  if (!start) return "";
+  return toISO(addDays(start, VIETNAM_EVISA_STAY_DAYS - 1));
+}
+
+function isWeekendDate(d: Date): boolean {
+  const day = d.getDay();
+  return day === 0 || day === 6;
+}
+
+// `businessDays` working days after `date`, skipping Saturdays and Sundays.
+// Counting starts the day AFTER `date` — the application day itself is not a
+// processing day.
+function addBusinessDays(date: Date, businessDays: number): Date {
+  const d = new Date(date);
+  let remaining = businessDays;
+  while (remaining > 0) {
+    d.setDate(d.getDate() + 1);
+    if (!isWeekendDate(d)) remaining -= 1;
+  }
+  return d;
+}
+
+// The earliest travel start date allowed for an anchor (submission/appointment)
+// date — the single source of truth used by BOTH the picker's minimum and
+// server-side validation, so the rule can't be bypassed from the client.
+//
+// Calendar-day destinations: anchor + leadMinDays.
+// Business-day destinations (Vietnam): the visa needs leadMinDays *working*
+// days to be processed, and travel can start the day after the last of them.
+// e.g. filed Friday → processed Mon–Thu → earliest travel the next Friday.
+export function earliestTravelStart(rule: DestinationRule, anchor: Date): Date {
+  if (!rule.leadCountsBusinessDays) return addDays(anchor, rule.leadMinDays);
+  return addDays(addBusinessDays(anchor, rule.leadMinDays), 1);
 }
 
 // --- The rules ------------------------------------------------------------
@@ -347,6 +398,43 @@ export const DESTINATION_RULES: Record<string, DestinationRule> = {
       "Residence proof in Korea (if needed)",
     ],
   },
+
+  // Vietnam — pure e-Visa flow, no embassy appointment and no official
+  // multi-page form to replicate. We collect the applicant's data and the
+  // admin submits it directly on Vietnam's e-Visa portal.
+  Vietnam: {
+    anchorLabel: "Planned application date",
+    anchorRequired: false,
+    leadMinDays: 4,
+    leadCountsBusinessDays: true,
+    leadMaxDays: 90,
+    // The end date isn't chosen by the applicant — it's computed as exactly
+    // 30 days from entry, so both bounds are that same fixed number.
+    minStayDays: VIETNAM_EVISA_STAY_DAYS,
+    maxStayDays: VIETNAM_EVISA_STAY_DAYS,
+    recommendedStayMin: VIETNAM_EVISA_STAY_DAYS,
+    recommendedStayMax: VIETNAM_EVISA_STAY_DAYS,
+    maxStayError:
+      "The Vietnam e-Visa is issued for 30 days from your entry date — the return date is calculated automatically once you choose your travel start date.",
+    leadTooSoonError:
+      "Vietnam e-Visa processing takes about 4 business days, and weekends don't count — so your travel start date has to leave room for that. Pick a later date (the calendar already blocks the ones that are too soon).",
+    // 0 = not applicable. The Vietnam e-Visa portal doesn't ask for proof of
+    // funds, so no figure is shown for it.
+    bankRecommendationKRW: 0,
+    guidance:
+      "Vitamin VisaAI prepares your application and submits it to the Vietnam Immigration Department through its official e-Visa portal. The process is entirely online — there is no embassy appointment. The e-Visa grants a 30-day stay from your chosen entry date, so your return date is set automatically. A decision normally takes about 3–4 business days.",
+    processingText:
+      "Fully electronic — no original passport is sent anywhere and no embassy visit is required. The e-Visa is issued by the Vietnam Immigration Department and sent to you as a PDF by email.",
+    contacts: [],
+    documents: [
+      "Passport copy",
+      "Korean ARC — front and back",
+      "Recent photo 4 × 6 cm, white background",
+      "Home-country family member's full name, phone and address",
+      "Planned spending in Vietnam (USD)",
+      "Who is financing the trip",
+    ],
+  },
 };
 
 // `rules` defaults to the code table; pass the DB-backed ruleset slice to
@@ -389,7 +477,7 @@ export function getRecommendation(
   let recommendedEndISO: string | null = null;
   const anchor = parseISO(anchorISO);
   if (anchor) {
-    const start = addDays(anchor, rule.leadMinDays);
+    const start = earliestTravelStart(rule, anchor);
     recommendedStartISO = toISO(start);
     recommendedEndISO = toISO(addDays(start, rule.recommendedStayMin - 1));
   }
@@ -414,7 +502,7 @@ export function travelStartWindow(
   const rule = getDestinationRule(destination, rules);
   const anchor = parseISO(anchorISO);
   if (!rule || !anchor) return { minISO: null, maxISO: null };
-  const min = addDays(anchor, rule.leadMinDays);
+  const min = earliestTravelStart(rule, anchor);
   const max =
     rule.leadMaxMonths != null
       ? addMonths(anchor, rule.leadMaxMonths)
@@ -518,6 +606,27 @@ export const COUNTRY_GUIDANCE: Record<string, CountryGuidance> = {
       "Prepare proof of funds, accommodation, return flights, and proof of residence in Korea (ARC).",
     ],
   },
+
+  Vietnam: {
+    visaValidity:
+      "Vietnam e-Visas are single-entry and valid for 30 days from the entry date you choose — there is no separate 90-day option in this flow.",
+    maxStay:
+      "This service is built around a fixed 30-day stay: your return date is set automatically to 29 days after your entry date, making 30 days in total including the day you arrive.",
+    processingTime:
+      "e-Visa processing usually takes about 3–4 business days after submission. There is no embassy appointment — everything is handled online and the approved e-Visa (PDF) arrives by email.",
+    whyRecommendedDates:
+      "Because processing takes a few business days, choose an entry date at least 4 days after your planned application date so the e-Visa is approved before you fly.",
+    risksTooClose:
+      "Applying too close to your travel date risks the e-Visa not arriving in time — there is no way to expedite or walk in, so build in a safe margin.",
+    recommendedDuration:
+      "The e-Visa is issued for 30 days; the return date is calculated automatically and cannot be extended within this flow.",
+    importantNotes: [
+      "Upload a recent photo, 4 × 6 cm, plain white background, taken within the last 6 months.",
+      "Provide the full name, phone number and home address of a family member in your home country — Vietnam's e-Visa asks for this contact.",
+      "State how much you plan to spend in Vietnam (USD) and who is financing the trip.",
+      "Upload clear ARC front and back copies alongside your passport.",
+    ],
+  },
 };
 
 export function getCountryGuidance(
@@ -585,7 +694,7 @@ export function validateDates(
   }
 
   if (anchor && start) {
-    const minStart = addDays(anchor, rule.leadMinDays);
+    const minStart = earliestTravelStart(rule, anchor);
     const maxStart =
       rule.leadMaxMonths != null
         ? addMonths(anchor, rule.leadMaxMonths)

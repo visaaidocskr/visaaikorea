@@ -80,7 +80,10 @@ function SetupNotice() {
 export default async function ApplyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ new?: string; app?: string }>;
+  // `step` lets us deep-link into a specific wizard step — used by the
+  // "Open my application to fix this" button on the client's application
+  // page, which should land on the fields/uploads, not back on Destination.
+  searchParams: Promise<{ new?: string; app?: string; step?: string }>;
 }) {
   if (!isSupabaseConfigured()) return <SetupNotice />;
 
@@ -236,6 +239,22 @@ export default async function ApplyPage({
     taiwan_travel_purpose_other: app?.taiwan_travel_purpose_other ?? "",
     taiwan_background_answers:
       app?.taiwan_background_answers ?? { ...EMPTY_TAIWAN_BACKGROUND },
+
+    // --- Vietnam application fields (0012) -----------------------------------
+    vietnam_family_member_name: details?.vietnam_family_member_name ?? "",
+    vietnam_family_member_phone: details?.vietnam_family_member_phone ?? "",
+    vietnam_family_member_address: details?.vietnam_family_member_address ?? "",
+    vietnam_family_member_relationship:
+      details?.vietnam_family_member_relationship ?? "",
+    vietnam_family_member_relationship_other:
+      details?.vietnam_family_member_relationship_other ?? "",
+    vietnam_insurance_purchased: app?.vietnam_insurance_purchased ?? null,
+    vietnam_financing_source: details?.vietnam_financing_source ?? "",
+    vietnam_financier_name: details?.vietnam_financier_name ?? "",
+    vietnam_financier_relationship: details?.vietnam_financier_relationship ?? "",
+    vietnam_financier_phone: details?.vietnam_financier_phone ?? "",
+    vietnam_financier_address: details?.vietnam_financier_address ?? "",
+    vietnam_express_requested: app?.vietnam_express_requested ?? null,
   };
 
   const initialUploads: Record<string, string> = {};
@@ -265,6 +284,7 @@ export default async function ApplyPage({
           initialForm={initialForm}
           initialUploads={initialUploads}
           ruleset={ruleset}
+          initialStepName={sp?.step}
         />
       </div>
     </main>

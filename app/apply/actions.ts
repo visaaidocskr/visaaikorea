@@ -106,10 +106,10 @@ function humanizeDbError(message: string): string {
     );
   if (schemaIssue) {
     console.error(
-      "[db] SCHEMA MISMATCH — apply supabase/migrations/0006_japan_application.sql and 0007_taiwan_application.sql, then reload the PostgREST schema cache. Raw error:",
+      "[db] SCHEMA MISMATCH — apply supabase/migrations/0006_japan_application.sql, 0007_taiwan_application.sql and 0012_vietnam_application.sql, then reload the PostgREST schema cache. Raw error:",
       message
     );
-    return `Database schema is out of date — a required update isn't visible to the API yet. Details: ${message}. Fix: (1) run supabase/migrations/0006_japan_application.sql and 0007_taiwan_application.sql, then (2) reload the API schema cache — Supabase Dashboard → Settings → API → “Reload schema”, or run: NOTIFY pgrst, 'reload schema';`;
+    return `Database schema is out of date — a required update isn't visible to the API yet. Details: ${message}. Fix: (1) run supabase/migrations/0006_japan_application.sql, 0007_taiwan_application.sql and 0012_vietnam_application.sql, then (2) reload the API schema cache — Supabase Dashboard → Settings → API → “Reload schema”, or run: NOTIFY pgrst, 'reload schema';`;
   }
   return message;
 }
@@ -172,6 +172,9 @@ export async function saveApplication(
       taiwan_travel_purpose: nullIfEmpty(form.taiwan_travel_purpose),
       taiwan_travel_purpose_other: nullIfEmpty(form.taiwan_travel_purpose_other),
       taiwan_background_answers: form.taiwan_background_answers,
+      // Vietnam trip-level fields (0012)
+      vietnam_express_requested: form.vietnam_express_requested,
+      vietnam_insurance_purchased: form.vietnam_insurance_purchased,
     })
     .eq("id", applicationId)
     .eq("user_id", session.user.id);
@@ -215,6 +218,21 @@ export async function saveApplication(
         // Taiwan personal fields (0007)
         home_country_address: nullIfEmpty(form.home_country_address),
         home_country_phone: nullIfEmpty(form.home_country_phone),
+        // Vietnam personal fields (0012)
+        vietnam_family_member_name: nullIfEmpty(form.vietnam_family_member_name),
+        vietnam_family_member_phone: nullIfEmpty(form.vietnam_family_member_phone),
+        vietnam_family_member_address: nullIfEmpty(form.vietnam_family_member_address),
+        vietnam_family_member_relationship: nullIfEmpty(
+          form.vietnam_family_member_relationship
+        ),
+        vietnam_family_member_relationship_other: nullIfEmpty(
+          form.vietnam_family_member_relationship_other
+        ),
+        vietnam_financing_source: nullIfEmpty(form.vietnam_financing_source),
+        vietnam_financier_name: nullIfEmpty(form.vietnam_financier_name),
+        vietnam_financier_relationship: nullIfEmpty(form.vietnam_financier_relationship),
+        vietnam_financier_phone: nullIfEmpty(form.vietnam_financier_phone),
+        vietnam_financier_address: nullIfEmpty(form.vietnam_financier_address),
       },
       { onConflict: "application_id" }
     );
@@ -514,8 +532,19 @@ export async function submitApplication(
     .select("marital_status")
     .eq("application_id", applicationId)
     .maybeSingle();
-  if (!app.destination_country || !app.nationality || !app.korean_visa_status) {
-    return { ok: false, error: "Please complete destination, nationality, and Korean visa status." };
+  // Vietnam's e-Visa flow never asks for a Korean visa status (the portal
+  // doesn't want one), so requiring it here would block every Vietnam
+  // submission. Every other destination still needs it — the status drives
+  // their document checklist.
+  const isVietnam = app.destination_country === "Vietnam";
+  if (!app.destination_country || !app.nationality) {
+    return { ok: false, error: "Please complete destination and nationality." };
+  }
+  if (!isVietnam && !app.korean_visa_status) {
+    return {
+      ok: false,
+      error: "Please complete destination, nationality, and Korean visa status.",
+    };
   }
 
   const ruleset = await resolveRuleset();
@@ -556,12 +585,22 @@ export async function submitApplication(
     .eq("application_id", applicationId);
 
   const uploaded = new Set((files ?? []).map((f) => f.file_type));
-  const missing = documentsForStatus(
-    app.korean_visa_status,
-    ruleset.baseDocuments,
-    ruleset.statusDocuments,
-    details?.marital_status ?? undefined
-  )
+  // Vietnam has no Korean-visa-status document set — just the base identity
+  // documents plus the 4×6 photo the e-Visa portal requires. Mirrors the
+  // wizard's own gating so the client can't be blocked here by a rule it was
+  // never shown.
+  const requiredDocs = isVietnam
+    ? [
+        ...ruleset.baseDocuments,
+        { key: "vietnam_photo", labelEn: "Photo, 4 × 6 cm", required: true },
+      ]
+    : documentsForStatus(
+        app.korean_visa_status,
+        ruleset.baseDocuments,
+        ruleset.statusDocuments,
+        details?.marital_status ?? undefined
+      );
+  const missing = requiredDocs
     .filter((d) => d.required && !uploaded.has(d.key))
     .map((d) => d.labelEn);
 

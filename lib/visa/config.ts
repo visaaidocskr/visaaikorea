@@ -7,13 +7,30 @@ import type {
 } from "@/lib/visa/types";
 
 // --- Destinations + cities -------------------------------------------------
-export const DESTINATIONS = ["Japan", "Taiwan", "Singapore", "Spain"] as const;
+export const DESTINATIONS = [
+  "Japan",
+  "Taiwan",
+  "Singapore",
+  "Spain",
+  "Vietnam",
+] as const;
 
 export const DESTINATION_CITIES: Record<string, string[]> = {
   Japan: ["Tokyo", "Osaka", "Fukuoka"],
   Taiwan: ["Taipei"],
   Singapore: ["Singapore"],
   Spain: ["Madrid", "Barcelona", "Valencia", "Seville", "Malaga", "Other"],
+  Vietnam: [
+    "Hanoi",
+    "Ho Chi Minh City",
+    "Da Nang",
+    "Nha Trang",
+    "Hoi An",
+    "Phu Quoc",
+    "Hue",
+    "Ha Long",
+    "Other",
+  ],
 };
 
 // --- Nationalities (form dropdown) ----------------------------------------

@@ -13,6 +13,7 @@ import {
   getCountryGuidance,
   travelStartWindow,
   toISO,
+  vietnamStayEndISO,
   validateDates,
   japanRouteForRegion,
   KOREA_REGIONS,
@@ -33,13 +34,24 @@ import {
   isCompleteAddress,
 } from "@/lib/visa/forms";
 import { isSubmissionDateBlocked } from "@/lib/visa/japanEmbassy";
+import {
+  vietnamSubmissionDateBlock,
+  isVietnamSubmissionDateBlocked,
+} from "@/lib/visa/vietnamEvisa";
 import type { ApplyFormData, CompanionInput } from "@/lib/visa/types";
 import { saveApplication, submitApplication } from "@/app/apply/actions";
 import { UploadField } from "@/app/apply/UploadField";
 import { PassportScanPanel } from "@/app/apply/PassportScanPanel";
 import { GuidanceModal } from "@/app/apply/GuidanceModal";
 import { DatePicker } from "@/app/apply/DatePicker";
-import { Input, Select, BooleanChoice, Textarea } from "@/app/apply/fields";
+import {
+  Input,
+  Select,
+  BooleanChoice,
+  Textarea,
+  ChoiceGroup,
+  FIELD_ERROR_ATTR,
+} from "@/app/apply/fields";
 import { SupportContactCard } from "@/app/apply/japan/SupportContactCard";
 import { PersonalStep } from "@/app/apply/japan/PersonalStep";
 import { PassportStep } from "@/app/apply/japan/PassportStep";
@@ -73,6 +85,19 @@ import { TAIWAN_MARITAL_OPTIONS } from "@/app/apply/fields";
 // longer its own step — those uploads now render inline inside
 // KoreaStatusStep, right next to the university/employer fields that make
 // them relevant (see "Application Details" below).
+// Vietnam's emergency-contact relationship options. Stored lowercase (matching
+// the DB check values); shown capitalised in the dropdown.
+const RELATIONSHIP_LABELS: Record<
+  Exclude<ApplyFormData["vietnam_family_member_relationship"], "">,
+  string
+> = {
+  father: "Father",
+  mother: "Mother",
+  brother: "Brother",
+  sister: "Sister",
+  other: "Other",
+};
+
 const RICH_APPLICATION_STEPS = [
   "Destination",
   "Identity Documents",
@@ -90,6 +115,10 @@ type Props = {
   // Resolved server-side (DB overrides over code defaults) and passed down so
   // the engine selectors read live rules without the client fetching anything.
   ruleset: VisaRuleset;
+  // Optional step to open on, by name (e.g. "Applicant") — used for deep
+  // links like "fix the document we flagged". Ignored if the name isn't part
+  // of this flow's step list.
+  initialStepName?: string;
 };
 
 export function ApplyWizard({
@@ -98,9 +127,19 @@ export function ApplyWizard({
   initialForm,
   initialUploads,
   ruleset,
+  initialStepName,
 }: Props) {
   const router = useRouter();
-  const [step, setStep] = useState(0);
+  // Resolved against the real step list below (which depends on eligibility);
+  // this is just the requested index within the flow this destination uses.
+  const [step, setStep] = useState(() => {
+    if (!initialStepName) return 0;
+    const flowSteps = RICH_APPLICATION_STEPS.includes(initialStepName)
+      ? RICH_APPLICATION_STEPS
+      : ["Destination", "Applicant", "Companions", "Guidance"];
+    const idx = flowSteps.indexOf(initialStepName);
+    return idx > 0 ? idx : 0;
+  });
   const [form, setForm] = useState<ApplyFormData>(initialForm);
   const [uploads, setUploads] =
     useState<Record<string, string>>(initialUploads);
@@ -142,6 +181,10 @@ export function ApplyWizard({
   const rule = getDestinationRule(form.destination_country, ruleset.dateRules);
   const isJapan = form.destination_country === "Japan";
   const isTaiwan = form.destination_country === "Taiwan";
+  // Vietnam is a plain e-Visa flow: no embassy appointment, no flight/hotel
+  // booking proof up front (unlike Singapore/Spain), and a fixed one-month
+  // stay whose end date is calculated, not chosen — see the effect below.
+  const isVietnam = form.destination_country === "Vietnam";
 
   // Real-time field validity (used for both inline errors and gating).
   const emailValid = isValidEmail(form.client_email);
@@ -250,6 +293,21 @@ export function ApplyWizard({
     window.history.pushState({ step: next }, "");
   }
 
+  // Vietnam's return date is derived from the entry date (a flat 30-day
+  // stay), never chosen — so it's computed here rather than trusted from form
+  // state. A draft saved before this rule (or under an older version of it)
+  // would otherwise keep a stale end date that silently fails validation,
+  // with the applicant unable to correct a field they aren't allowed to edit.
+  const vietnamEndISO =
+    isVietnam && form.travel_start_date
+      ? vietnamStayEndISO(form.travel_start_date)
+      : "";
+  const travelEndDate = vietnamEndISO || form.travel_end_date;
+  // What gets persisted — so a stale stored value is repaired on the next save.
+  const formToSave: ApplyFormData = vietnamEndISO
+    ? { ...form, travel_end_date: vietnamEndISO }
+    : form;
+
   const dateCheck: DateValidation = useMemo(
     () =>
       validateDates(
@@ -257,7 +315,7 @@ export function ApplyWizard({
         {
           planned_submission_date: form.planned_submission_date,
           travel_start_date: form.travel_start_date,
-          travel_end_date: form.travel_end_date,
+          travel_end_date: travelEndDate,
         },
         ruleset.dateRules
       ),
@@ -265,7 +323,7 @@ export function ApplyWizard({
       form.destination_country,
       form.planned_submission_date,
       form.travel_start_date,
-      form.travel_end_date,
+      travelEndDate,
       ruleset.dateRules,
     ]
   );
@@ -298,7 +356,11 @@ export function ApplyWizard({
   // they're critical for document generation. Without a confirmed booking we
   // block progress and show our contacts instead of letting the applicant
   // fill everything out only to get stuck later.
-  const bookingsRequired = outcome != null && requiresApplication(outcome);
+  // Vietnam's e-Visa doesn't need a confirmed flight/hotel reservation up
+  // front — the portal doesn't ask for one, unlike Singapore/Spain's embassy
+  // submission, which does.
+  const bookingsRequired =
+    outcome != null && requiresApplication(outcome) && !isVietnam;
   const bookingsConfirmed = form.flight_booked === true && form.accommodation_booked === true;
   const destinationValid =
     form.nationality !== "" &&
@@ -404,23 +466,69 @@ export function ApplyWizard({
       : japanEmploymentKind === "employer"
         ? orgFieldsFilled && form.position_title.trim() !== ""
         : true);
+  // --- Vietnam-only fields (0012) -------------------------------------------
+  const vietnamFinancingValid =
+    form.vietnam_financing_source === "personal" ||
+    (form.vietnam_financing_source === "other" &&
+      form.vietnam_financier_name.trim() !== "" &&
+      form.vietnam_financier_relationship.trim() !== "" &&
+      form.vietnam_financier_phone.trim() !== "" &&
+      form.vietnam_financier_address.trim() !== "");
+  const vietnamPhotoUploaded = Boolean(uploads["vietnam_photo"]);
+  // A weekend application date can't be honoured (we don't submit then), so
+  // it's blocked here as well as greyed out in the picker.
+  const vietnamSubmissionDateOk =
+    !form.planned_submission_date ||
+    !isVietnamSubmissionDateBlocked(form.planned_submission_date);
+  const vietnamFieldsValid =
+    !isVietnam ||
+    (form.vietnam_family_member_name.trim() !== "" &&
+      form.vietnam_family_member_phone.trim() !== "" &&
+      form.vietnam_family_member_address.trim() !== "" &&
+      form.vietnam_family_member_relationship !== "" &&
+      // "Other" is only answered once the free-text box is actually filled in.
+      (form.vietnam_family_member_relationship !== "other" ||
+        form.vietnam_family_member_relationship_other.trim() !== "") &&
+      form.vietnam_insurance_purchased !== null &&
+      form.vietnam_financing_source !== "" &&
+      vietnamFinancingValid &&
+      vietnamPhotoUploaded &&
+      vietnamSubmissionDateOk);
+
   // The merged generic-flow "Applicant" page = every field from what used to
   // be separate Applicant/Korea-Status/Documents steps, all valid at once.
+  // Vietnam skips the flight/hotel booking requirement (the e-Visa portal
+  // doesn't ask for one), skips Korean visa status / occupation / employer /
+  // status-specific documents entirely (not asked at all, regardless of
+  // status), and adds its own small field set above instead.
+  // Passport identity block on the generic "Applicant" page. Mostly MRZ
+  // auto-filled, but still gated: an e-Visa can't be submitted without a
+  // passport number and valid dates, and a typo'd expiry is worth catching
+  // here rather than at the embassy.
+  const genericPassportValid =
+    form.date_of_birth !== "" &&
+    form.passport_number.trim() !== "" &&
+    form.passport_issue_date !== "" &&
+    form.passport_expiry_date !== "" &&
+    form.passport_issue_date < form.passport_expiry_date;
+
   const applicantValid =
     form.full_name_as_passport.trim() !== "" &&
     form.surname.trim() !== "" &&
     form.given_name.trim() !== "" &&
     (!fatherRequired || form.middle_name_or_patronymic.trim() !== "") &&
+    genericPassportValid &&
     emailValid &&
     form.client_phone.trim() !== "" &&
-    form.korean_visa_status !== "" &&
+    (isVietnam || form.korean_visa_status !== "") &&
     addressValid &&
     dateCheck.ok &&
     baseUploadsValid &&
-    flightValid &&
-    accommodationValid &&
-    koreaOrgValid &&
-    statusDocsValid;
+    (isVietnam || flightValid) &&
+    (isVietnam || accommodationValid) &&
+    (isVietnam || koreaOrgValid) &&
+    (isVietnam || statusDocsValid) &&
+    vietnamFieldsValid;
   // Planned submission date (if set) must be an embassy business day.
   const submissionDateOk =
     !form.planned_submission_date ||
@@ -818,7 +926,7 @@ export function ApplyWizard({
     setNotice(null);
     startSaving(async () => {
       try {
-        const res = await saveApplication(applicationId, form);
+        const res = await saveApplication(applicationId, formToSave);
         if (!res.ok) return setNotice({ kind: "err", text: res.error });
         then?.();
       } catch {
@@ -832,7 +940,7 @@ export function ApplyWizard({
   function advanceAndPersist() {
     setNotice(null);
     changeStep(Math.min(stepIndex + 1, steps.length - 1));
-    void saveApplication(applicationId, form)
+    void saveApplication(applicationId, formToSave)
       .then((res) => {
         if (!res.ok) setNotice({ kind: "err", text: res.error });
       })
@@ -843,8 +951,44 @@ export function ApplyWizard({
         });
       });
   }
+  // Scrolls to the first unfinished field on the current step and puts the
+  // cursor in it. Works off the FIELD_ERROR_ATTR marker every field primitive
+  // renders when it's incomplete, so it covers every destination and every
+  // field type without the wizard needing a list of them — and keeps working
+  // as fields are added.
+  function scrollToFirstIncompleteField(): boolean {
+    const marker = document.querySelector<HTMLElement>(`[${FIELD_ERROR_ATTR}]`);
+    if (!marker) return false;
+
+    // The marker sits just after its field; scroll the whole field group into
+    // view rather than the tiny error line at the bottom of it.
+    const group = marker.closest("div");
+    (group ?? marker).scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Focus the field itself so the applicant can type straight away.
+    const focusable = group?.querySelector<HTMLElement>(
+      "input:not([type=hidden]), select, textarea, button:not([disabled])"
+    );
+    focusable?.focus({ preventScroll: true });
+    return true;
+  }
+
   function next() {
     const advance = () => changeStep(Math.min(stepIndex + 1, steps.length - 1));
+
+    // Continue is never disabled — pressing it with something missing takes
+    // the applicant to that field instead of silently doing nothing, which
+    // is what a greyed-out button felt like.
+    if (!canAdvance) {
+      setNotice(null);
+      if (!scrollToFirstIncompleteField()) {
+        setNotice({
+          kind: "err",
+          text: "Some required information on this step is still missing.",
+        });
+      }
+      return;
+    }
     // Visa-free travellers aren't building an application — just show guidance.
     if (outcome === "visa_free") return advance();
     // Right as the applicant leaves "Destination", show the document-prep
@@ -876,7 +1020,7 @@ export function ApplyWizard({
     setNotice(null);
     startSaving(async () => {
       try {
-        const saved = await saveApplication(applicationId, form);
+        const saved = await saveApplication(applicationId, formToSave);
         if (!saved.ok) return setNotice({ kind: "err", text: saved.error });
         const res = await submitApplication(applicationId, consent);
         if (!res.ok) return setNotice({ kind: "err", text: res.error });
@@ -1154,13 +1298,60 @@ export function ApplyWizard({
 
         {current === "Applicant" && (
           <div className="space-y-8">
-            <section className="space-y-6">
+            {/* Uploads come FIRST, before any typing — scanning the passport
+                auto-reads the name, passport number and dates (MRZ), so the
+                fields below arrive pre-filled instead of hand-typed. This
+                mirrors the rich (Japan/Taiwan) flow, where identity documents
+                are their own first step for the same reason. */}
+            <section>
+              <h3 className="text-xl font-bold">Identity documents</h3>
+              <p className="mt-1 text-sm text-slate-600">
+                Upload your passport first — we can auto-read your name, passport
+                number and dates from it so you don&rsquo;t have to type them.
+              </p>
+              <div className="mt-4 grid gap-6 md:grid-cols-3">
+                {ruleset.baseDocuments.map((doc) => (
+                  <UploadField
+                    key={doc.key}
+                    applicationId={applicationId}
+                    userId={userId}
+                    fileType={doc.key}
+                    label={doc.labelEn}
+                    required={doc.required}
+                    initialFilename={uploads[doc.key]}
+                    onUploaded={onUploaded}
+                  />
+                ))}
+                {isVietnam && (
+                  <UploadField
+                    applicationId={applicationId}
+                    userId={userId}
+                    fileType="vietnam_photo"
+                    label="Photo, 4 × 6 cm"
+                    hint="White background, taken in the last 6 months, no glasses or hat."
+                    required
+                    initialFilename={uploads["vietnam_photo"]}
+                    onUploaded={onUploaded}
+                  />
+                )}
+              </div>
+              {uploads["passport"] && (
+                <PassportScanPanel
+                  applicationId={applicationId}
+                  passportFilename={uploads["passport"]}
+                  set={set}
+                />
+              )}
+            </section>
+
+            <section className="space-y-6 border-t border-slate-200 pt-8">
               <div>
                 <h3 className="text-xl font-bold text-slate-900">
                   Applicant information
                 </h3>
                 <p className="mt-1 text-sm text-slate-600">
-                  Enter your details exactly as they appear on your passport and ARC.
+                  If you uploaded your passport above, some fields are already
+                  filled in — please double-check them against your passport and ARC.
                 </p>
               </div>
               <div className="grid gap-6 md:grid-cols-2">
@@ -1216,6 +1407,51 @@ export function ApplyWizard({
                 />
               </div>
 
+              {/* Date of birth, passport number and expiry all come straight
+                  off the MRZ scan above. The issue date does NOT — the MRZ
+                  simply doesn't encode it — so that one is typed in, and is
+                  labelled as such rather than pretending it was read. */}
+              <div className="grid gap-6 md:grid-cols-2">
+                <DatePicker
+                  label="Date of birth"
+                  value={form.date_of_birth}
+                  onChange={(v) => set("date_of_birth", v)}
+                  maxISO={todayISO}
+                  showYearMonth
+                />
+                <Input
+                  label="Passport number"
+                  value={form.passport_number}
+                  onChange={(v) => set("passport_number", v.toUpperCase())}
+                />
+                <DatePicker
+                  label="Passport issue date"
+                  value={form.passport_issue_date}
+                  onChange={(v) => set("passport_issue_date", v)}
+                  maxISO={
+                    form.passport_expiry_date &&
+                    form.passport_expiry_date < todayISO
+                      ? form.passport_expiry_date
+                      : todayISO
+                  }
+                  showYearMonth
+                />
+                <DatePicker
+                  label="Passport expiry date"
+                  value={form.passport_expiry_date}
+                  onChange={(v) => set("passport_expiry_date", v)}
+                  minISO={form.passport_issue_date || null}
+                  showYearMonth
+                  error={
+                    form.passport_issue_date &&
+                    form.passport_expiry_date &&
+                    form.passport_expiry_date <= form.passport_issue_date
+                      ? "Expiry must be after the date of issue."
+                      : undefined
+                  }
+                />
+              </div>
+
               <Input
                 label="Current full address in Korea (as on your ARC)"
                 value={form.current_korea_address}
@@ -1230,19 +1466,25 @@ export function ApplyWizard({
               />
             </section>
 
-            <section className="space-y-6 border-t border-slate-200 pt-8">
-              <KoreaStatusStep
-                form={form}
-                set={set}
-                koreanVisaTypes={ruleset.koreanVisaTypes}
-                applicationId={applicationId}
-                userId={userId}
-                uploads={uploads}
-                onUploaded={onUploaded}
-                statusDocs={statusDocs}
-                showContactFields={false}
-              />
-            </section>
+            {/* Vietnam's e-Visa doesn't ask about occupation, employer/
+                university, or Korean-visa-status-specific documents at all —
+                skip this whole step regardless of which status is chosen
+                (D-2, E-9, etc.). */}
+            {!isVietnam && (
+              <section className="space-y-6 border-t border-slate-200 pt-8">
+                <KoreaStatusStep
+                  form={form}
+                  set={set}
+                  koreanVisaTypes={ruleset.koreanVisaTypes}
+                  applicationId={applicationId}
+                  userId={userId}
+                  uploads={uploads}
+                  onUploaded={onUploaded}
+                  statusDocs={statusDocs}
+                  showContactFields={false}
+                />
+              </section>
+            )}
 
             <section className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1282,13 +1524,35 @@ export function ApplyWizard({
                         onChange={(v) => set("planned_submission_date", v)}
                         required={anchorNeeded}
                         minISO={todayISO}
-                        error={dateCheck.errors.anchor}
+                        error={
+                          dateCheck.errors.anchor ??
+                          // A weekend date saved before this rule existed (or
+                          // typed in some other way) would otherwise block
+                          // Continue with nothing on screen explaining why.
+                          (isVietnam && form.planned_submission_date
+                            ? vietnamSubmissionDateBlock(
+                                form.planned_submission_date
+                              )?.message
+                            : undefined)
+                        }
                         onOpen={onDateFocus}
+                        blockedDate={isVietnam ? vietnamSubmissionDateBlock : undefined}
                       />
                       <DatePicker
                         label="Travel start date"
                         value={form.travel_start_date}
-                        onChange={(v) => set("travel_start_date", v)}
+                        onChange={(v) => {
+                          set("travel_start_date", v);
+                          // Vietnam's e-Visa grants a flat 30-day stay — the
+                          // applicant doesn't choose a length like other
+                          // destinations, so the return date is calculated
+                          // right here instead of via a free DatePicker
+                          // (which is disabled for Vietnam below).
+                          if (isVietnam) {
+                            const computedEnd = vietnamStayEndISO(v);
+                            if (computedEnd) set("travel_end_date", computedEnd);
+                          }
+                        }}
                         minISO={startWindow.minISO}
                         maxISO={startWindow.maxISO}
                         error={dateCheck.errors.travel_start}
@@ -1297,11 +1561,11 @@ export function ApplyWizard({
                       />
                       <DatePicker
                         label="Travel end date"
-                        value={form.travel_end_date}
+                        value={travelEndDate}
                         onChange={(v) => set("travel_end_date", v)}
                         minISO={form.travel_start_date || null}
                         error={dateCheck.errors.travel_end}
-                        disabled={endGated}
+                        disabled={endGated || isVietnam}
                         onOpen={onDateFocus}
                       />
                     </div>
@@ -1311,6 +1575,12 @@ export function ApplyWizard({
                         your travel dates.
                       </p>
                     )}
+                    {isVietnam && form.travel_start_date && (
+                      <p className="text-sm text-slate-500">
+                        Set automatically — the Vietnam e-Visa is valid for exactly
+                        30 days from your entry date.
+                      </p>
+                    )}
                   </>
                 );
               })()}
@@ -1318,6 +1588,7 @@ export function ApplyWizard({
               {dateCheck.errors.stay && (
                 <p
                   role="alert"
+                  {...{ [FIELD_ERROR_ATTR]: "" }}
                   className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600"
                 >
                   {dateCheck.errors.stay}
@@ -1340,42 +1611,183 @@ export function ApplyWizard({
               />
             </section>
 
-            <div>
-              <h3 className="text-xl font-bold">Identity documents</h3>
-              <div className="mt-4 grid gap-6 md:grid-cols-3">
-                {ruleset.baseDocuments.map((doc) => (
-                  <UploadField
-                    key={doc.key}
-                    applicationId={applicationId}
-                    userId={userId}
-                    fileType={doc.key}
-                    label={doc.labelEn}
-                    required={doc.required}
-                    initialFilename={uploads[doc.key]}
-                    onUploaded={onUploaded}
-                  />
-                ))}
-              </div>
-              {uploads["passport"] && (
-                <PassportScanPanel
-                  applicationId={applicationId}
-                  passportFilename={uploads["passport"]}
-                  set={set}
-                />
-              )}
-            </div>
+            {isVietnam && (
+              <div className="space-y-6 border-t border-slate-200 pt-8">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">
+                    Vietnam e-Visa details
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-600">
+                    A few extra questions the Vietnam e-Visa portal itself asks
+                    for.
+                  </p>
+                </div>
 
-            <div className="border-t border-slate-200 pt-8">
-              <TravelBookingsStep
-                form={form}
-                set={set}
-                applicationId={applicationId}
-                userId={userId}
-                uploads={uploads}
-                onUploaded={onUploaded}
-                countryLabel={form.destination_country || "Japan"}
-              />
-            </div>
+                <div className="rounded-2xl bg-slate-50 px-5 py-4">
+                  <h4 className="text-sm font-bold text-slate-800">
+                    Emergency contact at home
+                  </h4>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                    Vietnam&rsquo;s e-Visa form asks for someone in your home
+                    country who can be reached if an emergency happens while
+                    you&rsquo;re in Vietnam — an accident, hospitalisation, a lost
+                    passport. It is not used for anything else, and they are not
+                    contacted as part of your application.
+                  </p>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Input
+                    label="Family member's full name (in your home country)"
+                    value={form.vietnam_family_member_name}
+                    onChange={(v) =>
+                      set("vietnam_family_member_name", formatName(v))
+                    }
+                    helpText="Latin capitals, as written in their passport."
+                  />
+                  <Input
+                    label="Their phone number"
+                    value={form.vietnam_family_member_phone}
+                    onChange={(v) => set("vietnam_family_member_phone", v)}
+                    type="tel"
+                    inputMode="tel"
+                  />
+                </div>
+                <Input
+                  label="Their full home address"
+                  value={form.vietnam_family_member_address}
+                  onChange={(v) => set("vietnam_family_member_address", v)}
+                />
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Select
+                    label="Relationship to you"
+                    value={
+                      form.vietnam_family_member_relationship
+                        ? RELATIONSHIP_LABELS[
+                            form.vietnam_family_member_relationship
+                          ]
+                        : ""
+                    }
+                    onChange={(v) =>
+                      set(
+                        "vietnam_family_member_relationship",
+                        (v.toLowerCase() ||
+                          "") as ApplyFormData["vietnam_family_member_relationship"]
+                      )
+                    }
+                    options={Object.values(RELATIONSHIP_LABELS)}
+                  />
+                  {form.vietnam_family_member_relationship === "other" && (
+                    <Input
+                      label="Please specify"
+                      value={form.vietnam_family_member_relationship_other}
+                      onChange={(v) =>
+                        set("vietnam_family_member_relationship_other", v)
+                      }
+                      placeholder="e.g. spouse, uncle, cousin"
+                    />
+                  )}
+                </div>
+
+                <BooleanChoice
+                  label="Have you already bought travel insurance for this trip?"
+                  value={form.vietnam_insurance_purchased}
+                  onChange={(v) => set("vietnam_insurance_purchased", v)}
+                  helpText="Travel insurance isn't mandatory for the Vietnam e-Visa, but it's strongly recommended — it covers medical costs if you fall ill or have an accident there."
+                />
+
+                <ChoiceGroup
+                  label="Who is financing this trip?"
+                  value={form.vietnam_financing_source}
+                  onChange={(v) =>
+                    set("vietnam_financing_source", v as "personal" | "other")
+                  }
+                  options={[
+                    { value: "personal", label: "Personal" },
+                    { value: "other", label: "Someone else" },
+                  ]}
+                />
+
+                {form.vietnam_financing_source === "other" && (
+                  <div className="grid gap-6 rounded-2xl border border-slate-200 p-5 md:grid-cols-2">
+                    <Input
+                      label="Their full name"
+                      value={form.vietnam_financier_name}
+                      onChange={(v) => set("vietnam_financier_name", formatName(v))}
+                      helpText="Latin capitals."
+                    />
+                    <Input
+                      label="Relationship to you"
+                      value={form.vietnam_financier_relationship}
+                      onChange={(v) => set("vietnam_financier_relationship", v)}
+                    />
+                    <Input
+                      label="Their phone number"
+                      value={form.vietnam_financier_phone}
+                      onChange={(v) => set("vietnam_financier_phone", v)}
+                      type="tel"
+                      inputMode="tel"
+                    />
+                    <Input
+                      label="Their address"
+                      value={form.vietnam_financier_address}
+                      onChange={(v) => set("vietnam_financier_address", v)}
+                    />
+                  </div>
+                )}
+
+                {/* Urgent/express service — optional, so it never blocks the
+                    application. Answering "yes" is a real request an admin
+                    sees in the panel, and shows our contacts right away so
+                    the applicant can reach us without hunting for them. */}
+                <div className="space-y-4 rounded-2xl border border-slate-200 p-5">
+                  <div>
+                    <h4 className="text-lg font-bold text-slate-900">
+                      Need your visa urgently?
+                    </h4>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                      Standard processing takes about 3–4 business days. If you
+                      can&rsquo;t wait that long, we can arrange an express e-Visa
+                      in about 10 hours instead.
+                    </p>
+                    <p className="mt-2 rounded-xl bg-amber-50 px-4 py-2.5 text-xs font-semibold leading-relaxed text-amber-800">
+                      Express costs extra — it&rsquo;s a separate paid service on top
+                      of the normal fee, because Vietnam charges more for urgent
+                      processing. Saying yes here doesn&rsquo;t commit you to
+                      anything: we&rsquo;ll tell you the exact price first, and you
+                      decide then.
+                    </p>
+                  </div>
+                  <BooleanChoice
+                    label="Would you like the express service?"
+                    value={form.vietnam_express_requested}
+                    onChange={(v) => set("vietnam_express_requested", v)}
+                    required={false}
+                  />
+                  {form.vietnam_express_requested === true && (
+                    <SupportContactCard
+                      title="Let's arrange your express visa."
+                      message="Message our visa agent directly and we'll confirm the fee, the exact timing, and what we need from you."
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!isVietnam && (
+              <div className="border-t border-slate-200 pt-8">
+                <TravelBookingsStep
+                  form={form}
+                  set={set}
+                  applicationId={applicationId}
+                  userId={userId}
+                  uploads={uploads}
+                  onUploaded={onUploaded}
+                  countryLabel={form.destination_country || "Japan"}
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -1398,7 +1810,9 @@ export function ApplyWizard({
 
         {current === "Guidance" && !useRichFlow && (
           <GuidanceConsentStep
-            form={form}
+            // formToSave carries the derived Vietnam return date, so the
+            // review summary shows the same dates that get submitted.
+            form={formToSave}
             uploads={uploads}
             eligibility={eligibility}
             stayDays={dateCheck.stayDays}
@@ -1406,6 +1820,8 @@ export function ApplyWizard({
             consent={consent}
             onConsentChange={setConsent}
             dateRules={ruleset.dateRules}
+            steps={steps}
+            onEditStep={goToStep}
           />
         )}
       </div>
@@ -1439,7 +1855,7 @@ export function ApplyWizard({
           <button
             type="button"
             onClick={next}
-            disabled={!canAdvance || saving}
+            disabled={saving}
             aria-busy={saving}
             className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-xl bg-blue-700 px-8 py-3 font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
@@ -1471,12 +1887,12 @@ export function ApplyWizard({
       </div>
 
       {!canAdvance && !isLastStep && (
-        <p className="mt-4 text-right text-sm font-semibold text-red-500">
+        <p className="mt-4 text-right text-sm font-semibold text-slate-500">
           {current === "Destination" && !eligibility
             ? "Select your nationality and destination to check visa requirements."
             : current === "Destination" && eligibility && bookingsRequired && !bookingsConfirmed
               ? "Please confirm your flight and hotel bookings above to continue."
-              : "Please complete the required fields on this step."}
+              : "Some fields are still missing — press Continue and we'll take you to them."}
         </p>
       )}
 
@@ -1824,6 +2240,8 @@ function GuidanceConsentStep({
   consent,
   onConsentChange,
   dateRules,
+  steps,
+  onEditStep,
 }: {
   form: ApplyFormData;
   uploads: Record<string, string>;
@@ -1833,27 +2251,64 @@ function GuidanceConsentStep({
   consent: boolean;
   onConsentChange: (v: boolean) => void;
   dateRules: VisaRuleset["dateRules"];
+  // The step list for this flow + a jump-to-step callback, so each review
+  // section can send the applicant back to the page it came from.
+  steps: string[];
+  onEditStep: (step: string) => void;
 }) {
   const rule = getDestinationRule(form.destination_country, dateRules);
   const krw = rule ? rule.bankRecommendationKRW.toLocaleString("en-US") : "5,000,000";
+  const isVietnamDestination = form.destination_country === "Vietnam";
 
-  const reviewRows: [string, string][] = [
-    [
-      "Destination",
-      [form.destination_country, form.destination_city].filter(Boolean).join(" · "),
-    ],
-    ["Nationality", form.nationality],
-    ["Korean visa status", form.korean_visa_status],
-    ["Full name (passport)", form.full_name_as_passport],
-    ["Email", form.client_email],
-    ["Phone", form.client_phone],
-    [
-      "Travel dates",
-      [form.travel_start_date, form.travel_end_date].filter(Boolean).join(" → "),
-    ],
-    ["Planned stay", stayDays != null ? `${stayDays} day${stayDays === 1 ? "" : "s"}` : "—"],
-    ["Companions", String(form.companions.filter((c) => c.full_name.trim()).length)],
-    ["Documents uploaded", String(Object.keys(uploads).length)],
+  // Grouped by the step each answer was given on, so "Edit" can send the
+  // applicant straight back to the right page instead of making them walk
+  // backwards through the whole wizard to fix one field.
+  const reviewGroups: { step: string; rows: [string, string][] }[] = [
+    {
+      step: "Destination",
+      rows: [
+        [
+          "Destination",
+          [form.destination_country, form.destination_city].filter(Boolean).join(" · "),
+        ],
+        ["Nationality", form.nationality],
+      ],
+    },
+    {
+      step: "Applicant",
+      rows: [
+        ...(form.korean_visa_status
+          ? ([["Korean visa status", form.korean_visa_status]] as [string, string][])
+          : []),
+        ["Full name (passport)", form.full_name_as_passport],
+        ["Email", form.client_email],
+        ["Phone", form.client_phone],
+        [
+          "Travel dates",
+          [form.travel_start_date, form.travel_end_date].filter(Boolean).join(" → "),
+        ],
+        [
+          "Planned stay",
+          stayDays != null ? `${stayDays} day${stayDays === 1 ? "" : "s"}` : "—",
+        ],
+        ["Documents uploaded", String(Object.keys(uploads).length)],
+      ],
+    },
+    // Only some flows collect companions — don't offer to edit a step the
+    // applicant never saw.
+    ...(steps.includes("Companions")
+      ? [
+          {
+            step: "Companions",
+            rows: [
+              [
+                "Companions",
+                String(form.companions.filter((c) => c.full_name.trim()).length),
+              ],
+            ] as [string, string][],
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -1891,10 +2346,15 @@ function GuidanceConsentStep({
             <p className="rounded-2xl bg-slate-50 px-5 py-3 text-sm text-slate-700">
               <strong>Processing:</strong> {rule.processingText}
             </p>
-            <p className="rounded-2xl bg-slate-50 px-5 py-3 text-sm text-slate-700">
-              <strong>Recommended bank balance:</strong> at least {krw} KRW per
-              applicant.
-            </p>
+            {/* Only shown where a bank balance is actually part of the
+                requirements — Vietnam's e-Visa doesn't ask for proof of
+                funds, so quoting a figure there would invent a requirement. */}
+            {rule.bankRecommendationKRW > 0 && (
+              <p className="rounded-2xl bg-slate-50 px-5 py-3 text-sm text-slate-700">
+                <strong>Recommended bank balance:</strong> at least {krw} KRW per
+                applicant.
+              </p>
+            )}
 
             {rule.contacts.length > 0 && (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -1923,25 +2383,67 @@ function GuidanceConsentStep({
               </ul>
             </details>
 
-            <p className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800">
-              After submission, your document package will be prepared. Air ticket
-              and hotel booking reservations may be sent to your email within 16
-              hours after admin review.
-            </p>
+            {/* What actually happens next. Vietnam's e-Visa is issued by
+                email, so it gets its own wording — telling a Vietnam
+                applicant to expect a "document package" and hotel bookings
+                would describe a service they didn't buy. */}
+            {isVietnamDestination ? (
+              <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm leading-relaxed text-emerald-900">
+                Your application will be submitted to the{" "}
+                <strong>Vietnam Immigration Department</strong> through its
+                official e-Visa portal. The Immigration Department decides the
+                outcome, normally within{" "}
+                <strong>3&ndash;4 business days</strong>; Saturdays and Sundays
+                are not counted. Once approved, the e-Visa is sent to your email
+                address as a PDF.
+              </p>
+            ) : (
+              <p className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-800">
+                After submission, your document package will be prepared. Air
+                ticket and hotel booking reservations may be sent to your email
+                within 16 hours after admin review.
+              </p>
+            )}
           </div>
         )}
       </div>
 
       <div>
         <h3 className="text-xl font-bold">Review</h3>
-        <dl className="mt-4 divide-y divide-slate-200 rounded-3xl border border-slate-200">
-          {reviewRows.map(([k, v]) => (
-            <div key={k} className="flex justify-between gap-4 px-6 py-3.5">
-              <dt className="text-sm font-semibold text-slate-500">{k}</dt>
-              <dd className="text-right font-semibold text-slate-900">{v || "—"}</dd>
-            </div>
+        <p className="mt-1 text-sm text-slate-600">
+          Please check everything below. If something is wrong, use{" "}
+          <strong>Edit</strong> to go back to that page — nothing you&rsquo;ve
+          filled in is lost.
+        </p>
+        <div className="mt-4 space-y-4">
+          {reviewGroups.map((group) => (
+            <dl
+              key={group.step}
+              className="divide-y divide-slate-200 rounded-3xl border border-slate-200"
+            >
+              <div className="flex items-center justify-between gap-4 px-6 py-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  {group.step}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onEditStep(group.step)}
+                  className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-1.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                >
+                  Edit
+                </button>
+              </div>
+              {group.rows.map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4 px-6 py-3.5">
+                  <dt className="text-sm font-semibold text-slate-500">{k}</dt>
+                  <dd className="text-right font-semibold text-slate-900">
+                    {v || "—"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           ))}
-        </dl>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-300 bg-slate-50 p-5">

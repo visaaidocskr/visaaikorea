@@ -88,10 +88,24 @@ const DISPLAY: Record<
     ],
     accent: "from-violet-500/15 to-fuchsia-500/5",
   },
+  Vietnam: {
+    flag: "🇻🇳",
+    visaType: "e-Visa",
+    tagline: "Hanoi · Ho Chi Minh City · Da Nang",
+    processingTime: "About 3–4 business days",
+    overview:
+      "A fully electronic Vietnam e-Visa — no embassy appointment, no original passport sent anywhere. We collect your data and the approved e-Visa (PDF) arrives by email, valid for 30 days from your entry date.",
+    notes: [
+      "Entirely online — no embassy visit required.",
+      "Issued for 30 days; your return date is set automatically.",
+      "Needs a 4×6 cm photo on a white background, plus a home-country family contact.",
+    ],
+    accent: "from-red-500/15 to-yellow-500/5",
+  },
 };
 
 // Order shown on the landing page.
-const ORDER = ["Japan", "Spain", "Taiwan", "Singapore"];
+const ORDER = ["Japan", "Spain", "Taiwan", "Singapore", "Vietnam"];
 
 export const COUNTRIES: CountryContent[] = ORDER.map((country) => {
   const d = DISPLAY[country];

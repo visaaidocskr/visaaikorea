@@ -1,6 +1,11 @@
 // Shared types for the application form + persistence layer.
 
-export type DestinationCountry = "Japan" | "Taiwan" | "Singapore" | "Spain";
+export type DestinationCountry =
+  | "Japan"
+  | "Taiwan"
+  | "Singapore"
+  | "Spain"
+  | "Vietnam";
 
 export type ApplicationStatus =
   | "draft"
@@ -10,6 +15,9 @@ export type ApplicationStatus =
   | "documents_generating"
   | "waiting_manual_reservations"
   | "completed"
+  // The outcome from the authority itself, as opposed to "completed", which
+  // only means our own work is finished. Refusals use "rejected".
+  | "visa_granted"
   | "rejected"
   | "cancelled";
 
@@ -209,6 +217,34 @@ export type ApplyFormData = {
   taiwan_travel_purpose: TaiwanTravelPurpose;
   taiwan_travel_purpose_other: string;
   taiwan_background_answers: TaiwanBackgroundAnswers;
+
+  // --- Vietnam application fields (0012). Other destinations leave these
+  // empty. No official multi-page form to replicate — this is what
+  // Vietnam's e-Visa portal itself asks beyond the generic applicant/passport
+  // fields already collected above.
+  vietnam_family_member_name: string;
+  vietnam_family_member_phone: string;
+  vietnam_family_member_address: string;
+  // How that person is related to the applicant. "other" reveals a free-text
+  // box, so an uncommon relationship can still be stated exactly.
+  vietnam_family_member_relationship:
+    | ""
+    | "father"
+    | "mother"
+    | "brother"
+    | "sister"
+    | "other";
+  vietnam_family_member_relationship_other: string;
+  // Already bought travel insurance for the trip? null = not answered yet.
+  vietnam_insurance_purchased: boolean | null;
+  vietnam_financing_source: "" | "personal" | "other";
+  vietnam_financier_name: string;
+  vietnam_financier_relationship: string;
+  vietnam_financier_phone: string;
+  vietnam_financier_address: string;
+  // Asked about the 10-hour express service? null = not answered yet. Never
+  // pre-selected — a "yes" is a real request an admin follows up on.
+  vietnam_express_requested: boolean | null;
 };
 
 // Empty defaults so builders (page.tsx initialForm) stay terse.

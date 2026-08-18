@@ -151,6 +151,26 @@ export const DESTINATION_ELIGIBILITY: Record<string, DestinationEligibility> = {
     default: { outcome: "visa_required", maxStayDays: 90 },
     byNationality: {},
   },
+
+  // Vietnam — verified against Vietnam's unilateral visa-exemption list and
+  // e-Visa policy (2026). Since 2023 the e-Visa is open to every nationality,
+  // so anyone not on the exemption list below falls through to the `default`
+  // e-Visa outcome — there is no "visa_required only" case for Vietnam.
+  Vietnam: {
+    default: { outcome: "evisa", maxStayDays: 30 },
+    byNationality: {
+      Russia: {
+        outcome: "visa_free",
+        maxStayDays: 45,
+        note: "Unilateral visa exemption, extended through 14 August 2028.",
+      },
+      Thailand: { outcome: "visa_free", maxStayDays: 30 },
+      Indonesia: { outcome: "visa_free", maxStayDays: 30 },
+      Cambodia: { outcome: "visa_free", maxStayDays: 30 },
+      Myanmar: { outcome: "visa_free", maxStayDays: 30 },
+      Philippines: { outcome: "visa_free", maxStayDays: 21 },
+    },
+  },
 };
 
 // Shared note for Taiwan's Travel Authorization Certificate route.
