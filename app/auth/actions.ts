@@ -4,9 +4,25 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { safeNextPath } from "@/lib/auth-redirect";
+import { isValidEmail } from "@/lib/visa/forms";
 
 // Shape returned to the client forms via useActionState.
 export type AuthState = { error?: string; message?: string };
+
+// The code flow is two steps, so its state has to carry which one we're on
+// and the address the code went to — the verify step needs it, and asking the
+// applicant to type it twice would defeat the point.
+export type CodeState = {
+  error?: string;
+  sent?: boolean;
+  email?: string;
+  /**
+   * When the code was sent. The resend countdown is derived from this rather
+   * than started by a timer, so it stays correct across re-renders and
+   * restarts by itself whenever a new code actually goes out.
+   */
+  sentAt?: number;
+};
 
 function siteUrl() {
   // Prefer the configured public URL; fall back to the request origin.
@@ -111,6 +127,95 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) return { error: error.message };
+
+  revalidatePath("/", "layout");
+  redirect(next);
+}
+
+/**
+ * Step 1 of signing in with a code: email the applicant a six-digit code.
+ *
+ * `shouldCreateUser: true` makes this both sign-in and sign-up — the same
+ * behaviour as the Google button, and the reason it needs no password: an
+ * applicant coming from an Instagram message gets in with an address and a
+ * code, without inventing a password or leaving to click a confirmation link.
+ *
+ * It also removes the enumeration question entirely: the response is identical
+ * whether or not an account already exists, because either way the outcome is
+ * "a code was sent to that address".
+ *
+ * NOTE: whether Supabase sends a CODE or a magic LINK is decided by the email
+ * template, not by this call. The template must render {{ .Token }} rather
+ * than {{ .ConfirmationURL }}, and no `emailRedirectTo` may be passed here —
+ * supplying one makes Supabase send a link instead.
+ */
+export async function sendEmailCode(
+  _prev: CodeState,
+  formData: FormData
+): Promise<CodeState> {
+  const email = String(formData.get("email") ?? "").trim();
+
+  if (!email) return { error: "Enter your email address." };
+  if (!isValidEmail(email)) {
+    return { error: "That doesn't look like a valid email address." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true },
+  });
+
+  if (error) {
+    // Supabase rate-limits code sends per address. Saying so is more useful
+    // than the raw message, which reads as a fault on our side.
+    if (/rate limit|too many|security purposes/i.test(error.message)) {
+      return {
+        error: "Too many codes requested. Please wait a minute and try again.",
+        sent: true,
+        email,
+        sentAt: Date.now(),
+      };
+    }
+    return { error: error.message };
+  }
+
+  return { sent: true, email, sentAt: Date.now() };
+}
+
+/** Step 2: exchange the emailed code for a session. */
+export async function verifyEmailCode(
+  _prev: CodeState,
+  formData: FormData
+): Promise<CodeState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const token = String(formData.get("token") ?? "").replace(/\D/g, "");
+  const next = safeNextPath(String(formData.get("next") ?? ""));
+
+  if (!email) return { error: "Something went wrong. Please start again." };
+  if (token.length !== 6) {
+    return { error: "Enter the 6-digit code from your email.", sent: true, email };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({
+    email,
+    token,
+    type: "email",
+  });
+
+  if (error) {
+    // Keep the applicant on the code step with the address intact, so a typo
+    // costs one retype rather than restarting the whole flow.
+    const expired = /expired|invalid/i.test(error.message);
+    return {
+      error: expired
+        ? "That code is wrong or has expired. Check the latest email, or send a new code."
+        : error.message,
+      sent: true,
+      email,
+    };
+  }
 
   revalidatePath("/", "layout");
   redirect(next);

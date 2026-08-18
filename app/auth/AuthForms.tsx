@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { EmailCodeForm } from "@/app/auth/EmailCodeForm";
 import {
   signIn,
   signUp,
@@ -112,6 +113,37 @@ export function GoogleButton({ next = "/dashboard" }: { next?: string }) {
         </span>
         <span className="h-px flex-1 bg-slate-200" />
       </div>
+    </div>
+  );
+}
+
+/**
+ * The email half of the sign-in page: a code by default, a password if they
+ * want one.
+ *
+ * The code is the default because it asks less — an address, and six digits
+ * they can read off a notification. The password form stays one click away
+ * for everyone who already has one and would rather use it than wait for an
+ * email.
+ */
+export function SignInMethods({ next }: { next: string }) {
+  const [usePassword, setUsePassword] = useState(false);
+
+  return (
+    <div className="space-y-5">
+      {usePassword ? <LoginForm next={next} /> : <EmailCodeForm next={next} />}
+
+      <p className="text-center text-sm">
+        <button
+          type="button"
+          onClick={() => setUsePassword((v) => !v)}
+          className="font-semibold text-blue-700 underline-offset-4 hover:underline"
+        >
+          {usePassword
+            ? "Email me a code instead"
+            : "Sign in with a password instead"}
+        </button>
+      </p>
     </div>
   );
 }

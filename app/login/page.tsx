@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AuthShell } from "@/app/auth/AuthShell";
-import { LoginForm, GoogleButton } from "@/app/auth/AuthForms";
+import { SignInMethods, GoogleButton } from "@/app/auth/AuthForms";
 import { safeNextPath } from "@/lib/auth-redirect";
 
 export const metadata: Metadata = { title: "Sign In · VisaAI Korea" };
@@ -45,7 +45,7 @@ export default async function LoginPage({
         </p>
       )}
       <GoogleButton next={safeNext} />
-      <LoginForm next={safeNext} />
+      <SignInMethods next={safeNext} />
     </AuthShell>
   );
 }
