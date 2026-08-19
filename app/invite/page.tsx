@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -77,13 +78,14 @@ export default async function InvitePage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
+    <main className="relative min-h-screen px-6 py-12 text-slate-900">
+      <AuroraBackdrop />
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <Link href="/dashboard" className="text-sm font-semibold text-blue-700">
             ← {t("dashboard.eyebrow")}
           </Link>
-          <h1 className="mt-3 text-4xl font-extrabold">{t("invite.pageTitle")}</h1>
+          <h1 className="text-sky-gradient mt-3 text-4xl font-extrabold">{t("invite.pageTitle")}</h1>
           <p className="mt-3 text-lg text-slate-600">
             {t("invite.pageDescription")}
           </p>

@@ -74,7 +74,7 @@ export default async function ClientApplicationDetail({
           {canEdit && (
             <Link
               href={`/apply?app=${id}`}
-              className="rounded-full bg-blue-700 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-blue-800"
+              className="rounded-full btn-glow px-4 py-1.5 text-xs font-bold text-white transition"
             >
               {t("dashboard.editApplication")}
             </Link>
@@ -115,7 +115,7 @@ export default async function ClientApplicationDetail({
               // Land on the page with the fields and uploads, not back on
               // Destination — the applicant is here to fix something specific.
               href={`/apply?app=${id}&step=${encodeURIComponent(fixStepName)}`}
-              className="mt-4 inline-block rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-800"
+              className="mt-4 inline-block rounded-xl btn-glow px-5 py-2.5 text-sm font-bold text-white transition"
             >
               {t("dashboard.fixApplication")}
             </Link>

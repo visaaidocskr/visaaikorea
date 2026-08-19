@@ -1054,7 +1054,7 @@ export function ApplyWizard({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+    <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-xl shadow-slate-200/60 backdrop-blur md:p-10">
       <Stepper steps={steps} step={stepIndex} />
 
       {notice && (
@@ -1860,7 +1860,7 @@ export function ApplyWizard({
             onClick={next}
             disabled={saving}
             aria-busy={saving}
-            className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-xl bg-blue-700 px-8 py-3 font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-xl btn-glow px-8 py-3 font-bold text-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           >
             {saving && <Spinner />}
             {current === "Destination" && outcome === "visa_free"
@@ -1881,7 +1881,7 @@ export function ApplyWizard({
             onClick={submit}
             disabled={saving || !consent || !dateCheck.ok}
             aria-busy={saving}
-            className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-xl bg-blue-700 px-8 py-3 font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-xl btn-glow px-8 py-3 font-bold text-white transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
           >
             {saving && <Spinner />}
             {saving ? t("common.submitting") : t("apply.submit")}
@@ -1940,12 +1940,23 @@ function Stepper({ steps, step }: { steps: string[]; step: number }) {
         <span className="truncate text-sm font-semibold text-slate-600">{labelFor(steps[step])}</span>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+      {/* Progress bar: a flight route the applicant flies along */}
+      <div className="relative h-2 w-full rounded-full bg-slate-100">
         <div
-          className="h-full rounded-full bg-blue-700 transition-all duration-300"
+          aria-hidden
+          className="absolute inset-0 rounded-full bg-[repeating-linear-gradient(90deg,transparent_0_10px,#E2E8F0_10px_16px)]"
+        />
+        <div
+          className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-600 via-cyan-500 to-indigo-500 transition-all duration-500"
           style={{ width: `${pct}%` }}
         />
+        <span
+          aria-hidden
+          className="absolute -top-2.5 -ml-3.5 text-base drop-shadow-sm transition-all duration-500"
+          style={{ left: `${pct}%` }}
+        >
+          ✈️
+        </span>
       </div>
 
       {/* Step chips — shown on larger screens */}
@@ -1953,7 +1964,7 @@ function Stepper({ steps, step }: { steps: string[]; step: number }) {
         {steps.map((label, i) => {
           const stateClass =
             i === step
-              ? "border-blue-700 bg-blue-700 text-white"
+              ? "border-transparent bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30"
               : i < step
                 ? "border-blue-200 bg-blue-50 text-blue-700"
                 : "border-slate-200 bg-white text-slate-500";

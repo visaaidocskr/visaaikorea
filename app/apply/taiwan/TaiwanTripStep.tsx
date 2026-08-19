@@ -138,7 +138,7 @@ export function TaiwanTripStep({
             <button
               type="button"
               onClick={applyRecommendedDates}
-              className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+              className="rounded-xl btn-glow px-4 py-2 text-sm font-bold text-white"
             >
               {t("common.useRecommendedDates")}
             </button>

@@ -60,7 +60,7 @@ export function ServiceEnquiryForm({ kind }: { kind: ServiceKind }) {
       </fieldset>
       <Field label={t("form.notes")}><textarea value={form.notes} onChange={(e) => set("notes", e.target.value)} className={inputClass} rows={4} placeholder={t("form.notesPlaceholder")} /></Field>
       <div className="rounded-2xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-600"><strong className="text-slate-900">{t("form.before")}</strong> {t("form.beforeText")}</div>
-      <button disabled={pending} className="w-full rounded-xl bg-blue-700 px-6 py-3.5 font-bold text-white transition hover:bg-blue-800 disabled:cursor-wait disabled:opacity-60">{pending ? t("form.sending") : t("action.requestQuote")}</button>
+      <button disabled={pending} className="w-full rounded-xl btn-glow px-6 py-3.5 font-bold text-white transition disabled:cursor-wait disabled:opacity-60">{pending ? t("form.sending") : t("action.requestQuote")}</button>
     </form>
   );
 }

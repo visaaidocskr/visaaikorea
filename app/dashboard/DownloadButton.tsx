@@ -24,7 +24,7 @@ export function DownloadButton({ documentId }: { documentId: string }) {
       <button
         onClick={download}
         disabled={pending}
-        className="rounded-lg bg-blue-700 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-800 disabled:bg-slate-300"
+        className="rounded-lg btn-glow px-4 py-1.5 text-xs font-bold text-white disabled:opacity-40 disabled:shadow-none"
       >
         {pending ? "Preparing…" : "Download"}
       </button>

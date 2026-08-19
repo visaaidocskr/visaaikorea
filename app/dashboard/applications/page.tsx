@@ -25,7 +25,7 @@ export default async function MyApplicationsPage() {
         <h1 className="text-3xl font-extrabold">{t("dashboard.applications")}</h1>
         <Link
           href="/apply?new=1"
-          className="rounded-2xl bg-blue-700 px-5 py-2.5 font-semibold text-white hover:bg-blue-800"
+          className="rounded-2xl btn-glow px-5 py-2.5 font-semibold text-white"
         >
           {t("dashboard.newApplication")}
         </Link>

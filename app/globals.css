@@ -425,6 +425,8 @@ body {
   transform: translateX(-130%);
 }
 .btn-glow:hover::after { animation: btn-sweep .7s ease forwards; }
+.btn-glow:disabled { transform: none; box-shadow: none; opacity: .45; }
+.btn-glow:disabled::after { animation: none; }
 .btn-shine-auto::after { animation: btn-sweep 4s ease-in-out 1.2s infinite; }
 .btn-shine-auto:hover::after { animation: btn-sweep 4s ease-in-out infinite; }
 @keyframes btn-sweep {

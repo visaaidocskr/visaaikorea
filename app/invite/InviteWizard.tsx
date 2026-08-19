@@ -684,7 +684,7 @@ export function InviteWizard({
               type="button"
               onClick={next}
               disabled={!stepValid[current] || busy}
-              className="rounded-xl bg-blue-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:bg-slate-300"
+              className="rounded-xl btn-glow px-7 py-3 text-sm font-bold text-white transition disabled:opacity-40 disabled:shadow-none"
             >
               {busy ? t("invite.wizard.saving") : t("invite.wizard.continue")}
             </button>
@@ -693,7 +693,7 @@ export function InviteWizard({
               type="button"
               onClick={submit}
               disabled={!stepValid.Review || busy}
-              className="rounded-xl bg-blue-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:bg-slate-300"
+              className="rounded-xl btn-glow px-7 py-3 text-sm font-bold text-white transition disabled:opacity-40 disabled:shadow-none"
             >
               {busy ? t("invite.wizard.submitting") : t("invite.wizard.submit")}
             </button>

@@ -41,7 +41,7 @@ export function GenerateItineraryButton({ applicationId }: { applicationId: stri
       <button
         onClick={generate}
         disabled={loading}
-        className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+        className="rounded-xl btn-glow px-4 py-2 text-sm font-bold text-white transition disabled:opacity-50"
       >
         {loading ? "Generating…" : "Download Japan itinerary (DOCX)"}
       </button>

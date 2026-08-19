@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
@@ -14,7 +15,8 @@ export default async function DashboardPage() {
   const displayName = profile?.full_name || user.email;
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="relative min-h-screen text-slate-900">
+      <AuroraBackdrop />
       <nav className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-5">
         <Link href="/" className="text-xl font-extrabold text-blue-700">
           VisaAI Korea
@@ -31,10 +33,11 @@ export default async function DashboardPage() {
       </nav>
 
       <div className="mx-auto max-w-5xl px-6 py-12">
-        <p className="text-sm font-bold uppercase tracking-widest text-blue-700">
+        <p className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-blue-700">
+          <span aria-hidden className="sparkle text-cyan-500">✦</span>
           {t("dashboard.eyebrow")}
         </p>
-        <h1 className="mt-2 text-4xl font-extrabold">{t("dashboard.welcome")}, {displayName}</h1>
+        <h1 className="text-sky-gradient mt-2 text-4xl font-extrabold">{t("dashboard.welcome")}, {displayName}</h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-600">
           {t("dashboard.intro")}
         </p>
@@ -42,7 +45,7 @@ export default async function DashboardPage() {
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
           <Link
             href="/apply?new=1"
-            className="rounded-3xl bg-blue-700 p-8 text-white shadow-lg transition hover:bg-blue-800"
+            className="card-lift rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 p-8 text-white shadow-lg shadow-blue-500/30"
           >
             <h2 className="text-2xl font-bold">{t("dashboard.start")}</h2>
             <p className="mt-2 text-blue-100">
@@ -52,7 +55,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/dashboard/applications"
-            className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-blue-300"
+            className="card-lift rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-sm backdrop-blur"
           >
             <h2 className="text-2xl font-bold">{t("dashboard.applications")}</h2>
             <p className="mt-2 text-slate-600">
@@ -62,7 +65,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/dashboard/downloads"
-            className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-blue-300"
+            className="card-lift rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-sm backdrop-blur"
           >
             <h2 className="text-2xl font-bold">{t("dashboard.downloads")}</h2>
             <p className="mt-2 text-slate-600">

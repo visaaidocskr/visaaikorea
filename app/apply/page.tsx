@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { requireUser, isSupabaseConfigured } from "@/lib/auth";
@@ -275,7 +276,8 @@ export default async function ApplyPage({
   ]);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
+    <main className="relative min-h-screen px-6 py-12 text-slate-900">
+      <AuroraBackdrop />
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <div className="flex items-center justify-between gap-4">
@@ -284,7 +286,7 @@ export default async function ApplyPage({
             </Link>
             <LanguageSelector />
           </div>
-          <h1 className="mt-3 text-4xl font-extrabold">{t("apply.title")}</h1>
+          <h1 className="text-sky-gradient mt-3 text-4xl font-extrabold">{t("apply.title")}</h1>
           <p className="mt-3 text-lg text-slate-600">
             {t("apply.autosave")}
           </p>
