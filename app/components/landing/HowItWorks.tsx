@@ -18,7 +18,8 @@ export function HowItWorks() {
     <section id="how" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-blue-600">
+            <span aria-hidden className="sparkle text-cyan-500">✦</span>
             {t("how.eyebrow")}
           </p>
           <h2 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
@@ -32,24 +33,38 @@ export function HowItWorks() {
         <div className="mt-14 grid items-start gap-10 lg:grid-cols-2">
           {/* Steps */}
           <div className="relative space-y-4">
-            {/* Static connection line linking the step badges */}
-            <div className="pointer-events-none absolute bottom-12 left-[2.95rem] top-12 hidden w-px bg-slate-200 sm:block" />
+            {/* Route line linking the step badges, dashes always in motion */}
+            <svg
+              aria-hidden
+              className="pointer-events-none absolute bottom-12 left-[2.9rem] top-12 hidden w-1 sm:block"
+              preserveAspectRatio="none"
+              viewBox="0 0 2 100"
+            >
+              <path
+                className="route-flow"
+                d="M1 0V100"
+                stroke="#93C5FD"
+                strokeWidth="2"
+                strokeDasharray="4 6"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
             {steps.map((s, i) => {
               const activeStep = i === step;
               return (
                 <Reveal key={s.n} delay={i * 80}>
                   <button
                     onClick={() => setStep(i)}
-                    className={`flex w-full items-start gap-5 rounded-2xl border p-6 text-left transition-colors duration-200 ${
+                    className={`card-lift flex w-full items-start gap-5 rounded-2xl border p-6 text-left ${
                       activeStep
-                        ? "border-blue-300 bg-white shadow-sm"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                        ? "border-blue-300 bg-white shadow-md shadow-blue-500/10"
+                        : "border-slate-200 bg-white/85 backdrop-blur hover:border-slate-300"
                     }`}
                   >
                     <div
                       className={`flex h-12 w-12 flex-none items-center justify-center rounded-xl text-lg font-bold transition-colors ${
                         activeStep
-                          ? "bg-blue-700 text-white"
+                          ? "bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
                           : "bg-slate-100 text-slate-500"
                       }`}
                     >

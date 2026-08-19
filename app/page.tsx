@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Nav } from "@/app/components/landing/Nav";
+import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { CountriesSection } from "@/app/components/landing/CountriesSection";
 import { InviteSection } from "@/app/components/landing/InviteSection";
 import { HowItWorks } from "@/app/components/landing/HowItWorks";
@@ -15,8 +16,9 @@ import { useLocale } from "@/app/components/LocaleProvider";
 // it. Pricing returns once the destination list is final.
 export default function Home() {
   return (
-    <div className="relative bg-white text-slate-900">
-      <Nav />
+    <div className="relative text-slate-900">
+      <AuroraBackdrop />
+      <Nav overDark />
       <HomeHero />
       <CountriesSection />
       <InviteSection />
@@ -60,7 +62,7 @@ function SocialLinks() {
           rel="noopener noreferrer"
           aria-label={s.label}
           title={s.label}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-300 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
             <path d={s.path} />
@@ -74,28 +76,50 @@ function SocialLinks() {
 function Footer() {
   const { t } = useLocale();
   return (
-    <footer className="border-t border-slate-200 px-6 py-12">
-      <div className="mx-auto max-w-6xl">
+    <footer className="relative overflow-hidden bg-slate-950 px-6 py-14">
+      {/* The same night sky the journey started under. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-blue-600/15 blur-3xl" />
+        <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <svg className="absolute inset-x-0 top-0 h-10 w-full" viewBox="0 0 1440 40" fill="none" preserveAspectRatio="none">
+          <path
+            className="route-flow"
+            d="M0 20C360 34 1080 6 1440 20"
+            stroke="#334155"
+            strokeWidth="1.5"
+            strokeDasharray="5 9"
+          />
+        </svg>
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1440 260" fill="none" preserveAspectRatio="xMidYMid slice">
+          {([[140, 90, 1.4, "0s"], [420, 60, 1.1, "-1.3s"], [760, 100, 1.5, "-2.4s"], [1050, 55, 1.1, "-0.7s"], [1310, 95, 1.4, "-1.8s"]] as const).map(
+            ([x, y, r, delay]) => (
+              <circle key={x} className="auth-star" cx={x} cy={y} r={r} fill="#E0F2FE" style={{ animationDelay: delay }} />
+            )
+          )}
+        </svg>
+      </div>
+
+      <div className="relative mx-auto max-w-6xl">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-          <span className="text-lg font-extrabold tracking-tight text-slate-900">
-            VisaAI <span className="text-blue-700">Korea</span>
+          <span className="text-lg font-extrabold tracking-tight text-white">
+            VisaAI <span className="text-cyan-300">Korea</span>
           </span>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-semibold text-slate-600">
-            <Link href="/services" className="hover:text-blue-600">{t("footer.services")}</Link>
-            <a href="/privacy" className="hover:text-blue-600">{t("footer.privacy")}</a>
-            <a href="/terms" className="hover:text-blue-600">{t("footer.terms")}</a>
-            <a href="/refunds" className="hover:text-blue-600">{t("footer.refunds")}</a>
-            <Link href="/login" className="hover:text-blue-600">{t("nav.signIn")}</Link>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-semibold text-slate-300">
+            <Link href="/services" className="transition-colors hover:text-cyan-300">{t("footer.services")}</Link>
+            <a href="/privacy" className="transition-colors hover:text-cyan-300">{t("footer.privacy")}</a>
+            <a href="/terms" className="transition-colors hover:text-cyan-300">{t("footer.terms")}</a>
+            <a href="/refunds" className="transition-colors hover:text-cyan-300">{t("footer.refunds")}</a>
+            <Link href="/login" className="transition-colors hover:text-cyan-300">{t("nav.signIn")}</Link>
           </div>
         </div>
 
         <div className="mt-8">
           <SocialLinks />
         </div>
-        <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-relaxed text-slate-400">
+        <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-relaxed text-slate-500">
           {t("footer.disclaimer")}
         </p>
-        <p className="mt-4 text-center text-xs text-slate-400">
+        <p className="mt-4 text-center text-xs text-slate-500">
           {t("footer.copyright")}
         </p>
       </div>

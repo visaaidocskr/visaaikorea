@@ -12,10 +12,11 @@ export function CountriesSection() {
   const { locale, t } = useLocale();
 
   return (
-    <section id="countries" className="bg-slate-50/70 px-6 py-24">
+    <section id="countries" className="relative px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-blue-600">
+            <span aria-hidden className="sparkle text-cyan-500">✦</span>
             {t("countries.eyebrow")}
           </p>
           <h2 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
@@ -34,10 +35,17 @@ export function CountriesSection() {
               <div className="h-full">
               <button
                 onClick={() => setActive(c)}
-                className="group relative h-full w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-7 text-left shadow-sm transition-colors duration-200 hover:border-blue-300 hover:bg-slate-50"
+                className="card-lift group relative h-full w-full overflow-hidden rounded-3xl border border-slate-200 bg-white/85 p-7 text-left shadow-sm backdrop-blur"
               >
+                <div aria-hidden className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-br opacity-80 ${c.accent}`} />
+                <span
+                  aria-hidden
+                  className="absolute right-6 top-6 -translate-x-4 text-xl opacity-0 transition-all duration-500 group-hover:translate-x-0 group-hover:opacity-100"
+                >
+                  ✈️
+                </span>
                 <div className="relative">
-                  <div className="text-5xl">
+                  <div className="text-5xl drop-shadow-sm">
                     {c.flag}
                   </div>
                   <h3 className="mt-5 text-2xl font-bold text-slate-900">

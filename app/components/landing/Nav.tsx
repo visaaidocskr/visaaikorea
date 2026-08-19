@@ -12,7 +12,9 @@ const LINKS = [
   { href: "/services", labelKey: "nav.services" }, { href: "/flights", labelKey: "nav.flights" }, { href: "/tours", labelKey: "nav.tours" }, { href: "/#countries", labelKey: "nav.destinations" }, { href: "/#invite", labelKey: "nav.invite" }, { href: "/#how", labelKey: "nav.how" },
 ];
 
-export function Nav() {
+// `overDark` renders the bar transparent with light text while it sits on the
+// night hero; once the visitor scrolls it becomes the usual white bar.
+export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { t } = useLocale();
@@ -24,19 +26,24 @@ export function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const dark = overDark && !scrolled && !open;
   return (
     <header
       className={`sticky top-0 z-40 transition-all duration-300 ${
-        scrolled ? "border-b border-slate-200 bg-white shadow-sm" : "bg-white"
+        scrolled
+          ? "border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-md"
+          : dark
+            ? "bg-transparent"
+            : "bg-white"
       }`}
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2 text-xl font-extrabold tracking-tight">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-700 text-sm text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-sm text-white shadow-md shadow-blue-500/30">
             V
           </span>
-          <span className="text-slate-900">
-            VisaAI <span className="text-blue-700">Korea</span>
+          <span className={dark ? "text-white" : "text-slate-900"}>
+            VisaAI <span className={dark ? "text-cyan-300" : "text-blue-700"}>Korea</span>
           </span>
         </Link>
 
@@ -45,7 +52,9 @@ export function Nav() {
             <a
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className={`text-sm font-medium transition-colors ${
+                dark ? "text-slate-300 hover:text-white" : "text-slate-600 hover:text-slate-900"
+              }`}
             >
               {t(l.labelKey)}
             </a>
@@ -55,13 +64,15 @@ export function Nav() {
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/login"
-            className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-blue-700"
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+              dark ? "text-slate-200 hover:text-white" : "text-slate-700 hover:text-blue-700"
+            }`}
           >
             {t("nav.signIn")}
           </Link>
           <Link
             href="/signup"
-            className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800"
+            className="btn-glow rounded-xl px-4 py-2 text-sm font-semibold text-white"
           >
             {t("nav.signUp")}
           </Link>
@@ -71,7 +82,9 @@ export function Nav() {
         <button
           onClick={() => setOpen((v) => !v)}
           aria-label={t("nav.menu")}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-700 lg:hidden"
+          className={`flex h-10 w-10 items-center justify-center rounded-xl border lg:hidden ${
+            dark ? "border-white/25 text-white" : "border-slate-200 text-slate-700"
+          }`}
         >
           {open ? "✕" : "☰"}
         </button>

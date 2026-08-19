@@ -12,7 +12,8 @@ export function InviteSection() {
     <section id="invite" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
+          <p className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-widest text-blue-600">
+            <span aria-hidden className="sparkle text-cyan-500">✦</span>
             {t("invite.eyebrow")}
           </p>
           <h2 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
@@ -24,13 +25,21 @@ export function InviteSection() {
         </Reveal>
 
         <Reveal delay={100} className="mt-12">
-          <div className="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div className="card-lift mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
             <div className="bg-gradient-to-br from-sky-500/10 to-blue-500/5 px-8 py-7">
               <div className="flex items-center gap-3 text-4xl">
                 <span aria-hidden>🇺🇿</span>
-                <span aria-hidden className="text-2xl text-slate-400">
-                  →
-                </span>
+                <svg aria-hidden viewBox="0 0 96 24" className="h-6 w-24" fill="none">
+                  <path
+                    className="route-flow"
+                    d="M2 18C26 20 38 6 58 10C74 13 84 8 94 6"
+                    stroke="#60A5FA"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray="4 7"
+                  />
+                  <path d="M84 2L94 6L84 10L86 6L84 2Z" fill="#2563EB" />
+                </svg>
                 <span aria-hidden>🇰🇷</span>
               </div>
               <h3 className="mt-4 text-2xl font-bold text-slate-900">
