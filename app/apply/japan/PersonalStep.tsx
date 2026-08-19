@@ -5,6 +5,7 @@ import type { ApplyFormData } from "@/lib/visa/types";
 import { formatName, hasNonLatinScript } from "@/lib/visa/forms";
 import { DatePicker } from "@/app/apply/DatePicker";
 import { Input, ChoiceGroup, SEX_OPTIONS, MARITAL_OPTIONS } from "@/app/apply/fields";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 type Setter = <K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) => void;
 
@@ -18,6 +19,7 @@ export function PersonalStep({
   fatherRequired,
   maritalOptions = MARITAL_OPTIONS,
   birthCityRequired = false,
+  showBirthCity = false,
 }: {
   form: ApplyFormData;
   set: Setter;
@@ -28,7 +30,11 @@ export function PersonalStep({
   // Taiwan's portal form (lib/docs/taiwanData.ts REQUIRED_FIELDS) asks for the
   // city of birth; Japan's does not, so this stays optional there by default.
   birthCityRequired?: boolean;
+  // Japan's official form does not require city of birth. Taiwan opts in
+  // because its official portal does ask for it.
+  showBirthCity?: boolean;
 }) {
+  const { t } = useLocale();
   // Pre-fill country of birth from the selected nationality (only when empty, so
   // it never overwrites a saved/edited value). The user can still change it.
   useEffect(() => {
@@ -42,60 +48,60 @@ export function PersonalStep({
     fatherRequired &&
     form.middle_name_or_patronymic.trim() !== "" &&
     hasNonLatinScript(form.middle_name_or_patronymic)
-      ? "Please enter the father's name / patronymic using Latin characters."
+      ? t("japan.personal.fatherLatin")
       : undefined;
 
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold text-slate-900">Personal information</h3>
+        <h3 className="text-xl font-bold text-slate-900">{t("japan.personal.title")}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Enter your details exactly as they appear in your passport.
+          {t("japan.personal.intro")}
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Input
-          label="Surname (as in passport)"
+          label={t("japan.personal.surname")}
           value={form.surname}
           onChange={(v) => set("surname", formatName(v))}
           autoComplete="family-name"
         />
         <Input
-          label="Given name (as in passport)"
+          label={t("japan.personal.givenName")}
           value={form.given_name}
           onChange={(v) => set("given_name", formatName(v))}
           autoComplete="given-name"
         />
         {fatherRequired && (
           <Input
-            label="Father's name / Patronymic"
+            label={t("japan.personal.father")}
             value={form.middle_name_or_patronymic}
             onChange={(v) => set("middle_name_or_patronymic", v.toUpperCase())}
             error={fatherError}
-            placeholder="e.g. DAMIN UGLI"
-            helpText="Enter your father's name or patronymic exactly as used in your official documents."
+            placeholder={t("japan.personal.fatherExample")}
+            helpText={t("japan.personal.fatherHelp")}
           />
         )}
         <Input
-          label="Other / previous names"
+          label={t("japan.personal.otherNames")}
           value={form.other_names}
           onChange={(v) => set("other_names", formatName(v))}
           required={false}
-          helpText="Optional — any other names you have been known by."
+          helpText={t("japan.optionalOtherNames")}
         />
         <Input
-          label="Full name exactly as written in passport"
+          label={t("japan.personal.fullPassportName")}
           value={form.full_name_as_passport}
           onChange={(v) => set("full_name_as_passport", formatName(v))}
           autoComplete="name"
-          helpText="Latin capitals, as printed in the passport."
+          helpText={t("japan.personal.passportLatin")}
         />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <DatePicker
-          label="Date of birth"
+          label={t("japan.dateOfBirth")}
           value={form.date_of_birth}
           onChange={(v) => set("date_of_birth", v)}
           minISO="1900-01-01"
@@ -103,7 +109,7 @@ export function PersonalStep({
           showYearMonth
         />
         <ChoiceGroup
-          label="Sex"
+          label={t("japan.sex")}
           value={form.gender}
           onChange={(v) => set("gender", v)}
           options={SEX_OPTIONS}
@@ -111,34 +117,35 @@ export function PersonalStep({
       </div>
 
       <ChoiceGroup
-        label="Marital status"
+        label={t("japan.maritalStatus")}
         value={form.marital_status}
         onChange={(v) => set("marital_status", v)}
         options={maritalOptions}
       />
 
       <div>
-        <h4 className="text-sm font-bold text-slate-800">Place of birth</h4>
+        <h4 className="text-sm font-bold text-slate-800">{t("japan.placeOfBirth")}</h4>
         <div className="mt-3 grid gap-6 md:grid-cols-2">
+          {showBirthCity && (
+            <Input
+              label={t("japan.city")}
+              value={form.birth_city}
+              onChange={(v) => set("birth_city", v)}
+              required={birthCityRequired}
+            />
+          )}
           <Input
-            label="City"
-            value={form.birth_city}
-            onChange={(v) => set("birth_city", v)}
-            required={birthCityRequired}
-            helpText={birthCityRequired ? undefined : "Optional."}
-          />
-          <Input
-            label="State / Province"
+            label={t("japan.stateProvince")}
             value={form.birth_state}
             onChange={(v) => set("birth_state", v)}
             required={false}
-            helpText="Optional."
+            helpText={t("japan.optional")}
           />
           <Input
-            label="Country"
+            label={t("japan.country")}
             value={form.country_of_birth}
             onChange={(v) => set("country_of_birth", v)}
-            helpText="Pre-filled from your nationality — change it if you were born in another country."
+            helpText={t("japan.personal.birthCountryHelp")}
           />
         </div>
       </div>
@@ -146,25 +153,25 @@ export function PersonalStep({
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Nationality
+            {t("apply.nationality")}
           </p>
           <p className="mt-1 font-semibold text-slate-900">
-            {form.nationality || "— set on the first step —"}
+            {form.nationality || t("japan.personal.setFirst")}
           </p>
         </div>
         <Input
-          label="Former / other nationality"
+          label={t("japan.personal.formerNationality")}
           value={form.former_nationality}
           onChange={(v) => set("former_nationality", v)}
           required={false}
-          helpText="Optional."
+          helpText={t("japan.optional")}
         />
         <Input
-          label="Government-issued ID number"
+          label={t("japan.personal.govId")}
           value={form.home_government_id}
           onChange={(v) => set("home_government_id", v)}
           required={false}
-          helpText="Optional — national ID from your home country, if any."
+          helpText={t("japan.personal.govIdHelp")}
         />
       </div>
     </div>

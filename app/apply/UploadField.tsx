@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { uploadApplicantFile, removeUploadedFile } from "@/app/apply/actions";
 import { FIELD_ERROR_ATTR } from "@/app/apply/fields";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 const ALLOWED = ["image/jpeg", "image/png", "application/pdf"];
 // Configurable via env; falls back to 10 MB.
@@ -32,6 +33,7 @@ export function UploadField({
   initialFilename,
   onUploaded,
 }: Props) {
+  const { t } = useLocale();
   const [filename, setFilename] = useState(initialFilename ?? "");
   const [status, setStatus] = useState<Status>(initialFilename ? "done" : "idle");
   const [message, setMessage] = useState("");
@@ -53,12 +55,12 @@ export function UploadField({
 
     if (!ALLOWED.includes(file.type)) {
       setStatus("error");
-      setMessage("Only JPG, PNG, or PDF files are allowed.");
+      setMessage(t("upload.fileType"));
       return;
     }
     if (file.size / (1024 * 1024) > MAX_MB) {
       setStatus("error");
-      setMessage(`File is too large. Maximum size is ${MAX_MB}MB.`);
+      setMessage(t("upload.fileSize").replace("{size}", String(MAX_MB)));
       return;
     }
 
@@ -84,7 +86,7 @@ export function UploadField({
       res = await uploadApplicantFile(fd);
     } catch {
       setStatus("error");
-      setMessage("Upload failed. Please check your connection and try again.");
+      setMessage(t("upload.failed"));
       return;
     }
     if (!res.ok) {
@@ -168,14 +170,14 @@ export function UploadField({
 
           {/* Status line (announced) */}
           <p aria-live="polite" className="mt-1 min-h-[1.25rem] text-sm">
-            {uploading && <span className="font-semibold text-blue-700">Uploading…</span>}
+            {uploading && <span className="font-semibold text-blue-700">{t("upload.uploading")}</span>}
             {done && filename && (
               <span className="font-semibold text-emerald-600">✓ {filename}</span>
             )}
             {errored && <span className="font-semibold text-red-600">{message}</span>}
             {status === "idle" && (
               <span className="text-slate-500">
-                Drag &amp; drop, or choose a file — JPG, PNG, PDF up to {MAX_MB}MB.
+                {t("upload.hint").replace("{size}", String(MAX_MB))}
               </span>
             )}
           </p>
@@ -194,7 +196,7 @@ export function UploadField({
               disabled={uploading}
               className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-50"
             >
-              {done ? "Replace file" : "Choose file"}
+              {done ? t("upload.replace") : t("upload.choose")}
             </button>
             <button
               type="button"
@@ -202,7 +204,7 @@ export function UploadField({
               disabled={uploading}
               className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 sm:hidden"
             >
-              📷 Take photo
+              📷 {t("upload.photo")}
             </button>
             {done && (
               <button
@@ -211,7 +213,7 @@ export function UploadField({
                 disabled={uploading}
                 className="rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 disabled:opacity-50"
               >
-                Remove
+                {t("upload.remove")}
               </button>
             )}
           </div>
@@ -221,7 +223,7 @@ export function UploadField({
               {...{ [FIELD_ERROR_ATTR]: "" }}
               className="mt-2 text-xs font-semibold text-red-500"
             >
-              This document is required.
+              {t("upload.required")}
             </p>
           )}
         </div>

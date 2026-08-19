@@ -65,6 +65,66 @@ body {
 .animate-slide-in-right { animation: slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-float { animation: float 6s ease-in-out infinite; }
 
+@keyframes auth-route-dash {
+  to { stroke-dashoffset: -90; }
+}
+@keyframes auth-plane-flight {
+  0%, 8% { transform: translate(73px, 261px) rotate(-7deg); opacity: 0; }
+  14% { opacity: 1; }
+  45% { transform: translate(200px, 170px) rotate(5deg); }
+  78% { transform: translate(350px, 103px) rotate(-16deg); opacity: 1; }
+  92%, 100% { transform: translate(433px, 71px) rotate(-12deg); opacity: 0; }
+}
+@keyframes auth-cloud-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(12px); }
+}
+@keyframes auth-orb-pulse {
+  0%, 100% { opacity: .55; transform: scale(1); }
+  50% { opacity: .9; transform: scale(1.13); }
+}
+@keyframes auth-traveler-bob {
+  0%, 100% { transform: translate(205px, 190px) translateY(0); }
+  50% { transform: translate(205px, 190px) translateY(-4px); }
+}
+@keyframes auth-walk-leg-left {
+  0%, 100% { transform: rotate(8deg); }
+  50% { transform: rotate(-11deg); }
+}
+@keyframes auth-walk-leg-right {
+  0%, 100% { transform: rotate(-10deg); }
+  50% { transform: rotate(8deg); }
+}
+@keyframes auth-walk-arm-left {
+  0%, 100% { transform: rotate(-9deg); }
+  50% { transform: rotate(10deg); }
+}
+@keyframes auth-walk-arm-right {
+  0%, 100% { transform: rotate(9deg); }
+  50% { transform: rotate(-10deg); }
+}
+@keyframes auth-suitcase-roll {
+  0%, 100% { transform: translate(57px, 58px) rotate(-1deg); }
+  50% { transform: translate(57px, 56px) rotate(1deg); }
+}
+@keyframes auth-ticket-float {
+  0%, 100% { transform: translate(312px, 119px) rotate(-3deg); }
+  50% { transform: translate(312px, 110px) rotate(3deg); }
+}
+.auth-route { animation: auth-route-dash 5s linear infinite; }
+.auth-plane { animation: auth-plane-flight 7.5s cubic-bezier(.42, 0, .28, 1) infinite; transform-box: fill-box; transform-origin: center; }
+.auth-cloud { animation: auth-cloud-drift 7s ease-in-out infinite; }
+.auth-scene-orb { animation: auth-orb-pulse 7s ease-in-out infinite; }
+.auth-scene-orb-delay { animation: auth-orb-pulse 7s ease-in-out -3.5s infinite; }
+.auth-traveler { animation: auth-traveler-bob 1.2s ease-in-out infinite; }
+.auth-walk-leg-left, .auth-walk-leg-right, .auth-walk-arm-left, .auth-walk-arm-right { transform-box: fill-box; transform-origin: top center; animation-duration: 1.2s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.auth-walk-leg-left { animation-name: auth-walk-leg-left; }
+.auth-walk-leg-right { animation-name: auth-walk-leg-right; }
+.auth-walk-arm-left { animation-name: auth-walk-arm-left; }
+.auth-walk-arm-right { animation-name: auth-walk-arm-right; }
+.auth-suitcase { animation: auth-suitcase-roll 1.2s ease-in-out infinite; }
+.auth-ticket { animation: auth-ticket-float 4.5s ease-in-out infinite; }
+
 /* ---- Loading skeleton ----------------------------------------------------- */
 .skeleton {
   background: linear-gradient(90deg, #eef2f7 25%, #f6f8fb 37%, #eef2f7 63%);

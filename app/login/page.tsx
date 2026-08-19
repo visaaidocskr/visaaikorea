@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { AuthShell } from "@/app/auth/AuthShell";
 import { SignInMethods, GoogleButton } from "@/app/auth/AuthForms";
 import { safeNextPath } from "@/lib/auth-redirect";
+import { getRequestLocale } from "@/lib/locale-server";
+import { translate } from "@/lib/i18n";
 
 export const metadata: Metadata = { title: "Sign In · VisaAI Korea" };
 
@@ -14,22 +16,24 @@ export default async function LoginPage({
 }) {
   const { next, error } = await searchParams;
   const safeNext = safeNextPath(next);
+  const locale = await getRequestLocale();
+  const t = (key: string) => translate(locale, key);
 
   return (
     <AuthShell
-      title="Welcome back"
-      subtitle="Sign in to manage your visa applications."
+      title={t("auth.welcome")}
+      subtitle={t("auth.signInSubtitle")}
       footer={
         <>
           <p>
-            Don&apos;t have an account?{" "}
+            {t("auth.noAccount")} {" "}
             <Link href="/signup" className="font-semibold text-blue-700">
-              Create one
+              {t("auth.create")}
             </Link>
           </p>
           <p className="mt-2">
             <Link href="/forgot-password" className="font-semibold text-blue-700">
-              Forgot your password?
+              {t("auth.forgot")}
             </Link>
           </p>
         </>
@@ -38,7 +42,7 @@ export default async function LoginPage({
       {error && (
         <p className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600">
           {error === "auth_callback"
-            ? "That link was invalid or expired. Please sign in again."
+            ? t("auth.invalidLink")
             : // Real reason from the provider, so a misconfiguration is
               // diagnosable instead of hiding behind a generic message.
               error}

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrCreateInvitationDraft } from "@/app/invite/actions";
 import { InviteWizard } from "@/app/invite/InviteWizard";
 import type { InviteFormData, InviteeInput } from "@/lib/invite/types";
+import { getRequestLocale } from "@/lib/locale-server";
+import { translate } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Invite family to Korea · VisaAI Korea",
@@ -12,6 +14,8 @@ export const metadata: Metadata = {
 
 export default async function InvitePage() {
   const user = await requireUser();
+  const locale = await getRequestLocale();
+  const t = (key: string) => translate(locale, key);
 
   const draft = await getOrCreateInvitationDraft();
   if (!draft.ok) {
@@ -77,12 +81,11 @@ export default async function InvitePage() {
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <Link href="/dashboard" className="text-sm font-semibold text-blue-700">
-            ← Dashboard
+            ← {t("dashboard.eyebrow")}
           </Link>
-          <h1 className="mt-3 text-4xl font-extrabold">Invitation Documents</h1>
+          <h1 className="mt-3 text-4xl font-extrabold">{t("invite.pageTitle")}</h1>
           <p className="mt-3 text-lg text-slate-600">
-            For a family member visiting you in Korea on a short-term visit
-            (C-3-1). Your progress is saved as you move between steps.
+            {t("invite.pageDescription")}
           </p>
         </div>
 

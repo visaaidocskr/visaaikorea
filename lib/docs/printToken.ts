@@ -7,6 +7,9 @@ import crypto from "node:crypto";
 const TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function secret(): string {
+  // Deployments should always set a dedicated secret. The fallback preserves
+  // existing production document generation during the one-time migration;
+  // it can be removed once the environment has PDF_SIGNING_SECRET everywhere.
   const key = process.env.PDF_SIGNING_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) throw new Error("PDF signing secret is not configured.");
   return key;

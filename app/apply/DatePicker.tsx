@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { toISO } from "@/lib/visa/destinations";
 import { FIELD_ERROR_ATTR } from "@/app/apply/fields";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 // ---- date helpers (local, to keep this component self-contained) ----------
 function parse(iso: string): Date | null {
@@ -30,18 +31,6 @@ function clamp(d: Date, min: Date | null, max: Date | null) {
   if (max && d > max) return max;
   return d;
 }
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-
-function pretty(iso: string): string {
-  const d = parse(iso);
-  if (!d) return "";
-  return `${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}, ${d.getFullYear()}`;
-}
-
 type Props = {
   label: string;
   value: string;
@@ -77,6 +66,13 @@ export function DatePicker({
   showYearMonth = false,
   blockedDate,
 }: Props) {
+  const { t, locale } = useLocale();
+  const monthNames = Array.from({ length: 12 }, (_, month) =>
+    new Intl.DateTimeFormat(locale, { month: "long" }).format(new Date(2024, month, 1))
+  );
+  const weekdayNames = Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(new Date(2024, 0, 7 + day))
+  );
   const baseId = useId();
   const errorId = `${baseId}-error`;
   const [blockMsg, setBlockMsg] = useState<string | null>(null);
@@ -210,7 +206,7 @@ export function DatePicker({
         }`}
       >
         <span className={value ? "text-slate-900" : "text-slate-400"}>
-          {value ? pretty(value) : "Select date"}
+          {value ? new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric" }).format(parse(value)!) : t("date.select")}
         </span>
         <span aria-hidden className="text-slate-400">📅</span>
       </button>
@@ -235,14 +231,14 @@ export function DatePicker({
       {open && (
         <div
           role="dialog"
-          aria-label={`Choose ${label.toLowerCase()}`}
+          aria-label={`${t("date.choose")} ${label.toLowerCase()}`}
           className="animate-scale-in absolute left-0 z-40 mt-2 w-[20rem] max-w-[calc(100vw-3rem)] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
         >
           <div className="mb-2 flex items-center justify-between px-1">
             <button
               type="button"
               onClick={() => setView(addMonths(view, -1))}
-              aria-label="Previous month"
+              aria-label={t("date.previousMonth")}
               className="rounded-lg px-2 py-1 text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
             >
               ‹
@@ -250,21 +246,21 @@ export function DatePicker({
             {showYearMonth ? (
               <div className="flex items-center gap-1.5">
                 <select
-                  aria-label="Month"
+                  aria-label={t("date.month")}
                   value={view.getMonth()}
                   onChange={(e) =>
                     setView(new Date(view.getFullYear(), Number(e.target.value), 1))
                   }
                   className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
                 >
-                  {MONTHS.map((m, i) => (
+                  {monthNames.map((m, i) => (
                     <option key={m} value={i}>
                       {m}
                     </option>
                   ))}
                 </select>
                 <select
-                  aria-label="Year"
+                  aria-label={t("date.year")}
                   value={view.getFullYear()}
                   onChange={(e) =>
                     setView(new Date(Number(e.target.value), view.getMonth(), 1))
@@ -280,13 +276,13 @@ export function DatePicker({
               </div>
             ) : (
               <span aria-live="polite" className="text-sm font-bold text-slate-900">
-                {MONTHS[view.getMonth()]} {view.getFullYear()}
+                {monthNames[view.getMonth()]} {view.getFullYear()}
               </span>
             )}
             <button
               type="button"
               onClick={() => setView(addMonths(view, 1))}
-              aria-label="Next month"
+              aria-label={t("date.nextMonth")}
               className="rounded-lg px-2 py-1 text-slate-600 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600"
             >
               ›
@@ -295,7 +291,7 @@ export function DatePicker({
 
           <div role="grid" onKeyDown={onGridKeyDown}>
             <div role="row" className="grid grid-cols-7">
-              {WEEKDAYS.map((w) => (
+              {weekdayNames.map((w) => (
                 <div
                   key={w}
                   role="columnheader"
@@ -328,8 +324,8 @@ export function DatePicker({
                     aria-disabled={off || undefined}
                     aria-label={
                       blk
-                        ? `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} — ${blk.message}`
-                        : `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
+                        ? `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} — ${blk.message}`
+                        : `${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`
                     }
                     disabled={outOfRange || undefined}
                     onClick={() => {
@@ -371,7 +367,7 @@ export function DatePicker({
                 htmlFor={`${baseId}-typed`}
                 className="block text-[11px] font-semibold text-slate-500"
               >
-                Or type the date
+                {t("date.orType")}
               </label>
               <input
                 id={`${baseId}-typed`}

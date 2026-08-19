@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 // Accessible modal. variant="center" = centered dialog; variant="right" =
 // slide-over panel. Closes on Escape and backdrop click; locks body scroll.
@@ -15,16 +15,21 @@ export function Modal({
   variant?: "center" | "right";
   children: React.ReactNode;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
+    dialogRef.current?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
+      previouslyFocused?.focus();
     };
   }, [open, onClose]);
 
@@ -45,6 +50,8 @@ export function Modal({
         className="absolute inset-0 bg-slate-900/40 animate-fade-in backdrop-blur-sm"
       />
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className={
           isRight
             ? "relative h-full w-full max-w-md overflow-y-auto bg-white shadow-2xl animate-slide-in-right sm:rounded-l-3xl"

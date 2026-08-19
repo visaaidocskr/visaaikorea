@@ -2,11 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
+import { getRequestLocale } from "@/lib/locale-server";
+import { translate } from "@/lib/i18n";
 
 export const metadata: Metadata = { title: "Dashboard · VisaAI Korea" };
 
 export default async function DashboardPage() {
   const { user, profile } = await requireUser();
+  const locale = await getRequestLocale();
+  const t = (key: string) => translate(locale, key);
   const displayName = profile?.full_name || user.email;
 
   return (
@@ -18,7 +22,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-4">
           {profile?.role === "admin" && (
             <Link href="/admin" className="text-sm font-semibold text-blue-700">
-              Admin
+              {t("dashboard.admin")}
             </Link>
           )}
           <span className="hidden text-sm text-slate-500 sm:inline">{user.email}</span>
@@ -28,12 +32,11 @@ export default async function DashboardPage() {
 
       <div className="mx-auto max-w-5xl px-6 py-12">
         <p className="text-sm font-bold uppercase tracking-widest text-blue-700">
-          Client Dashboard
+          {t("dashboard.eyebrow")}
         </p>
-        <h1 className="mt-2 text-4xl font-extrabold">Welcome, {displayName}</h1>
+        <h1 className="mt-2 text-4xl font-extrabold">{t("dashboard.welcome")}, {displayName}</h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-600">
-          This is your home for visa applications. Start a new application or
-          review the status of existing ones.
+          {t("dashboard.intro")}
         </p>
 
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
@@ -41,9 +44,9 @@ export default async function DashboardPage() {
             href="/apply?new=1"
             className="rounded-3xl bg-blue-700 p-8 text-white shadow-lg transition hover:bg-blue-800"
           >
-            <h2 className="text-2xl font-bold">Start new application</h2>
+            <h2 className="text-2xl font-bold">{t("dashboard.start")}</h2>
             <p className="mt-2 text-blue-100">
-              Choose a destination and prepare your documents.
+              {t("dashboard.startBody")}
             </p>
           </Link>
 
@@ -51,9 +54,9 @@ export default async function DashboardPage() {
             href="/dashboard/applications"
             className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-blue-300"
           >
-            <h2 className="text-2xl font-bold">My applications</h2>
+            <h2 className="text-2xl font-bold">{t("dashboard.applications")}</h2>
             <p className="mt-2 text-slate-600">
-              View and track the status of your submitted applications.
+              {t("dashboard.applicationsBody")}
             </p>
           </Link>
 
@@ -61,9 +64,9 @@ export default async function DashboardPage() {
             href="/dashboard/downloads"
             className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-blue-300"
           >
-            <h2 className="text-2xl font-bold">Downloads</h2>
+            <h2 className="text-2xl font-bold">{t("dashboard.downloads")}</h2>
             <p className="mt-2 text-slate-600">
-              Download visa documents released to you by our team.
+              {t("dashboard.downloadsBody")}
             </p>
           </Link>
         </div>

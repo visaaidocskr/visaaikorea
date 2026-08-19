@@ -6,6 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getOrCreateDraft, createFreshDraft } from "@/app/apply/actions";
 import { ApplyWizard } from "@/app/apply/ApplyWizard";
 import { resolveRuleset } from "@/lib/visa/rules-source";
+import { resolveEmbassyClosures } from "@/lib/visa/embassyClosures-source";
+import { getRequestLocale } from "@/lib/locale-server";
+import { translate } from "@/lib/i18n";
+import { LanguageSelector } from "@/app/components/LanguageSelector";
 import {
   EMPTY_FLIGHT,
   EMPTY_HOST,
@@ -85,6 +89,8 @@ export default async function ApplyPage({
   // page, which should land on the fields/uploads, not back on Destination.
   searchParams: Promise<{ new?: string; app?: string; step?: string }>;
 }) {
+  const locale = await getRequestLocale();
+  const t = (key: string) => translate(locale, key);
   if (!isSupabaseConfigured()) return <SetupNotice />;
 
   const { user } = await requireUser();
@@ -263,18 +269,24 @@ export default async function ApplyPage({
   }
 
   // Resolve the visa ruleset server-side (DB overrides over code defaults).
-  const ruleset = await resolveRuleset();
+  const [ruleset, japanEmbassyClosures] = await Promise.all([
+    resolveRuleset(),
+    resolveEmbassyClosures("Japan"),
+  ]);
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
-          <Link href="/dashboard" className="text-sm font-semibold text-blue-700">
-            ← Dashboard
-          </Link>
-          <h1 className="mt-3 text-4xl font-extrabold">Tourist Visa Application</h1>
+          <div className="flex items-center justify-between gap-4">
+            <Link href="/dashboard" className="text-sm font-semibold text-blue-700">
+              ← {t("apply.backDashboard")}
+            </Link>
+            <LanguageSelector />
+          </div>
+          <h1 className="mt-3 text-4xl font-extrabold">{t("apply.title")}</h1>
           <p className="mt-3 text-lg text-slate-600">
-            Your progress is saved automatically as you move between steps.
+            {t("apply.autosave")}
           </p>
         </div>
 
@@ -284,6 +296,7 @@ export default async function ApplyPage({
           initialForm={initialForm}
           initialUploads={initialUploads}
           ruleset={ruleset}
+          japanEmbassyClosures={japanEmbassyClosures}
           initialStepName={sp?.step}
         />
       </div>

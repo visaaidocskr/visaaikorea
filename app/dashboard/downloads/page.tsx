@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { DownloadButton } from "@/app/dashboard/DownloadButton";
+import { getRequestLocale } from "@/lib/locale-server";
+import { translate } from "@/lib/i18n";
 
 export const metadata: Metadata = { title: "Downloads · VisaAI Korea" };
 
@@ -23,6 +25,8 @@ function destOf(r: Row): string {
 
 export default async function DownloadsPage() {
   await requireUser();
+  const locale = await getRequestLocale();
+  const t = (key: string) => translate(locale, key);
   const supabase = await createClient();
 
   // RLS limits this to the user's own released documents.
@@ -35,8 +39,8 @@ export default async function DownloadsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-3xl font-extrabold">Downloads</h1>
-      <p className="mt-2 text-slate-600">All documents released to you, across applications.</p>
+      <h1 className="text-3xl font-extrabold">{t("dashboard.downloads")}</h1>
+      <p className="mt-2 text-slate-600">{t("dashboard.downloadsIntro")}</p>
 
       <div className="mt-6 space-y-2">
         {rows.map((d) => (
@@ -50,7 +54,7 @@ export default async function DownloadsPage() {
                 href={`/dashboard/applications/${d.application_id}`}
                 className="text-xs text-blue-700 hover:underline"
               >
-                {destOf(d) || "View application"}
+                {destOf(d) || t("dashboard.viewApplication")}
               </Link>
             </div>
             <DownloadButton documentId={d.id} />
@@ -58,7 +62,7 @@ export default async function DownloadsPage() {
         ))}
         {rows.length === 0 && (
           <p className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-400">
-            No documents have been released to you yet.
+            {t("dashboard.noDownloads")}
           </p>
         )}
       </div>

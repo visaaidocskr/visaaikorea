@@ -1,32 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { COUNTRIES, type CountryContent } from "@/lib/visa/countryContent";
+import { COUNTRIES, localizeCountryContent, type CountryContent } from "@/lib/visa/countryContent";
 import { Modal } from "@/app/components/Modal";
 import { Reveal } from "@/app/components/Reveal";
 import { GenerateButton } from "@/app/components/GenerateButton";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 export function CountriesSection() {
   const [active, setActive] = useState<CountryContent | null>(null);
+  const { locale, t } = useLocale();
 
   return (
     <section id="countries" className="bg-slate-50/70 px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
-            Destinations
+            {t("countries.eyebrow")}
           </p>
           <h2 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Choose where you&apos;re going
+            {t("countries.title")}
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            Tap a country to see its visa overview, required documents, and
-            embassy notes — then generate your package.
+            {t("countries.description")}
           </p>
         </Reveal>
 
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {COUNTRIES.map((c, i) => (
+          {COUNTRIES.map((country, i) => {
+            const c = localizeCountryContent(country, locale);
+            return (
             <Reveal key={c.country} delay={i * 80}>
               <div className="h-full">
               <button
@@ -42,7 +45,7 @@ export function CountriesSection() {
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">{c.tagline}</p>
                   <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
-                    View details
+                    {t("countries.details")}
                     <span className="transition-transform duration-200 group-hover:translate-x-1">
                       →
                     </span>
@@ -51,7 +54,8 @@ export function CountriesSection() {
               </button>
               </div>
             </Reveal>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -63,25 +67,27 @@ export function CountriesSection() {
 }
 
 function CountryPanel({ c }: { c: CountryContent }) {
+  const { locale, t } = useLocale();
+  const localized = localizeCountryContent(c, locale);
   return (
     <div className="flex min-h-full flex-col">
-      <div className={`bg-gradient-to-br p-8 ${c.accent}`}>
-        <div className="text-6xl">{c.flag}</div>
-        <h3 className="mt-4 text-3xl font-bold text-slate-900">{c.country}</h3>
-        <p className="mt-1 font-medium text-slate-600">{c.visaType}</p>
+      <div className={`bg-gradient-to-br p-8 ${localized.accent}`}>
+        <div className="text-6xl">{localized.flag}</div>
+        <h3 className="mt-4 text-3xl font-bold text-slate-900">{localized.country}</h3>
+        <p className="mt-1 font-medium text-slate-600">{localized.visaType}</p>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-sm font-semibold text-slate-700 backdrop-blur">
-          ⏱ {c.processingTime}
+          ⏱ {localized.processingTime}
         </div>
       </div>
 
       <div className="flex-1 space-y-7 p-8">
-        <Block title="Overview">
-          <p className="text-sm leading-relaxed text-slate-600">{c.overview}</p>
+        <Block title={t("countries.overview")}>
+          <p className="text-sm leading-relaxed text-slate-600">{localized.overview}</p>
         </Block>
 
-        <Block title="Required documents">
+        <Block title={t("countries.documents")}>
           <ul className="space-y-2">
-            {c.documents.map((d) => (
+            {localized.documents.map((d) => (
               <li key={d} className="flex gap-2.5 text-sm text-slate-700">
                 <span className="mt-0.5 text-blue-600">✓</span>
                 <span>{d}</span>
@@ -90,9 +96,9 @@ function CountryPanel({ c }: { c: CountryContent }) {
           </ul>
         </Block>
 
-        <Block title="Important embassy notes">
+        <Block title={t("countries.notes")}>
           <ul className="space-y-2">
-            {c.notes.map((n) => (
+            {localized.notes.map((n) => (
               <li key={n} className="flex gap-2.5 text-sm text-slate-700">
                 <span className="mt-0.5 text-amber-500">•</span>
                 <span>{n}</span>
@@ -102,7 +108,7 @@ function CountryPanel({ c }: { c: CountryContent }) {
         </Block>
 
         {c.contacts.length > 0 && (
-          <Block title="Embassy / office">
+          <Block title={t("countries.office")}>
             <div className="space-y-3">
               {c.contacts.map((ct) => (
                 <div
@@ -121,9 +127,9 @@ function CountryPanel({ c }: { c: CountryContent }) {
       </div>
 
       <div className="sticky bottom-0 border-t border-slate-100 bg-white/90 p-6 backdrop-blur">
-        <GenerateButton full label={`Generate ${c.country} Documents`} />
+        <GenerateButton full label={`${t("countries.generate")} ${c.country}`} />
         <p className="mt-3 text-center text-xs text-slate-400">
-          Approval is decided only by the embassy. We prepare your documents.
+          {t("countries.approval")}
         </p>
       </div>
     </div>

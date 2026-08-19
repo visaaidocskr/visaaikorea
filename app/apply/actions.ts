@@ -12,6 +12,8 @@ import { evaluateEligibility } from "@/lib/visa/eligibility";
 import { resolveRuleset } from "@/lib/visa/rules-source";
 import { APPLICANT_UPLOADS_BUCKET, applicantUploadPath } from "@/lib/supabase/storage";
 import { sendEmail } from "@/lib/email/send";
+import { resolveEmbassyClosures } from "@/lib/visa/embassyClosures-source";
+import { isSubmissionDateBlocked } from "@/lib/visa/japanEmbassy";
 import { submissionConfirmation, adminNotification } from "@/lib/email/templates";
 import type { ApplyFormData } from "@/lib/visa/types";
 
@@ -109,9 +111,10 @@ function humanizeDbError(message: string): string {
       "[db] SCHEMA MISMATCH — apply supabase/migrations/0006_japan_application.sql, 0007_taiwan_application.sql and 0012_vietnam_application.sql, then reload the PostgREST schema cache. Raw error:",
       message
     );
-    return `Database schema is out of date — a required update isn't visible to the API yet. Details: ${message}. Fix: (1) run supabase/migrations/0006_japan_application.sql, 0007_taiwan_application.sql and 0012_vietnam_application.sql, then (2) reload the API schema cache — Supabase Dashboard → Settings → API → “Reload schema”, or run: NOTIFY pgrst, 'reload schema';`;
+    return "We are updating our application system. Please save your draft and try again shortly. Our team has been notified.";
   }
-  return message;
+  console.error("[db] Applicant application action failed:", message);
+  return "We could not save your changes right now. Please try again.";
 }
 
 // Persist the wizard's data into applications + applicant_details + companions.
@@ -577,6 +580,18 @@ export async function submitApplication(
   if (!dateCheck.ok) {
     const firstError = Object.values(dateCheck.errors)[0];
     return { ok: false, error: firstError ?? "Please fix the travel dates." };
+  }
+
+  // Submission-date closures are also checked on the server. This prevents a
+  // crafted client request or an old saved date from bypassing the calendar.
+  if (app.destination_country === "Japan" && app.planned_submission_date) {
+    const closures = await resolveEmbassyClosures("Japan");
+    if (isSubmissionDateBlocked(app.planned_submission_date, closures)) {
+      return {
+        ok: false,
+        error: "The Embassy of Japan in Korea is closed on the selected submission date. Please choose another business day.",
+      };
+    }
   }
 
   const { data: files } = await supabase

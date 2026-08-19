@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 // The primary conversion action across the whole site.
 export function GenerateButton({
   size = "md",
   full = false,
-  label = "Generate Documents",
+  label,
   href = "/apply",
 }: {
   size?: "md" | "lg";
@@ -12,6 +15,7 @@ export function GenerateButton({
   label?: string;
   href?: string;
 }) {
+  const { t } = useLocale();
   const sizing = size === "lg" ? "px-8 py-4 text-lg" : "px-6 py-3 text-base";
   return (
     <Link
@@ -20,7 +24,7 @@ export function GenerateButton({
         full ? "w-full" : ""
       }`}
     >
-      {label}
+      {label ?? t("action.generate")}
       <span className="transition-transform duration-200 group-hover:translate-x-0.5">
         →
       </span>

@@ -8,7 +8,7 @@ import type {
 } from "@/lib/visa/destinations";
 import { DatePicker } from "@/app/apply/DatePicker";
 import { Select, Textarea } from "@/app/apply/fields";
-import { submissionDateBlock, seoulTodayISO } from "@/lib/visa/japanEmbassy";
+import { submissionDateBlock, seoulTodayISO, type EmbassyClosure } from "@/lib/visa/japanEmbassy";
 
 // Only tourist visas are supported today; keep this list so more can be added later.
 const PURPOSE_OPTIONS = ["Tourism"];
@@ -27,6 +27,7 @@ export function JapanTripStep({
   onDateFocus,
   openGuidance,
   applyRecommendedDates,
+  embassyClosures,
 }: {
   form: ApplyFormData;
   set: Setter;
@@ -37,6 +38,7 @@ export function JapanTripStep({
   onDateFocus: () => void;
   openGuidance: () => void;
   applyRecommendedDates: () => void;
+  embassyClosures: EmbassyClosure[];
 }) {
   return (
     <div className="space-y-6">
@@ -76,7 +78,7 @@ export function JapanTripStep({
             minISO={seoulTodayISO()}
             required={false}
             error={dateCheck.errors.anchor}
-            blockedDate={submissionDateBlock}
+            blockedDate={(iso) => submissionDateBlock(iso, embassyClosures)}
           />
           <p className="text-xs text-slate-500">
             Select a business day when the Embassy of Japan in Korea is open.

@@ -4,6 +4,7 @@
 // Input + Select are extracted verbatim from ApplyWizard (same markup/behavior);
 // ChoiceGroup is added for enum fields (sex, marital status, passport type).
 import { useId } from "react";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 // Every "this field isn't done yet" message carries this attribute, so the
 // wizard can jump the applicant to the first unfinished field when they press
@@ -34,6 +35,7 @@ export function Input({
   autoComplete?: string;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }) {
+  const { t } = useLocale();
   const id = useId();
   const errorId = `${id}-error`;
   const helpId = `${id}-help`;
@@ -87,7 +89,7 @@ export function Input({
             {...{ [FIELD_ERROR_ATTR]: "" }}
             className="mt-1 text-xs font-semibold text-red-500"
           >
-            Required.
+            {t("field.required")}
           </p>
         )
       )}
@@ -124,6 +126,7 @@ export function Textarea({
   rows?: number;
   required?: boolean;
 }) {
+  const { t } = useLocale();
   const id = useId();
   const words = countWords(value);
   const overLimit = maxWords != null && words > maxWords;
@@ -159,7 +162,7 @@ export function Textarea({
           {...{ [FIELD_ERROR_ATTR]: "" }}
           className="mt-1 text-xs font-semibold text-red-500"
         >
-          Please shorten this to {maxWords} words or fewer.
+          {t("field.wordLimit").replace("{count}", String(maxWords))}
         </p>
       ) : (
         helpText && <p className="mt-1 text-xs text-slate-500">{helpText}</p>
@@ -178,9 +181,10 @@ export function Select({
   label: string;
   value: string;
   onChange: (v: string) => void;
-  options: string[];
+  options: Array<string | { value: string; label: string }>;
   required?: boolean;
 }) {
+  const { t } = useLocale();
   const id = useId();
   return (
     <div>
@@ -195,19 +199,22 @@ export function Select({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 transition hover:border-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
       >
-        <option value="">Select {label.toLowerCase()}</option>
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}
+        <option value="">{t("field.select")} {label.toLowerCase()}</option>
+        {options.map((option) => {
+          const o = typeof option === "string" ? { value: option, label: option } : option;
+          return (
+          <option key={o.value} value={o.value}>
+            {o.label}
           </option>
-        ))}
+          );
+        })}
       </select>
       {required && value === "" && (
         <p
           {...{ [FIELD_ERROR_ATTR]: "" }}
           className="mt-1 text-xs font-semibold text-red-500"
         >
-          Required.
+          {t("field.required")}
         </p>
       )}
     </div>
@@ -228,6 +235,7 @@ export function ChoiceGroup({
   options: { value: string; label: string }[];
   required?: boolean;
 }) {
+  const { t } = useLocale();
   return (
     <div>
       <span className="mb-2 block text-sm font-semibold text-slate-700">
@@ -259,7 +267,7 @@ export function ChoiceGroup({
           {...{ [FIELD_ERROR_ATTR]: "" }}
           className="mt-1 text-xs font-semibold text-red-500"
         >
-          Required.
+          {t("field.required")}
         </p>
       )}
     </div>
@@ -273,8 +281,8 @@ export function BooleanChoice({
   label,
   value,
   onChange,
-  yesLabel = "Yes",
-  noLabel = "No",
+  yesLabel,
+  noLabel,
   required = true,
   helpText,
 }: {
@@ -286,6 +294,7 @@ export function BooleanChoice({
   required?: boolean;
   helpText?: string;
 }) {
+  const { t } = useLocale();
   const opt = (active: boolean, on: () => void, text: string) => (
     <button
       type="button"
@@ -307,8 +316,8 @@ export function BooleanChoice({
         {required && <span className="text-red-500"> *</span>}
       </span>
       <div className="flex flex-wrap gap-2">
-        {opt(value === true, () => onChange(true), yesLabel)}
-        {opt(value === false, () => onChange(false), noLabel)}
+        {opt(value === true, () => onChange(true), yesLabel ?? t("field.yes"))}
+        {opt(value === false, () => onChange(false), noLabel ?? t("field.no"))}
       </div>
       {helpText && <p className="mt-1 text-xs text-slate-500">{helpText}</p>}
       {required && value === null && (
@@ -316,7 +325,7 @@ export function BooleanChoice({
           {...{ [FIELD_ERROR_ATTR]: "" }}
           className="mt-1 text-xs font-semibold text-red-500"
         >
-          Please choose an option.
+          {t("field.choose")}
         </p>
       )}
     </div>

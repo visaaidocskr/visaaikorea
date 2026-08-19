@@ -4,6 +4,7 @@ import type { ApplyFormData, JapanHostInput, HostType } from "@/lib/visa/types";
 import { addressLanguageError } from "@/lib/visa/forms";
 import { DatePicker } from "@/app/apply/DatePicker";
 import { Input, ChoiceGroup, SEX_OPTIONS } from "@/app/apply/fields";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 type Setter = <K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) => void;
 
@@ -22,6 +23,7 @@ export function HostStep({
   form: ApplyFormData;
   set: Setter;
 }) {
+  const { t } = useLocale();
   const h = form.host;
   const setHost = (patch: Partial<JapanHostInput>) => set("host", { ...h, ...patch });
   const showFields = form.host_type === "inviter" || form.host_type === "guarantor";
@@ -37,44 +39,44 @@ export function HostStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold text-slate-900">Inviter / Guarantor in Japan</h3>
+        <h3 className="text-xl font-bold text-slate-900">{t("japan.host.title")}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Only needed if someone in Japan is inviting or guaranteeing your visit.
+          {t("japan.host.intro")}
         </p>
       </div>
 
       <ChoiceGroup
-        label="Do you have an inviter or guarantor in Japan?"
+        label={t("japan.host.question")}
         value={form.host_type === "" ? "" : form.host_type}
         onChange={onTypeChange}
-        options={HOST_OPTIONS}
+        options={HOST_OPTIONS.map((option) => ({ ...option, label: t(`japan.host.${option.value}`) }))}
       />
 
       {showFields && (
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
-            <Input label="Full name" value={h.name} onChange={(v) => setHost({ name: v })} />
+            <Input label={t("japan.host.fullName")} value={h.name} onChange={(v) => setHost({ name: v })} />
             <Input
-              label="Phone number"
+              label={t("japan.status.phone")}
               value={h.phone}
               onChange={(v) => setHost({ phone: v })}
               inputMode="tel"
             />
             <Input
-              label="Address in Japan"
+              label={t("japan.host.address")}
               value={h.address}
               onChange={(v) => setHost({ address: v })}
               error={addressLanguageError(h.address)}
-              helpText="Please enter the full address in English."
+              helpText={t("japan.status.fullAddressEnglish")}
             />
             <Input
-              label="Relationship to you"
+              label={t("japan.host.relationship")}
               value={h.relationship}
               onChange={(v) => setHost({ relationship: v })}
-              placeholder="e.g. friend, employer, relative"
+              placeholder={t("japan.host.relationshipExample")}
             />
             <DatePicker
-              label="Date of birth"
+              label={t("japan.dateOfBirth")}
               value={h.date_of_birth}
               onChange={(v) => setHost({ date_of_birth: v })}
               minISO="1900-01-01"
@@ -83,30 +85,30 @@ export function HostStep({
               showYearMonth
             />
             <ChoiceGroup
-              label="Sex"
+              label={t("japan.sex")}
               value={h.sex}
               onChange={(v) => setHost({ sex: v })}
               options={SEX_OPTIONS}
               required={false}
             />
             <Input
-              label="Profession / occupation"
+              label={t("japan.host.occupation")}
               value={h.occupation}
               onChange={(v) => setHost({ occupation: v })}
               required={false}
             />
             <Input
-              label="Nationality"
+              label={t("apply.nationality")}
               value={h.nationality}
               onChange={(v) => setHost({ nationality: v })}
               required={false}
             />
             <Input
-              label="Immigration / residence status in Japan"
+              label={t("japan.host.status")}
               value={h.immigration_status}
               onChange={(v) => setHost({ immigration_status: v })}
               required={false}
-              helpText="e.g. Japanese national, Permanent Resident, Work visa."
+              helpText={t("japan.host.statusExample")}
             />
           </div>
         </div>

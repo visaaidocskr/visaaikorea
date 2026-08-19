@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 import { APPLICANT_UPLOADS_BUCKET } from "@/lib/supabase/storage";
 import { scanPassportMrz, type PassportMrzFields } from "@/lib/ocr/passportMrz";
 import { renderFirstPdfPageToPng } from "@/lib/ocr/pdfToImage";
+import { enforceRateLimit } from "@/lib/security/rateLimit";
 
 export type ScanResult =
   | { ok: true; fields: PassportMrzFields; valid: boolean }
@@ -21,6 +22,13 @@ const SUPPORTED_MIME = new Set(["image/jpeg", "image/png", "application/pdf"]);
 export async function scanUploadedPassport(applicationId: string): Promise<ScanResult> {
   const session = await getSessionUser();
   if (!session) return { ok: false, error: "Not signed in." };
+  const limit = enforceRateLimit(`passport-ocr:${session.user.id}`, {
+    limit: 6,
+    windowMs: 60_000,
+  });
+  if (!limit.ok) {
+    return { ok: false, error: "Too many scans requested. Please wait a minute and try again." };
+  }
 
   const supabase = await createClient();
 
@@ -31,7 +39,10 @@ export async function scanUploadedPassport(applicationId: string): Promise<ScanR
     .eq("file_type", "passport")
     .maybeSingle();
 
-  if (rowErr) return { ok: false, error: rowErr.message };
+  if (rowErr) {
+    console.error("[ocr] Could not load passport upload:", rowErr.message);
+    return { ok: false, error: "We could not read the passport upload. Please try again." };
+  }
   if (!row) return { ok: false, error: "Upload your passport photo page first." };
 
   if (!SUPPORTED_MIME.has(row.mime_type ?? "")) {
@@ -45,7 +56,8 @@ export async function scanUploadedPassport(applicationId: string): Promise<ScanR
     .from(APPLICANT_UPLOADS_BUCKET)
     .download(row.storage_path);
   if (dlErr || !file) {
-    return { ok: false, error: dlErr?.message ?? "Could not read the uploaded file." };
+    console.error("[ocr] Could not download passport upload:", dlErr?.message);
+    return { ok: false, error: "We could not read the uploaded file. Please try again." };
   }
 
   let buffer: Buffer = Buffer.from(await file.arrayBuffer());
@@ -56,10 +68,10 @@ export async function scanUploadedPassport(applicationId: string): Promise<ScanR
   if (row.mime_type === "application/pdf") {
     try {
       buffer = await renderFirstPdfPageToPng(buffer);
-    } catch (e) {
+    } catch {
       return {
         ok: false,
-        error: `Could not read the uploaded PDF: ${(e as Error).message}`,
+        error: "We could not read this PDF. Please upload a clearer passport image or PDF.",
       };
     }
   }

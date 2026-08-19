@@ -2,6 +2,7 @@
 
 import type { ApplyFormData, BackgroundAnswers } from "@/lib/visa/types";
 import { BooleanChoice } from "@/app/apply/fields";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 type Setter = <K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) => void;
 
@@ -40,6 +41,7 @@ export function BackgroundStep({
   form: ApplyFormData;
   set: Setter;
 }) {
+  const { t } = useLocale();
   const answers = form.background_answers;
   const setAnswer = (key: keyof BackgroundAnswers, v: boolean) =>
     set("background_answers", { ...answers, [key]: v });
@@ -49,10 +51,9 @@ export function BackgroundStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold text-slate-900">Additional questions</h3>
+        <h3 className="text-xl font-bold text-slate-900">{t("japan.background.title")}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          These are official declarations. Please answer each one honestly — they
-          are only ever answered by you.
+          {t("japan.background.intro")}
         </p>
       </div>
 
@@ -70,7 +71,7 @@ export function BackgroundStep({
 
       <div>
         <label className="mb-2 block text-sm font-semibold text-slate-700">
-          Remarks / special circumstances
+          {t("japan.background.remarks")}
           {anyYes ? <span className="text-red-500"> *</span> : null}
         </label>
         <textarea
@@ -79,14 +80,14 @@ export function BackgroundStep({
           rows={4}
           placeholder={
             anyYes
-              ? "You answered “Yes” above — please provide the relevant details."
-              : "Optional — anything the consulate should know."
+              ? t("japan.background.yesDetails")
+              : t("japan.background.optionalDetails")
           }
           className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 transition hover:border-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
         {anyYes && form.remarks.trim() === "" && (
           <p className="mt-1 text-xs font-semibold text-red-500">
-            Please provide details for any “Yes” answer above.
+            {t("japan.background.requiredDetails")}
           </p>
         )}
       </div>

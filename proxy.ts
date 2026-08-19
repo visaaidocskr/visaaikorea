@@ -10,7 +10,15 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Run on everything except static assets and image files.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // Authenticated routes only. Running a remote `auth.getUser()` call for
+    // every public landing/privacy/terms request added needless latency. Each
+    // server action still authorizes itself; this just refreshes browser
+    // sessions where a refreshed cookie is actually required.
+    "/apply/:path*",
+    "/invite/:path*",
+    "/dashboard/:path*",
+    "/admin/:path*",
+    "/login",
+    "/signup",
   ],
 };

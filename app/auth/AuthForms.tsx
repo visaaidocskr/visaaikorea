@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { EmailCodeForm } from "@/app/auth/EmailCodeForm";
+import { useLocale } from "@/app/components/LocaleProvider";
 import {
   signIn,
   signUp,
@@ -17,13 +18,14 @@ const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
 
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
+  const { t } = useLocale();
   return (
     <button
       type="submit"
       disabled={pending}
       className="w-full rounded-2xl bg-blue-700 py-4 text-lg font-bold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-300"
     >
-      {pending ? "Please wait…" : label}
+      {pending ? t("auth.wait") : label}
     </button>
   );
 }
@@ -74,6 +76,7 @@ function GoogleMark() {
 
 function GoogleButtonInner() {
   const { pending } = useFormStatus();
+  const { t } = useLocale();
   return (
     <button
       type="submit"
@@ -81,11 +84,11 @@ function GoogleButtonInner() {
       className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-300 bg-white py-4 text-base font-bold text-slate-700 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? (
-        "Opening Google…"
+        t("auth.openingGoogle")
       ) : (
         <>
           <GoogleMark />
-          Continue with Google
+          {t("auth.continueGoogle")}
         </>
       )}
     </button>
@@ -99,6 +102,7 @@ function GoogleButtonInner() {
  */
 export function GoogleButton({ next = "/dashboard" }: { next?: string }) {
   const [state, action] = useActionState<AuthState, FormData>(signInWithGoogle, {});
+  const { t } = useLocale();
   return (
     <div className="space-y-4">
       <form action={action}>
@@ -109,7 +113,7 @@ export function GoogleButton({ next = "/dashboard" }: { next?: string }) {
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-slate-200" />
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-          or
+          {t("auth.or")}
         </span>
         <span className="h-px flex-1 bg-slate-200" />
       </div>
@@ -128,6 +132,7 @@ export function GoogleButton({ next = "/dashboard" }: { next?: string }) {
  */
 export function SignInMethods({ next }: { next: string }) {
   const [usePassword, setUsePassword] = useState(false);
+  const { t } = useLocale();
 
   return (
     <div className="space-y-5">
@@ -140,8 +145,8 @@ export function SignInMethods({ next }: { next: string }) {
           className="font-semibold text-blue-700 underline-offset-4 hover:underline"
         >
           {usePassword
-            ? "Email me a code instead"
-            : "Sign in with a password instead"}
+            ? t("auth.emailCodeInstead")
+            : t("auth.passwordInstead")}
         </button>
       </p>
     </div>
@@ -150,73 +155,76 @@ export function SignInMethods({ next }: { next: string }) {
 
 export function LoginForm({ next }: { next: string }) {
   const [state, action] = useActionState<AuthState, FormData>(signIn, {});
+  const { t } = useLocale();
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="next" value={next} />
       <div>
         <label className={labelClass} htmlFor="email">
-          Email
+          {t("form.email")}
         </label>
         <input id="email" name="email" type="email" required className={inputClass} placeholder="you@example.com" />
       </div>
       <div>
         <label className={labelClass} htmlFor="password">
-          Password
+          {t("auth.password")}
         </label>
         <input id="password" name="password" type="password" required className={inputClass} placeholder="••••••••" />
       </div>
       <Feedback state={state} />
-      <SubmitButton label="Sign In" />
+      <SubmitButton label={t("auth.signIn")} />
     </form>
   );
 }
 
 export function SignupForm() {
   const [state, action] = useActionState<AuthState, FormData>(signUp, {});
+  const { t } = useLocale();
   return (
     <form action={action} className="space-y-5">
       <div>
         <label className={labelClass} htmlFor="full_name">
-          Full name
+          {t("auth.fullName")}
         </label>
-        <input id="full_name" name="full_name" type="text" className={inputClass} placeholder="As written in your passport" />
+        <input id="full_name" name="full_name" type="text" className={inputClass} placeholder={t("auth.passportName")} />
       </div>
       <div>
         <label className={labelClass} htmlFor="phone">
-          Phone number
+          {t("auth.phone")}
         </label>
         <input id="phone" name="phone" type="tel" className={inputClass} placeholder="010-0000-0000" />
       </div>
       <div>
         <label className={labelClass} htmlFor="email">
-          Email
+          {t("form.email")}
         </label>
         <input id="email" name="email" type="email" required className={inputClass} placeholder="you@example.com" />
       </div>
       <div>
         <label className={labelClass} htmlFor="password">
-          Password
+          {t("auth.password")}
         </label>
-        <input id="password" name="password" type="password" required minLength={8} className={inputClass} placeholder="At least 8 characters" />
+        <input id="password" name="password" type="password" required minLength={8} className={inputClass} placeholder={t("auth.passwordHint")} />
       </div>
       <Feedback state={state} />
-      <SubmitButton label="Create Account" />
+      <SubmitButton label={t("auth.createAccount")} />
     </form>
   );
 }
 
 export function ForgotPasswordForm() {
   const [state, action] = useActionState<AuthState, FormData>(forgotPassword, {});
+  const { t } = useLocale();
   return (
     <form action={action} className="space-y-5">
       <div>
         <label className={labelClass} htmlFor="email">
-          Email
+          {t("form.email")}
         </label>
         <input id="email" name="email" type="email" required className={inputClass} placeholder="you@example.com" />
       </div>
       <Feedback state={state} />
-      <SubmitButton label="Send Reset Link" />
+      <SubmitButton label={t("auth.reset")} />
     </form>
   );
 }

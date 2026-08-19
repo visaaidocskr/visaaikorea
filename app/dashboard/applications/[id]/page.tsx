@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { STATUS_LABELS, STATUS_BADGE } from "@/lib/visa/status";
+import { statusLabel, STATUS_BADGE } from "@/lib/visa/status";
 import type { ApplicationStatus } from "@/lib/visa/types";
 import { DownloadButton } from "@/app/dashboard/DownloadButton";
 import { APPROVED_VISA_DOC_TYPE } from "@/lib/docs/documentTypes";
 import { GenerateItineraryButton } from "@/app/dashboard/GenerateItineraryButton";
+import { getRequestLocale } from "@/lib/locale-server";
+import { translate } from "@/lib/i18n";
 
 export const metadata: Metadata = { title: "Application · VisaAI Korea" };
 
@@ -17,6 +19,8 @@ export default async function ClientApplicationDetail({
   params: Promise<{ id: string }>;
 }) {
   await requireUser();
+  const locale = await getRequestLocale();
+  const t = (key: string) => translate(locale, key);
   const { id } = await params;
   const supabase = await createClient();
 
@@ -53,26 +57,26 @@ export default async function ClientApplicationDetail({
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
       <Link href="/dashboard/applications" className="text-sm font-semibold text-blue-700">
-        ← My applications
+        ← {t("dashboard.applications")}
       </Link>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-extrabold">
           {[app.destination_country, app.destination_city].filter(Boolean).join(" · ") ||
-            "Application"}
+            t("dashboard.application")}
         </h1>
         <div className="flex items-center gap-3">
           <span
             className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_BADGE[app.status as ApplicationStatus]}`}
           >
-            {STATUS_LABELS[app.status as ApplicationStatus]}
+            {statusLabel(app.status as ApplicationStatus, locale)}
           </span>
           {canEdit && (
             <Link
               href={`/apply?app=${id}`}
               className="rounded-full bg-blue-700 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-blue-800"
             >
-              Edit application
+              {t("dashboard.editApplication")}
             </Link>
           )}
         </div>
@@ -96,8 +100,8 @@ export default async function ClientApplicationDetail({
             }`}
           >
             {app.status === "missing_documents"
-              ? "Action needed from you"
-              : "A message from our team"}
+              ? t("dashboard.actionNeeded")
+              : t("dashboard.teamMessage")}
           </h2>
           <p
             className={`mt-2 whitespace-pre-wrap text-sm leading-relaxed ${
@@ -113,7 +117,7 @@ export default async function ClientApplicationDetail({
               href={`/apply?app=${id}&step=${encodeURIComponent(fixStepName)}`}
               className="mt-4 inline-block rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-800"
             >
-              Open my application to fix this
+              {t("dashboard.fixApplication")}
             </Link>
           )}
           {app.client_message_at && (
@@ -122,24 +126,24 @@ export default async function ClientApplicationDetail({
                 app.status === "missing_documents" ? "text-amber-700" : "text-blue-700"
               }`}
             >
-              Sent {new Date(app.client_message_at).toLocaleString()}
+              {t("dashboard.sent")} {new Date(app.client_message_at).toLocaleString(locale)}
             </p>
           )}
         </section>
       )}
 
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-lg font-bold">Summary</h2>
+        <h2 className="mb-4 text-lg font-bold">{t("dashboard.summary")}</h2>
         <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
           {[
             // Vietnam never asks for a Korean visa status — showing an empty
             // row would look like the applicant forgot to fill something in.
             ...(app.korean_visa_status
-              ? [["Korean visa status", app.korean_visa_status]]
+              ? [[t("dashboard.koreanStatus"), app.korean_visa_status]]
               : []),
-            ["Nationality", app.nationality],
-            ["Travel dates", [app.travel_start_date, app.travel_end_date].filter(Boolean).join(" → ")],
-            ["Planned stay", app.stay_days != null ? `${app.stay_days} days` : "—"],
+            [t("dashboard.nationality"), app.nationality],
+            [t("dashboard.travelDates"), [app.travel_start_date, app.travel_end_date].filter(Boolean).join(" → ")],
+            [t("dashboard.plannedStay"), app.stay_days != null ? `${app.stay_days} ${t("dashboard.days")}` : "—"],
           ].map(([k, v]) => (
             <div key={k as string} className="flex justify-between border-b border-slate-100 pb-2">
               <dt className="text-sm text-slate-500">{k}</dt>
@@ -151,12 +155,12 @@ export default async function ClientApplicationDetail({
 
       <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
         <h2 className="mb-1 text-lg font-bold">
-          {app.destination_country === "Vietnam" ? "Your e-Visa" : "Your documents"}
+          {app.destination_country === "Vietnam" ? t("dashboard.evisa") : t("dashboard.yourDocuments")}
         </h2>
         <p className="mb-4 text-sm text-slate-500">
           {app.destination_country === "Vietnam"
-            ? "Your approved e-Visa is emailed to you as a PDF, and also appears here once it has been issued by the Vietnam Immigration Department."
-            : "Documents appear here once our team has prepared and released them. Air ticket and hotel reservations may arrive within 16 hours after review."}
+            ? t("dashboard.evisaDescription")
+            : t("dashboard.documentsDescription")}
         </p>
         {app.destination_country === "Japan" &&
           app.travel_start_date &&
@@ -180,7 +184,7 @@ export default async function ClientApplicationDetail({
                 }`}
               >
                 <span className={`font-semibold ${isVisa ? "text-emerald-900" : ""}`}>
-                  {isVisa ? "✓ Your visa" : d.document_type}
+                  {isVisa ? `✓ ${t("dashboard.yourVisa")}` : d.document_type}
                   <span className="ml-2 text-xs uppercase text-slate-400">
                     {d.file_format}
                   </span>
@@ -191,7 +195,7 @@ export default async function ClientApplicationDetail({
           })}
           {(docs ?? []).length === 0 && (
             <p className="rounded-2xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-400">
-              No documents available yet.
+              {t("dashboard.noDownloads")}
             </p>
           )}
         </div>

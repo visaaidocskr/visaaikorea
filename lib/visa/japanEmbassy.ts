@@ -56,6 +56,10 @@ export function getJapanEmbassyClosureDates(year: number): EmbassyClosure[] {
   return CLOSURES_BY_YEAR[year] ?? [];
 }
 
+export function allJapanEmbassyClosures(): EmbassyClosure[] {
+  return Object.values(CLOSURES_BY_YEAR).flat();
+}
+
 export function japanEmbassyClosure(iso: string): EmbassyClosure | null {
   const year = Number(iso.slice(0, 4));
   if (!year) return null;
@@ -81,14 +85,17 @@ export type SubmissionBlock = { message: string; closure?: boolean };
 
 // Why a submission date can't be chosen (weekend or embassy closure), or null
 // when it's a selectable business day.
-export function submissionDateBlock(iso: string): SubmissionBlock | null {
+export function submissionDateBlock(
+  iso: string,
+  closures: EmbassyClosure[] = getJapanEmbassyClosureDates(Number(iso.slice(0, 4)))
+): SubmissionBlock | null {
   if (isWeekend(iso)) {
     return {
       message:
         "The Embassy of Japan in Korea is closed on Saturdays and Sundays. Please select another business day.",
     };
   }
-  const c = japanEmbassyClosure(iso);
+  const c = closures.find((closure) => closure.date === iso) ?? null;
   if (c) {
     return {
       message: `${c.name} — Embassy closed. Please select another business day.`,
@@ -98,6 +105,6 @@ export function submissionDateBlock(iso: string): SubmissionBlock | null {
   return null;
 }
 
-export function isSubmissionDateBlocked(iso: string): boolean {
-  return submissionDateBlock(iso) !== null;
+export function isSubmissionDateBlocked(iso: string, closures?: EmbassyClosure[]): boolean {
+  return submissionDateBlock(iso, closures) !== null;
 }

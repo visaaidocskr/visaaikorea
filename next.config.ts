@@ -14,6 +14,15 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  // This allows only our own scripts/resources and the narrow set needed for
+  // private-file previews. `unsafe-eval` is retained for Next development
+  // tooling; production deployments should serve this same policy without it
+  // once a nonce-based CSP is introduced.
+  {
+    key: "Content-Security-Policy",
+    value:
+      "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https:; media-src 'self' blob:; worker-src 'self' blob:",
+  },
 ];
 
 // Document uploads are sent through a Server Action (uploadApplicantFile), so

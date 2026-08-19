@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from "react";
 import { scanUploadedFlightReservation } from "@/app/apply/reservationActions";
 import type { FlightReservationFields } from "@/lib/ocr/reservationParse";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 export function FlightScanPanel({
   applicationId,
@@ -24,6 +25,7 @@ export function FlightScanPanel({
   flightFilename?: string;
   onApply: (fields: FlightReservationFields) => void;
 }) {
+  const { t } = useLocale();
   const [status, setStatus] = useState<"idle" | "scanning" | "done" | "error">("idle");
   const [error, setError] = useState("");
   const [fields, setFields] = useState<FlightReservationFields | null>(null);
@@ -42,7 +44,7 @@ export function FlightScanPanel({
     if (!found) {
       setStatus("error");
       setError(
-        "Couldn't find any recognizable flight details in this document. Please fill the fields in below."
+        t("scan.flightNotFound")
       );
       return;
     }
@@ -63,11 +65,11 @@ export function FlightScanPanel({
     <div className="mt-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-blue-900">🔍 Auto-read from e-ticket (beta)</p>
+          <p className="text-sm font-bold text-blue-900">🔍 {t("scan.flightTitle")}</p>
           <p className="mt-0.5 text-xs text-blue-800/80">
             {status === "scanning"
-              ? "Reading the reservation document…"
-              : "Tries to fill the airline, flight number, arrival airport, and date below — always double-check them, e-ticket formats vary a lot."}
+              ? t("scan.readingReservation")
+              : t("scan.flightHelp")}
           </p>
         </div>
         <button
@@ -76,7 +78,7 @@ export function FlightScanPanel({
           disabled={status === "scanning"}
           className="shrink-0 rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-50 disabled:opacity-50"
         >
-          {status === "scanning" ? "Reading…" : status === "idle" ? "Scan document" : "Scan again"}
+          {status === "scanning" ? t("scan.reading") : status === "idle" ? t("scan.document") : t("scan.again")}
         </button>
       </div>
 
@@ -87,30 +89,30 @@ export function FlightScanPanel({
       {status === "done" && fields && (
         <div className="mt-3 rounded-xl border border-blue-100 bg-white p-3">
           <p className="text-xs font-bold text-amber-600">
-            ⚠ Best-effort read — please check every field carefully below.
+            ⚠ {t("scan.warning")}
           </p>
           <dl className="mt-2 grid gap-x-6 gap-y-1 sm:grid-cols-2">
             {fields.airline && (
               <div className="flex justify-between gap-3 text-sm">
-                <dt className="text-slate-500">Airline</dt>
+                <dt className="text-slate-500">{t("booking.airline")}</dt>
                 <dd className="font-semibold text-slate-900">{fields.airline}</dd>
               </div>
             )}
             {fields.flightNumber && (
               <div className="flex justify-between gap-3 text-sm">
-                <dt className="text-slate-500">Flight number</dt>
+                <dt className="text-slate-500">{t("booking.flightNumber")}</dt>
                 <dd className="font-semibold text-slate-900">{fields.flightNumber}</dd>
               </div>
             )}
             {fields.arrivalAirportCode && (
               <div className="flex justify-between gap-3 text-sm">
-                <dt className="text-slate-500">Arrival airport</dt>
+                <dt className="text-slate-500">{t("scan.arrivalAirport")}</dt>
                 <dd className="font-semibold text-slate-900">{fields.arrivalAirportCode}</dd>
               </div>
             )}
             {fields.arrivalDate && (
               <div className="flex justify-between gap-3 text-sm">
-                <dt className="text-slate-500">Arrival date</dt>
+                <dt className="text-slate-500">{t("booking.arrivalDate")}</dt>
                 <dd className="font-semibold text-slate-900">{fields.arrivalDate}</dd>
               </div>
             )}

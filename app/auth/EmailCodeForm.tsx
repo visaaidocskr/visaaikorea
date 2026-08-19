@@ -9,6 +9,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { sendEmailCode, verifyEmailCode, type CodeState } from "@/app/auth/actions";
 import { CodeInput } from "@/app/auth/CodeInput";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 const RESEND_SECONDS = 60;
 
@@ -41,6 +42,7 @@ function Problem({ text }: { text?: string }) {
 }
 
 export function EmailCodeForm({ next = "/dashboard" }: { next?: string }) {
+  const { t } = useLocale();
   const [sendState, sendAction] = useActionState<CodeState, FormData>(
     sendEmailCode,
     {}
@@ -49,7 +51,6 @@ export function EmailCodeForm({ next = "/dashboard" }: { next?: string }) {
     verifyEmailCode,
     {}
   );
-
   // The address is whichever step last knew it: the verify action echoes it
   // back on failure so a wrong code doesn't drop us to step one.
   const email = verifyState.email ?? sendState.email ?? "";
@@ -60,7 +61,7 @@ export function EmailCodeForm({ next = "/dashboard" }: { next?: string }) {
       <form action={sendAction} className="space-y-5">
         <div>
           <label className="mb-2 block text-sm font-semibold text-slate-700" htmlFor="code-email">
-            Email
+            {t("form.email")}
           </label>
           <input
             id="code-email"
@@ -73,11 +74,11 @@ export function EmailCodeForm({ next = "/dashboard" }: { next?: string }) {
             className={inputClass}
           />
           <p className="mt-2 text-xs text-slate-500">
-            We&rsquo;ll email you a 6-digit code. No password needed.
+            {t("auth.codeHelp")}
           </p>
         </div>
         <Problem text={sendState.error} />
-        <SubmitButton label="Email me a code" pendingLabel="Sending…" />
+        <SubmitButton label={t("auth.emailCode")} pendingLabel={t("auth.sending")} />
       </form>
     );
   }
@@ -109,6 +110,7 @@ function CodeStep({
   sendAction: (formData: FormData) => void;
   sentAt?: number;
 }) {
+  const { t } = useLocale();
   const formRef = useRef<HTMLFormElement>(null);
   const submittedFor = useRef<string>("");
 
@@ -128,8 +130,7 @@ function CodeStep({
     <div className="space-y-5">
       <div>
         <p className="text-sm text-slate-600">
-          We sent a 6-digit code to <strong className="text-slate-900">{email}</strong>.
-          It expires shortly, so enter it now.
+          {t("auth.codeSent")} <strong className="text-slate-900">{email}</strong>. {t("auth.codeExpiry")}
         </p>
       </div>
 
@@ -146,7 +147,7 @@ function CodeStep({
           }}
         />
         <Problem text={verifyState.error} />
-        <SubmitButton label="Sign in" pendingLabel="Checking…" />
+        <SubmitButton label={t("auth.signIn")} pendingLabel={t("auth.checking")} />
       </form>
 
       <form action={sendAction} className="text-center">
@@ -160,10 +161,11 @@ function CodeStep({
 
 function ResendButton({ seconds }: { seconds: number }) {
   const { pending } = useFormStatus();
+  const { t } = useLocale();
   if (seconds > 0) {
     return (
       <p className="text-sm text-slate-500">
-        Didn&rsquo;t get it? You can request another code in {seconds}s.
+        {t("auth.resendWait")} {seconds}s.
       </p>
     );
   }
@@ -173,7 +175,7 @@ function ResendButton({ seconds }: { seconds: number }) {
       disabled={pending}
       className="text-sm font-semibold text-blue-700 underline-offset-4 hover:underline disabled:opacity-50"
     >
-      {pending ? "Sending…" : "Send another code"}
+      {pending ? t("auth.sending") : t("auth.resend")}
     </button>
   );
 }

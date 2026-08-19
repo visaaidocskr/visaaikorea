@@ -9,6 +9,7 @@ import { SupportContactCard } from "@/app/apply/japan/SupportContactCard";
 import { Input, Select, BooleanChoice } from "@/app/apply/fields";
 import { FlightScanPanel } from "@/app/apply/FlightScanPanel";
 import { HotelScanPanel } from "@/app/apply/HotelScanPanel";
+import { useLocale } from "@/app/components/LocaleProvider";
 import type { FlightReservationFields, HotelReservationFields } from "@/lib/ocr/reservationParse";
 
 type Setter = <K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) => void;
@@ -85,6 +86,7 @@ export function TravelBookingsStep({
   onUploaded: (fileType: string, filename: string) => void;
   countryLabel?: string;
 }) {
+  const { t } = useLocale();
   const f = form.flight;
   const setFlight = (patch: Partial<FlightBooking>) => set("flight", { ...f, ...patch });
 
@@ -173,29 +175,29 @@ export function TravelBookingsStep({
   const showSupport = missingFlight || missingAcc;
   const supportTitle =
     missingFlight && missingAcc
-      ? "You haven't booked your flight or accommodation yet."
+      ? t("booking.supportBoth")
       : missingFlight
-        ? "You haven't booked your flight yet."
-        : "You haven't booked your accommodation yet.";
+        ? t("booking.supportFlight")
+        : t("booking.supportHotel");
 
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-xl font-bold text-slate-900">Travel bookings</h3>
+        <h3 className="text-xl font-bold text-slate-900">{t("booking.title")}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Your flight and accommodation for the trip. We never fabricate bookings.
+          {t("booking.intro")}
         </p>
       </div>
 
       {/* Flight */}
       <section className="space-y-5">
-        <h4 className="text-sm font-bold text-slate-800">Flight</h4>
+        <h4 className="text-sm font-bold text-slate-800">{t("booking.flight")}</h4>
         <BooleanChoice
-          label={`Have you booked your flight to ${countryLabel}?`}
+          label={t("booking.flightQuestion").replace("{country}", countryLabel)}
           value={form.flight_booked}
           onChange={onFlightBooked}
-          yesLabel="Yes, I have booked my flight"
-          noLabel="No, not yet"
+          yesLabel={t("booking.yesFlight")}
+          noLabel={t("booking.notYet")}
         />
         {form.flight_booked === true && (
           <div className="space-y-6">
@@ -204,7 +206,7 @@ export function TravelBookingsStep({
                 applicationId={applicationId}
                 userId={userId}
                 fileType="flight_reservation"
-                label="Flight reservation / e-ticket"
+                label={t("booking.flightUpload")}
                 required={false}
                 initialFilename={uploads["flight_reservation"]}
                 onUploaded={onUploaded}
@@ -218,29 +220,29 @@ export function TravelBookingsStep({
               )}
             </div>
             <div className="grid gap-6 md:grid-cols-2">
-              <Input label="Airline" value={f.airline} onChange={(v) => setFlight({ airline: v })} />
+              <Input label={t("booking.airline")} value={f.airline} onChange={(v) => setFlight({ airline: v })} />
               <Input
-                label="Flight number"
+                label={t("booking.flightNumber")}
                 value={f.flight_number}
                 onChange={(v) => setFlight({ flight_number: v })}
                 required={false}
-                helpText="Optional if not issued yet."
+                helpText={t("booking.optionalFlight")}
               />
               <Select
-                label={`Port of entry into ${countryLabel}`}
+                label={t("booking.portEntry").replace("{country}", countryLabel)}
                 value={portSelectValue}
                 onChange={onPortChange}
                 options={[...PORTS_OF_ENTRY, OTHER_PORT]}
               />
               {portOther && (
                 <Input
-                  label="Enter your port of entry"
+                  label={t("booking.enterPort")}
                   value={form.port_of_entry}
                   onChange={(v) => set("port_of_entry", v)}
                 />
               )}
               <DatePicker
-                label="Arrival date"
+                label={t("booking.arrivalDate")}
                 value={f.arrival_date}
                 onChange={(v) => setFlight({ arrival_date: v })}
                 minISO={tripStart}
@@ -253,13 +255,13 @@ export function TravelBookingsStep({
 
       {/* Accommodation */}
       <section className="space-y-5">
-        <h4 className="text-sm font-bold text-slate-800">Accommodation</h4>
+        <h4 className="text-sm font-bold text-slate-800">{t("booking.accommodation")}</h4>
         <BooleanChoice
-          label={`Have you booked your accommodation in ${countryLabel}?`}
+          label={t("booking.hotelQuestion").replace("{country}", countryLabel)}
           value={form.accommodation_booked}
           onChange={onAccBooked}
-          yesLabel="Yes, I have booked accommodation"
-          noLabel="No, not yet"
+          yesLabel={t("booking.yesHotel")}
+          noLabel={t("booking.notYet")}
         />
         {form.accommodation_booked === true && (
           <div className="space-y-6">
@@ -268,7 +270,7 @@ export function TravelBookingsStep({
                 applicationId={applicationId}
                 userId={userId}
                 fileType="hotel_booking"
-                label="Hotel booking confirmation"
+                label={t("booking.hotelUpload")}
                 required={false}
                 initialFilename={uploads["hotel_booking"]}
                 onUploaded={onUploaded}
@@ -285,13 +287,13 @@ export function TravelBookingsStep({
               const addressError = addressLanguageError(a.address);
               const orderError =
                 a.check_in && a.check_out && a.check_out < a.check_in
-                  ? "Check-out must be on or after check-in."
+                  ? t("booking.dateOrder")
                   : undefined;
               return (
                 <div key={i} className="rounded-2xl border border-slate-200 p-5">
                   <div className="flex items-center justify-between">
                     <h5 className="text-sm font-bold text-slate-800">
-                      Accommodation {i + 1}
+                      {t("booking.accommodation")} {i + 1}
                     </h5>
                     {list.length > 1 && (
                       <button
@@ -299,33 +301,33 @@ export function TravelBookingsStep({
                         onClick={() => removeAcc(i)}
                         className="text-xs font-semibold text-red-600 hover:underline"
                       >
-                        Remove
+                        {t("booking.remove")}
                       </button>
                     )}
                   </div>
                   <div className="mt-3 grid gap-6 md:grid-cols-2">
                     <Input
-                      label="Hotel / accommodation name"
+                      label={t("booking.hotelName")}
                       value={a.name}
                       onChange={(v) => updateAcc(i, { name: v })}
                     />
                     <Input
-                      label="Phone number"
+                      label={t("booking.phone")}
                       value={a.phone}
                       onChange={(v) => updateAcc(i, { phone: v })}
                       required={false}
                       inputMode="tel"
                     />
                     <Input
-                      label="Address"
+                      label={t("booking.address")}
                       value={a.address}
                       onChange={(v) => updateAcc(i, { address: v })}
                       error={addressError}
-                      helpText="Please enter the full address in English."
+                      helpText={t("booking.addressHelp")}
                     />
                     <div className="grid grid-cols-2 gap-4">
                       <DatePicker
-                        label="Check-in"
+                        label={t("booking.checkIn")}
                         value={a.check_in}
                         onChange={(v) => updateAcc(i, { check_in: v })}
                         minISO={tripStart}
@@ -333,7 +335,7 @@ export function TravelBookingsStep({
                         showYearMonth
                       />
                       <DatePicker
-                        label="Check-out"
+                        label={t("booking.checkOut")}
                         value={a.check_out}
                         onChange={(v) => updateAcc(i, { check_out: v })}
                         minISO={a.check_in || tripStart}
@@ -351,7 +353,7 @@ export function TravelBookingsStep({
               onClick={addAcc}
               className="rounded-xl border border-dashed border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-blue-400 hover:text-blue-700"
             >
-              + Add another accommodation
+              + {t("booking.addAccommodation")}
             </button>
           </div>
         )}
@@ -361,7 +363,7 @@ export function TravelBookingsStep({
       {showSupport && (
         <SupportContactCard
           title={supportTitle}
-          message={`If you need help arranging your flight or accommodation for your ${countryLabel} visa application, please contact our visa support team. You can continue now — any missing details will be marked as “Needs attention.”`}
+          message={t("booking.supportMessage").replace("{country}", countryLabel)}
         />
       )}
     </div>

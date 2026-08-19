@@ -3,43 +3,29 @@
 import { useState } from "react";
 import { Reveal } from "@/app/components/Reveal";
 import { GenerateButton } from "@/app/components/GenerateButton";
-
-const STEPS = [
-  {
-    n: "01",
-    title: "Tell us about your trip",
-    blurb:
-      "Your nationality, Korean visa status, destination and travel dates. Upload your passport and we read the details for you.",
-  },
-  {
-    n: "02",
-    title: "We prepare your documents",
-    blurb:
-      "Your travel purpose statement, day-by-day itinerary and the exact checklist for your visa status — all generated from what you entered.",
-  },
-  {
-    n: "03",
-    title: "We check, then you download",
-    blurb:
-      "Our team reviews everything before release, so you never submit a document with a mistake in it. Flight and hotel reservations may take up to 16 hours.",
-  },
-];
+import { useLocale } from "@/app/components/LocaleProvider";
 
 export function HowItWorks() {
   const [step, setStep] = useState(0);
+  const { t } = useLocale();
+  const steps = [
+    { n: "01", title: t("how.step1.title"), blurb: t("how.step1.body") },
+    { n: "02", title: t("how.step2.title"), blurb: t("how.step2.body") },
+    { n: "03", title: t("how.step3.title"), blurb: t("how.step3.body") },
+  ];
 
   return (
     <section id="how" className="px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
-            How it works
+            {t("how.eyebrow")}
           </p>
           <h2 className="mt-3 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Three steps to embassy-ready
+            {t("how.title")}
           </h2>
           <p className="mt-4 text-lg text-slate-600">
-            Click each step to see exactly what happens.
+            {t("how.description")}
           </p>
         </Reveal>
 
@@ -48,7 +34,7 @@ export function HowItWorks() {
           <div className="relative space-y-4">
             {/* Static connection line linking the step badges */}
             <div className="pointer-events-none absolute bottom-12 left-[2.95rem] top-12 hidden w-px bg-slate-200 sm:block" />
-            {STEPS.map((s, i) => {
+            {steps.map((s, i) => {
               const activeStep = i === step;
               return (
                 <Reveal key={s.n} delay={i * 80}>
@@ -114,35 +100,34 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 function FormPreview() {
+  const { t } = useLocale();
   return (
     <div className="space-y-4">
-      <p className="text-sm font-bold text-slate-900">Application details</p>
+      <p className="text-sm font-bold text-slate-900">{t("how.applicationDetails")}</p>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Nationality" value="Uzbekistan" />
-        <Field label="Korean visa status" value="D-2 Student" />
-        <Field label="Destination" value="Japan · Tokyo" />
-        <Field label="Travel dates" value="Jul 12 – Jul 18" />
+        <Field label={t("how.nationality")} value="Uzbekistan" />
+        <Field label={t("how.koreanStatus")} value="D-2 Student" />
+        <Field label={t("how.destination")} value="Japan · Tokyo" />
+        <Field label={t("how.travelDates")} value="Jul 12 – Jul 18" />
       </div>
       <div className="rounded-xl bg-blue-50 px-4 py-3 text-xs font-medium text-blue-700">
-        We tailor required documents to your exact visa status automatically.
+        {t("how.tailored")}
       </div>
     </div>
   );
 }
 
 function DocsPreview() {
+  const { t } = useLocale();
   const docs = ["Travel Purpose Statement", "Daily Travel Itinerary", "Document Checklist"];
   // Absorbed from the old standalone "Services" section — the same points,
   // shown where they're actually relevant instead of in a separate block.
   const included = [
-    "Destination-specific forms and checklist",
-    "Details kept consistent across every document",
-    "Companions included when you travel together",
-    "Embassy submission notes for your route",
+    t("how.included1"), t("how.included2"), t("how.included3"), t("how.included4"),
   ];
   return (
     <div className="space-y-3">
-      <p className="text-sm font-bold text-slate-900">Preparing documents…</p>
+      <p className="text-sm font-bold text-slate-900">{t("how.preparing")}</p>
       {docs.map((d, i) => (
         <div
           key={d}
@@ -155,12 +140,12 @@ function DocsPreview() {
             <p className="text-sm font-semibold text-slate-800">{d}</p>
             <div className="mt-1.5 skeleton h-2 w-2/3" style={{ animationDelay: `${i * 120}ms` }} />
           </div>
-          <span className="text-xs font-bold text-emerald-600">✓ Ready</span>
+          <span className="text-xs font-bold text-emerald-600">{t("how.ready")}</span>
         </div>
       ))}
       <div className="rounded-xl bg-slate-50 px-4 py-3">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-          Also included
+          {t("how.included")}
         </p>
         <ul className="mt-2 space-y-1.5">
           {included.map((item) => (
@@ -176,6 +161,7 @@ function DocsPreview() {
 }
 
 function DownloadPreview() {
+  const { t } = useLocale();
   const files = [
     { name: "travel-purpose-statement.docx", size: "82 KB" },
     { name: "daily-itinerary.docx", size: "146 KB" },
@@ -183,9 +169,9 @@ function DownloadPreview() {
   ];
   return (
     <div className="space-y-3">
-      <p className="text-sm font-bold text-slate-900">Your document package</p>
+      <p className="text-sm font-bold text-slate-900">{t("how.package")}</p>
       <div className="rounded-xl bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-800">
-        ✓ Reviewed by our team before release
+        {t("how.reviewed")}
       </div>
       {files.map((f) => (
         <div
@@ -202,13 +188,12 @@ function DownloadPreview() {
             </div>
           </div>
           <span className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white">
-            Download
+            {t("how.download")}
           </span>
         </div>
       ))}
       <div className="rounded-xl bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-500">
-        Print, sign where required, and submit per the embassy steps included in
-        your package.
+        {t("how.print")}
       </div>
       <GenerateButton full size="md" />
     </div>

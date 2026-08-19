@@ -1,4 +1,5 @@
 import type { ApplicationStatus } from "@/lib/visa/types";
+import { translate, type Locale } from "@/lib/i18n";
 
 export const APPLICATION_STATUSES: ApplicationStatus[] = [
   "draft",
@@ -25,6 +26,11 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   rejected: "Rejected",
   cancelled: "Cancelled",
 };
+
+/** Localized label for customer-facing status badges. */
+export function statusLabel(status: ApplicationStatus, locale: Locale) {
+  return translate(locale, `status.${status}`);
+}
 
 // Tailwind classes for a status badge.
 export const STATUS_BADGE: Record<ApplicationStatus, string> = {

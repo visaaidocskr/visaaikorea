@@ -14,7 +14,6 @@ const DEFAULT_PATH = "/dashboard";
 
 // Written as escapes rather than literal characters, so this file stays
 // readable text rather than being treated as binary by grep and diffs.
-// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\x00-\x1f\x7f]/;
 
 export function safeNextPath(

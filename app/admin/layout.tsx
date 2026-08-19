@@ -5,6 +5,7 @@ import { SignOutButton } from "@/app/dashboard/SignOutButton";
 const NAV = [
   { href: "/admin/applications", label: "Applications" },
   { href: "/admin/invitations", label: "Invitations" },
+  { href: "/admin/service-requests", label: "Travel requests" },
   { href: "/admin/templates", label: "Templates" },
   { href: "/admin/email-logs", label: "Email logs" },
   { href: "/admin/users", label: "Users" },

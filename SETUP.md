@@ -35,6 +35,8 @@ Run the migrations **in order** in the Supabase SQL Editor:
 4. `supabase/migrations/0004_visa_engine.sql` — data-driven visa engine: destinations, nationalities,
    korean_visa_types, embassies, eligibility_rules, destination_date_rules, required_documents,
    country_guidance, financial_requirements, faqs, latest_updates (public-read, admin-write)
+5. Continue with every migration in numeric order through `0017_service_enquiries.sql`.
+   Migration `0017` adds secure flight and tour quotation requests for the admin team.
 
 This also creates the 4 private buckets: `applicant-uploads`, `generated-documents`,
 `document-templates`, `admin-reservations`.
