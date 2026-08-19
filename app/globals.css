@@ -146,6 +146,11 @@ body {
   0%, 100% { transform: scale(1); opacity: .38; }
   50% { transform: scale(.88); opacity: .24; }
 }
+@keyframes auth-city-cycle {
+  0% { opacity: 0; transform: translateY(6px); }
+  2.5%, 18% { opacity: 1; transform: translateY(0); }
+  21%, 100% { opacity: 0; transform: translateY(-6px); }
+}
 @keyframes auth-wind-blow {
   0% { transform: translateX(26px); opacity: 0; }
   18% { opacity: .55; }
@@ -213,6 +218,7 @@ body {
 .auth-shooting-star { animation: auth-shooting-star-arc 11s linear infinite; }
 .auth-window { animation: auth-window-blink 7s ease-in-out infinite; }
 .auth-wind { animation: auth-wind-blow 1.7s linear infinite; }
+.auth-city { transform-box: fill-box; transform-origin: center; animation: auth-city-cycle 20s ease-in-out infinite; }
 .auth-dest-ring, .auth-dest-ring-delay, .auth-pin-ring { fill: none; transform-box: fill-box; transform-origin: center; animation: auth-dest-ping 2.8s cubic-bezier(.16, 1, .3, 1) infinite; }
 .auth-dest-ring-delay { animation-delay: -1.4s; }
 .auth-pin-ring { animation-duration: 3.6s; }

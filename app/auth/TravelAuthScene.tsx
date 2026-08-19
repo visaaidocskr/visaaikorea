@@ -48,6 +48,16 @@ const WIND: Array<[number, number, string]> = [
   [158, 284, "-1.1s"],
 ];
 
+// The pin label cycles through the cities we actually serve. Each entry is
+// (city key, country key, animation delay); the cycle is pure CSS.
+const CITY_STOPS: Array<[string, string, string]> = [
+  ["auth.scene.seoul", "auth.scene.korea", "0s"],
+  ["auth.scene.tokyo", "auth.scene.japan", "4s"],
+  ["auth.scene.taipei", "auth.scene.taiwan", "8s"],
+  ["auth.scene.singapore", "auth.scene.singaporeCountry", "12s"],
+  ["auth.scene.madrid", "auth.scene.spain", "16s"],
+];
+
 export function TravelAuthScene() {
   const { t } = useLocale();
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -249,8 +259,17 @@ export function TravelAuthScene() {
               <circle className="auth-pin-ring" cx="18" cy="18" r="18" stroke="#67E8F9" strokeWidth="1.5" />
               <circle cx="18" cy="18" r="18" fill="#0F172A" stroke="#67E8F9" strokeWidth="2" />
               <path d="M18 8C14 8 11 11 11 15C11 21 18 27 18 27C18 27 25 21 25 15C25 11 22 8 18 8ZM18 18C16 18 15 17 15 15C15 13 16 12 18 12C20 12 21 13 21 15C21 17 20 18 18 18Z" fill="#CFFAFE" />
-              <text x="43" y="14" fill="#E0F2FE" fontSize="12" fontWeight="700">{t("auth.scene.seoul")}</text>
-              <text x="43" y="31" fill="#94A3B8" fontSize="10">{t("auth.scene.korea")}</text>
+              {CITY_STOPS.map(([cityKey, countryKey, delay], i) => (
+                <g
+                  key={cityKey}
+                  className="auth-city"
+                  opacity={i === 0 ? 1 : 0}
+                  style={{ animationDelay: delay }}
+                >
+                  <text x="43" y="14" fill="#E0F2FE" fontSize="12" fontWeight="700">{t(cityKey)}</text>
+                  <text x="43" y="31" fill="#94A3B8" fontSize="10">{t(countryKey)}</text>
+                </g>
+              ))}
             </g>
 
             <g className="auth-chip" transform="translate(385 46)">
