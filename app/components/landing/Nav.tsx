@@ -49,7 +49,7 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
 
         <div className="hidden items-center gap-5 lg:flex">
           {LINKS.map((l) => (
-            <a
+            <Link
               key={l.href}
               href={l.href}
               className={`text-sm font-medium transition-colors ${
@@ -57,7 +57,7 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
               }`}
             >
               {t(l.labelKey)}
-            </a>
+            </Link>
           ))}
         </div>
 
@@ -94,14 +94,14 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
         <div className="animate-fade-in border-t border-slate-200 bg-white px-6 py-4 lg:hidden">
           <div className="flex flex-col gap-3">
             {LINKS.map((l) => (
-              <a
+              <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
                 className="rounded-lg px-2 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
               >
                 {t(l.labelKey)}
-              </a>
+              </Link>
             ))}
             <Link
               href="/login"

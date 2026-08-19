@@ -106,9 +106,9 @@ function Footer() {
           </span>
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-semibold text-slate-300">
             <Link href="/services" className="transition-colors hover:text-cyan-300">{t("footer.services")}</Link>
-            <a href="/privacy" className="transition-colors hover:text-cyan-300">{t("footer.privacy")}</a>
-            <a href="/terms" className="transition-colors hover:text-cyan-300">{t("footer.terms")}</a>
-            <a href="/refunds" className="transition-colors hover:text-cyan-300">{t("footer.refunds")}</a>
+            <Link href="/privacy" className="transition-colors hover:text-cyan-300">{t("footer.privacy")}</Link>
+            <Link href="/terms" className="transition-colors hover:text-cyan-300">{t("footer.terms")}</Link>
+            <Link href="/refunds" className="transition-colors hover:text-cyan-300">{t("footer.refunds")}</Link>
             <Link href="/login" className="transition-colors hover:text-cyan-300">{t("nav.signIn")}</Link>
           </div>
         </div>

@@ -13,9 +13,34 @@ type ClosureRow = {
   source: "Korea" | "Japan" | "Embassy";
 };
 
+// Closure calendars change on the scale of weeks; the visa wizard loads on the
+// scale of clicks. Cache per destination with a short TTL and in-flight dedupe
+// (same shape as resolveRuleset) so warm /apply navigations cost zero queries.
+const CLOSURES_TTL_MS = 60_000;
+const closuresCache = new Map<string, { at: number; data: EmbassyClosure[] }>();
+const closuresInFlight = new Map<string, Promise<EmbassyClosure[]>>();
+
 export async function resolveEmbassyClosures(
   destinationCountry: string
 ): Promise<EmbassyClosure[]> {
+  const cached = closuresCache.get(destinationCountry);
+  if (cached && Date.now() - cached.at < CLOSURES_TTL_MS) return cached.data;
+  const pending = closuresInFlight.get(destinationCountry);
+  if (pending) return pending;
+
+  const load = loadClosures(destinationCountry)
+    .then((data) => {
+      closuresCache.set(destinationCountry, { at: Date.now(), data });
+      return data;
+    })
+    .finally(() => {
+      closuresInFlight.delete(destinationCountry);
+    });
+  closuresInFlight.set(destinationCountry, load);
+  return load;
+}
+
+async function loadClosures(destinationCountry: string): Promise<EmbassyClosure[]> {
   const fallback = destinationCountry === "Japan" ? allJapanEmbassyClosures() : [];
   if (!isSupabaseConfigured()) return fallback;
 
