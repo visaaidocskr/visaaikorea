@@ -55,9 +55,15 @@ export function Nav() {
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             href="/login"
-            className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-blue-600"
+            className="rounded-xl px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:text-blue-700"
           >
             {t("nav.signIn")}
+          </Link>
+          <Link
+            href="/signup"
+            className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-800"
+          >
+            {t("nav.signUp")}
           </Link>
           <LanguageSelector />
         </div>
@@ -86,9 +92,17 @@ export function Nav() {
             ))}
             <Link
               href="/login"
+              onClick={() => setOpen(false)}
               className="rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
             >
               {t("nav.signIn")}
+            </Link>
+            <Link
+              href="/signup"
+              onClick={() => setOpen(false)}
+              className="rounded-lg bg-blue-700 px-2 py-2 text-center text-sm font-semibold text-white hover:bg-blue-800"
+            >
+              {t("nav.signUp")}
             </Link>
             <LanguageSelector />
             <GenerateButton full size="md" />
