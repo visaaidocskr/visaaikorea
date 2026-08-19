@@ -202,7 +202,7 @@ body {
 .auth-parallax-chip { transform: translate3d(calc(var(--px) * 20px), calc(var(--py) * 16px), 0); }
 .auth-aurora {
   background: conic-gradient(from 180deg at 50% 50%, transparent 0deg, rgba(56, 189, 248, .16) 55deg, rgba(129, 140, 248, .15) 130deg, transparent 215deg, rgba(34, 211, 238, .1) 300deg, transparent 360deg);
-  filter: blur(36px);
+  filter: blur(26px);
   opacity: .55;
   animation: auth-aurora-spin 32s linear infinite;
 }
@@ -326,7 +326,8 @@ body {
 .aurora {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(90px);
+  /* Softness baked into the gradient — no blur filter, no repaint cost. */
+  background: radial-gradient(circle closest-side, var(--aurora-c, rgba(147, 197, 253, .5)), transparent 70%);
   will-change: transform;
 }
 @keyframes aurora-1 {
@@ -401,6 +402,12 @@ body {
 .loader-sweep { animation: loader-sweep 1.1s ease-in-out infinite; }
 
 /* ---- Travel-brand design system ------------------------------------------- */
+/* Soft glow ball with the softness in the gradient, not in a filter. */
+.glow-orb {
+  border-radius: 9999px;
+  background: radial-gradient(circle closest-side, var(--orb-c, rgba(59, 130, 246, .35)), transparent 72%);
+  will-change: transform;
+}
 /* Gradient headline text: dawn-sky blue into cyan. */
 .text-sky-gradient {
   background: linear-gradient(92deg, #3B82F6 5%, #22D3EE 55%, #818CF8 100%);
@@ -466,7 +473,7 @@ body {
 /* Destination marquee: seamless loop, pauses on hover. */
 @keyframes marquee-roll { to { transform: translateX(-50%); } }
 .marquee { overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent); mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent); }
-.marquee-track { display: flex; width: max-content; animation: marquee-roll 34s linear infinite; }
+.marquee-track { display: flex; width: max-content; will-change: transform; animation: marquee-roll 34s linear infinite; }
 .marquee:hover .marquee-track { animation-play-state: paused; }
 /* Hero flight: same story as the sign-in scene, on the landing sky. */
 .hero-plane { transform-box: fill-box; transform-origin: center; visibility: hidden; }

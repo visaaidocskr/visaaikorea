@@ -31,7 +31,7 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
     <header
       className={`sticky top-0 z-40 transition-all duration-300 ${
         scrolled
-          ? "border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-md"
+          ? "border-b border-slate-200 bg-white/95 shadow-sm"
           : dark
             ? "bg-transparent"
             : "bg-white"

@@ -28,8 +28,8 @@ export function HomeHero() {
     <section className="relative isolate -mt-[72px] overflow-hidden bg-slate-950 px-6 pb-20 pt-36 text-center sm:pt-44">
       {/* Sky backdrop: orbs, grid, stars, and the flight. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="auth-scene-orb absolute -left-32 -top-32 h-[30rem] w-[30rem] rounded-full bg-blue-600/25 blur-3xl" />
-        <div className="auth-scene-orb-delay absolute -right-32 top-1/4 h-[32rem] w-[32rem] rounded-full bg-cyan-500/15 blur-3xl" />
+        <div className="auth-scene-orb glow-orb absolute -left-32 -top-32 h-[30rem] w-[30rem] [--orb-c:rgba(37,99,235,0.3)]" />
+        <div className="auth-scene-orb-delay glow-orb absolute -right-32 top-1/4 h-[32rem] w-[32rem] [--orb-c:rgba(6,182,212,0.2)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.05)_1px,transparent_1px)] bg-[size:56px_56px] [mask-image:radial-gradient(ellipse_at_center,black_25%,transparent_78%)]" />
         <svg
           className="absolute inset-0 h-full w-full"
@@ -43,10 +43,11 @@ export function HomeHero() {
               <stop stopColor="#22D3EE" stopOpacity=".7" />
               <stop offset="1" stopColor="#818CF8" stopOpacity=".7" />
             </linearGradient>
-            <filter id="hero-glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="6" result="blur" />
-              <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-            </filter>
+            <radialGradient id="hero-comet-glow">
+              <stop offset="0%" stopColor="#E0FBFF" />
+              <stop offset="45%" stopColor="#A5F3FC" stopOpacity=".8" />
+              <stop offset="100%" stopColor="#A5F3FC" stopOpacity="0" />
+            </radialGradient>
           </defs>
           {STARS.map(([x, y, r, delay]) => (
             <circle
@@ -68,8 +69,8 @@ export function HomeHero() {
             strokeLinecap="round"
             strokeDasharray="6 12"
           />
-          <circle className="hero-comet" r="4" fill="#A5F3FC" filter="url(#hero-glow)" />
-          <g className="hero-plane" filter="url(#hero-glow)">
+          <circle className="hero-comet" r="9" fill="url(#hero-comet-glow)" />
+          <g className="hero-plane">
             <path d="M-16 0L13 -8L30 -2.5L13 4L1.5 14.5H-6.5L-2.5 4L-16 0Z" fill="#F8FAFC" />
             <path d="M-16 0L13 -8L30 -2.5L13 4" stroke="#93C5FD" strokeWidth="1.4" strokeLinejoin="round" />
           </g>
@@ -105,7 +106,7 @@ export function HomeHero() {
             <GenerateButton size="lg" className="btn-shine-auto" />
             <a
               href="#countries"
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-lg font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-7 py-4 text-lg font-semibold text-white transition-colors hover:bg-white/15"
             >
               {t("nav.destinations")}
             </a>
@@ -116,7 +117,7 @@ export function HomeHero() {
             {[t("hero.prices"), t("hero.drafts"), t("hero.support")].map((line) => (
               <span
                 key={line}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-slate-200 backdrop-blur"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-slate-200"
               >
                 <span className="text-emerald-400">✓</span>
                 {line}

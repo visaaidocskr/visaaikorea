@@ -61,9 +61,9 @@ export function AuroraBackdrop() {
       <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-slate-50" />
 
       {/* Aurora blobs — low opacity, heavily blurred, slow drift */}
-      <div className="aurora aurora-1 -left-[10%] -top-[15%] h-[55vh] w-[55vh] bg-blue-300/35" />
-      <div className="aurora aurora-2 -right-[12%] top-[2%] h-[50vh] w-[50vh] bg-indigo-300/35" />
-      <div className="aurora aurora-3 left-[22%] top-[34%] h-[46vh] w-[46vh] bg-sky-300/25" />
+      <div className="aurora aurora-1 -left-[10%] -top-[15%] h-[55vh] w-[55vh] [--aurora-c:rgba(147,197,253,0.4)]" />
+      <div className="aurora aurora-2 -right-[12%] top-[2%] h-[50vh] w-[50vh] [--aurora-c:rgba(165,180,252,0.4)]" />
+      <div className="aurora aurora-3 left-[22%] top-[34%] h-[46vh] w-[46vh] [--aurora-c:rgba(125,211,252,0.3)]" />
 
       {/* Fine grid for AI depth (very subtle) */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(15,23,42,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.025)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />

@@ -62,7 +62,7 @@ function SocialLinks() {
           rel="noopener noreferrer"
           aria-label={s.label}
           title={s.label}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-300 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-300 transition-all hover:-translate-y-0.5 hover:border-cyan-400/50 hover:text-cyan-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden>
             <path d={s.path} />
@@ -79,8 +79,8 @@ function Footer() {
     <footer className="relative overflow-hidden bg-slate-950 px-6 py-14">
       {/* The same night sky the journey started under. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-blue-600/15 blur-3xl" />
-        <div className="absolute -right-24 top-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="glow-orb absolute -left-24 bottom-0 h-72 w-72 [--orb-c:rgba(37,99,235,0.2)]" />
+        <div className="glow-orb absolute -right-24 top-0 h-72 w-72 [--orb-c:rgba(6,182,212,0.14)]" />
         <svg className="absolute inset-x-0 top-0 h-10 w-full" viewBox="0 0 1440 40" fill="none" preserveAspectRatio="none">
           <path
             className="route-flow"

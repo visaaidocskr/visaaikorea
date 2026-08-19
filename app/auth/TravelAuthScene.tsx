@@ -89,8 +89,8 @@ export function TravelAuthScene() {
       className="auth-scene relative isolate min-h-56 overflow-hidden rounded-[2rem] border border-white/15 bg-slate-950 shadow-2xl shadow-blue-950/25 sm:min-h-72 md:min-h-[35rem]"
     >
       <div className="auth-tilt absolute inset-0 px-6 py-7 md:px-10 md:py-10">
-        <div className="auth-scene-orb absolute -left-16 -top-16 h-52 w-52 rounded-full bg-blue-500/35 blur-3xl" />
-        <div className="auth-scene-orb-delay absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
+        <div className="auth-scene-orb glow-orb absolute -left-16 -top-16 h-52 w-52 [--orb-c:rgba(59,130,246,0.4)]" />
+        <div className="auth-scene-orb-delay glow-orb absolute -bottom-24 -right-16 h-64 w-64 [--orb-c:rgba(34,211,238,0.25)]" />
         <div className="auth-aurora pointer-events-none absolute left-1/2 top-1/2 h-[170%] w-[170%]" />
 
         <div className="auth-parallax auth-parallax-world absolute inset-0">
@@ -155,7 +155,7 @@ export function TravelAuthScene() {
             <g transform="translate(433 71)">
               <circle className="auth-dest-ring" r="7" stroke="#67E8F9" strokeWidth="1.5" />
               <circle className="auth-dest-ring-delay" r="7" stroke="#818CF8" strokeWidth="1.5" />
-              <circle r="3.5" fill="#67E8F9" filter="url(#travel-glow)" />
+              <circle r="3.5" fill="#67E8F9" />
             </g>
 
             <g className="auth-cloud-cross" opacity=".8">
@@ -279,9 +279,9 @@ export function TravelAuthScene() {
             </g>
 
             {/* Comet trail: only shown when CSS motion paths are supported. */}
-            <circle className="auth-comet" r="3.5" fill="#A5F3FC" filter="url(#travel-glow)" />
+            <circle className="auth-comet" r="8" fill="url(#comet-glow)" />
 
-            <g className="auth-plane" filter="url(#travel-glow)">
+            <g className="auth-plane">
               <path d="M-12 0L10 -6L23 -2L10 3L1 11H-5L-2 3L-12 0Z" fill="#F8FAFC" />
               <path d="M-12 0L10 -6L23 -2L10 3" stroke="#93C5FD" strokeWidth="1.2" strokeLinejoin="round" />
             </g>
@@ -305,7 +305,7 @@ export function TravelAuthScene() {
 
         <div className="auth-parallax auth-parallax-chip absolute bottom-5 right-6 z-20 hidden sm:block md:bottom-9 md:right-9">
           <div
-            className="auth-enter rounded-2xl border border-white/15 bg-white/10 px-3 py-2 backdrop-blur-md"
+            className="auth-enter rounded-2xl border border-white/15 bg-slate-900/70 px-3 py-2"
             style={{ animationDelay: "460ms" }}
           >
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-300">VisaAI Korea</p>

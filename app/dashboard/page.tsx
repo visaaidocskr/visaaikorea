@@ -55,7 +55,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/dashboard/applications"
-            className="card-lift rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-sm backdrop-blur"
+            className="card-lift rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
           >
             <h2 className="text-2xl font-bold">{t("dashboard.applications")}</h2>
             <p className="mt-2 text-slate-600">
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
 
           <Link
             href="/dashboard/downloads"
-            className="card-lift rounded-3xl border border-slate-200 bg-white/90 p-8 shadow-sm backdrop-blur"
+            className="card-lift rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
           >
             <h2 className="text-2xl font-bold">{t("dashboard.downloads")}</h2>
             <p className="mt-2 text-slate-600">

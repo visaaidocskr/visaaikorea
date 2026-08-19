@@ -35,7 +35,7 @@ export function CountriesSection() {
               <div className="h-full">
               <button
                 onClick={() => setActive(c)}
-                className="card-lift group relative h-full w-full overflow-hidden rounded-3xl border border-slate-200 bg-white/85 p-7 text-left shadow-sm backdrop-blur"
+                className="card-lift group relative h-full w-full overflow-hidden rounded-3xl border border-slate-200 bg-white p-7 text-left shadow-sm"
               >
                 <div aria-hidden className={`absolute inset-x-0 top-0 h-24 bg-gradient-to-br opacity-80 ${c.accent}`} />
                 <span

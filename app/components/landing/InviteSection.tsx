@@ -25,7 +25,7 @@ export function InviteSection() {
         </Reveal>
 
         <Reveal delay={100} className="mt-12">
-          <div className="card-lift mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-sm backdrop-blur">
+          <div className="card-lift mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="bg-gradient-to-br from-sky-500/10 to-blue-500/5 px-8 py-7">
               <div className="flex items-center gap-3 text-4xl">
                 <span aria-hidden>🇺🇿</span>

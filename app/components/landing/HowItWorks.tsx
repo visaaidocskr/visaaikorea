@@ -58,7 +58,7 @@ export function HowItWorks() {
                     className={`card-lift flex w-full items-start gap-5 rounded-2xl border p-6 text-left ${
                       activeStep
                         ? "border-blue-300 bg-white shadow-md shadow-blue-500/10"
-                        : "border-slate-200 bg-white/85 backdrop-blur hover:border-slate-300"
+                        : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
                     <div

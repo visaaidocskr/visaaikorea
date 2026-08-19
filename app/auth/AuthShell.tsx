@@ -20,8 +20,8 @@ export function AuthShell({
 }) {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-5 py-8 text-slate-900 sm:px-6 sm:py-14">
-      <div className="absolute -left-40 top-0 h-96 w-96 rounded-full bg-blue-100/70 blur-3xl" />
-      <div className="absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-cyan-100/60 blur-3xl" />
+      <div className="glow-orb absolute -left-40 top-0 h-96 w-96 [--orb-c:rgba(219,234,254,0.8)]" />
+      <div className="glow-orb absolute -right-40 bottom-0 h-96 w-96 [--orb-c:rgba(207,250,254,0.7)]" />
       <div className="relative grid w-full max-w-5xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
         <TravelAuthScene />
 
@@ -30,7 +30,7 @@ export function AuthShell({
             VisaAI Korea
           </Link>
           <div className="auth-form-arrival relative">
-            <div className="relative z-10 rounded-[2rem] border border-white/80 bg-white/95 p-8 shadow-2xl shadow-slate-300/60 backdrop-blur md:p-10">
+            <div className="relative z-10 rounded-[2rem] border border-white/80 bg-white p-8 shadow-2xl shadow-slate-300/60 md:p-10">
               <h1 className="text-3xl font-extrabold">{title}</h1>
               <p className="mt-2 mb-8 text-slate-600">{subtitle}</p>
               {children}
