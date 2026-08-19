@@ -252,6 +252,49 @@ body {
 .auth-suitcase { animation: auth-suitcase-roll 1.2s ease-in-out infinite; }
 .auth-ticket { animation: auth-ticket-float 4.5s ease-in-out infinite; }
 .auth-chip { animation: auth-chip-float 5.5s ease-in-out infinite; }
+/* ---- Sign-in card arrival: the mascot pushes the form in ----------------- */
+@keyframes auth-form-push-in {
+  0% { transform: translateX(92vw); }
+  82% { transform: translateX(-10px); }
+  100% { transform: translateX(0); }
+}
+@keyframes auth-pusher-strain {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes auth-push-scramble {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(-10deg); }
+}
+@keyframes auth-pusher-swap-out {
+  to { opacity: 0; visibility: hidden; }
+}
+@keyframes auth-pusher-swap-in {
+  to { opacity: 1; }
+}
+@keyframes auth-pusher-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2.5px); }
+}
+/* Hidden by default: phones and reduced-motion visitors get the plain card. */
+.auth-pusher { display: none; }
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .auth-pusher { display: block; }
+  .auth-form-arrival { animation: auth-form-push-in 1.3s cubic-bezier(.22, .9, .3, 1) .35s both; }
+  .auth-pusher-push {
+    animation:
+      auth-pusher-strain .32s ease-in-out infinite,
+      auth-pusher-swap-out .25s ease 1.5s forwards;
+  }
+  .auth-push-leg-a, .auth-push-leg-b { transform-box: fill-box; transform-origin: top center; animation: auth-push-scramble .3s ease-in-out infinite; }
+  .auth-push-leg-b { animation-delay: -.15s; }
+  .auth-pusher-lean {
+    animation:
+      auth-pusher-swap-in .3s ease 1.62s forwards,
+      auth-pusher-idle 3.2s ease-in-out 2.1s infinite;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-scene, .auth-scene * { animation: none !important; transition: none !important; }
   .auth-tilt, .auth-parallax { transform: none !important; }
