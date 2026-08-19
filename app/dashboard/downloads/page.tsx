@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -38,8 +39,9 @@ export default async function DownloadsPage() {
   const rows = (data ?? []) as unknown as Row[];
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-3xl font-extrabold">{t("dashboard.downloads")}</h1>
+    <main className="relative mx-auto max-w-3xl px-6 py-12">
+      <AuroraBackdrop />
+      <h1 className="text-sky-gradient text-3xl font-extrabold">{t("dashboard.downloads")}</h1>
       <p className="mt-2 text-slate-600">{t("dashboard.downloadsIntro")}</p>
 
       <div className="mt-6 space-y-2">
