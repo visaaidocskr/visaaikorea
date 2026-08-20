@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Nav } from "@/app/components/landing/Nav";
-import { ServiceEnquiryForm } from "@/app/services/ServiceEnquiryForm";
+import { FlightSearchForm } from "@/app/flights/FlightSearchForm";
 import { FlightScene } from "@/app/flights/FlightScene";
 
 export const metadata: Metadata = { title: "Flight quotation · VisaAI Korea" };
@@ -26,7 +26,7 @@ export default function FlightsPage() {
       <Nav />
       <main className="relative mx-auto grid max-w-6xl gap-10 px-6 py-14 lg:grid-cols-[.95fr_1.05fr]">
         <FlightScene />
-        <ServiceEnquiryForm kind="flight" />
+        <FlightSearchForm />
       </main>
     </div>
   );
