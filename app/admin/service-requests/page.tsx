@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ServiceRequestActions } from "./ServiceRequestActions";
 import type { EnquiryStatus } from "@/app/services/actions";
@@ -14,6 +15,9 @@ type RequestRow = {
 };
 
 export default async function ServiceRequestsPage() {
+  // Defense in depth: the layout and proxy guard /admin, and this page
+  // guards itself — RSC requests cannot skip past it. Cached per request.
+  await requireAdmin();
   const supabase = await createClient();
   const { data, error } = await supabase.from("service_enquiries").select("*").order("created_at", { ascending: false }).limit(200);
   const rows = (data ?? []) as RequestRow[];

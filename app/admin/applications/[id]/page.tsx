@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAdmin } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
@@ -18,6 +19,9 @@ export default async function AdminApplicationDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // Defense in depth: the layout and proxy guard /admin, and this page
+  // guards itself — RSC requests cannot skip past it. Cached per request.
+  await requireAdmin();
   const { id } = await params;
   const supabase = await createClient();
 

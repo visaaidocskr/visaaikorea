@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { TemplateUpload } from "./TemplateUpload";
 import { TemplateActions } from "./TemplateActions";
@@ -6,6 +7,9 @@ import { TemplateActions } from "./TemplateActions";
 export const metadata: Metadata = { title: "Templates · Admin" };
 
 export default async function AdminTemplatesPage() {
+  // Defense in depth: the layout and proxy guard /admin, and this page
+  // guards itself — RSC requests cannot skip past it. Cached per request.
+  await requireAdmin();
   const supabase = await createClient();
   const { data: templates } = await supabase
     .from("document_templates")

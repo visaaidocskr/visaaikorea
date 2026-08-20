@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAdmin } from "@/lib/auth";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { STATUS_LABELS, STATUS_BADGE, APPLICATION_STATUSES } from "@/lib/visa/status";
@@ -6,6 +7,9 @@ import { STATUS_LABELS, STATUS_BADGE, APPLICATION_STATUSES } from "@/lib/visa/st
 export const metadata: Metadata = { title: "Admin · VisaAI Korea" };
 
 export default async function AdminHome() {
+  // Defense in depth: the layout and proxy guard /admin, and this page
+  // guards itself — RSC requests cannot skip past it. Cached per request.
+  await requireAdmin();
   const supabase = await createClient();
   const { data: apps } = await supabase
     .from("applications")
