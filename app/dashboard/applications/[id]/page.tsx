@@ -159,7 +159,9 @@ export default async function ClientApplicationDetail({
         <p className="mb-4 text-sm text-slate-500">
           {app.destination_country === "Vietnam"
             ? t("dashboard.evisaDescription")
-            : t("dashboard.documentsDescription")}
+            : app.destination_country === "Japan"
+              ? t("dashboard.documentsDescription")
+              : t("dashboard.documentsSelfSubmit")}
         </p>
         <div className="space-y-2">
           {(docs ?? []).map((d) => {

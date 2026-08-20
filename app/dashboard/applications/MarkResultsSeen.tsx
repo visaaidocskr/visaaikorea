@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { markAllSeen, type ResultRow } from "@/app/components/resultsSeen";
+import { fetchResultRows, markAllSeen } from "@/app/components/resultsSeen";
 
 // Renders nothing: opening My results marks every application update as
 // read, clearing the nav badge on the next page view.
@@ -12,10 +12,8 @@ export function MarkResultsSeen() {
       try {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
-        const { data } = await supabase
-          .from("applications")
-          .select("id, status, client_message");
-        if (!cancelled && data) markAllSeen(data as ResultRow[]);
+        const rows = await fetchResultRows(supabase);
+        if (!cancelled && rows) markAllSeen(rows);
       } catch {
         // Signed out or unreachable — nothing to mark.
       }

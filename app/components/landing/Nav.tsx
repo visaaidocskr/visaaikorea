@@ -6,7 +6,7 @@ import { GenerateButton } from "@/app/components/GenerateButton";
 import { LanguageSelector } from "@/app/components/LanguageSelector";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { signOut } from "@/app/auth/actions";
-import { countUnseen, type ResultRow } from "@/app/components/resultsSeen";
+import { countUnseen, fetchResultRows } from "@/app/components/resultsSeen";
 
 // Only the sections that actually exist on the page — the Services and
 // Pricing sections were removed, so their anchors went with them.
@@ -46,10 +46,8 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
           .eq("id", session.user.id)
           .single();
         if (!cancelled && data?.role === "admin") setIsAdmin(true);
-        const { data: apps } = await supabase
-          .from("applications")
-          .select("id, status, client_message");
-        if (!cancelled && apps) setResultsBadge(countUnseen(apps as ResultRow[]));
+        const rows = await fetchResultRows(supabase);
+        if (!cancelled && rows) setResultsBadge(countUnseen(rows));
       } catch {
         // Signed out or Supabase unreachable: simply no admin link.
       }
