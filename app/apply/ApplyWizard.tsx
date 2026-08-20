@@ -1055,7 +1055,9 @@ export function ApplyWizard({
   }
 
   return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 md:p-10">
+    // No card frame around the wizard: the form sits straight on the page so
+    // the destination's ambience stays visible behind the fields.
+    <div>
       <CountryAmbience destination={form.destination_country} />
       <CountryBanner destination={form.destination_country} />
       <Stepper steps={steps} step={stepIndex} />
