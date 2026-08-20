@@ -7,7 +7,6 @@ import { statusLabel, STATUS_BADGE } from "@/lib/visa/status";
 import type { ApplicationStatus } from "@/lib/visa/types";
 import { DownloadButton } from "@/app/dashboard/DownloadButton";
 import { APPROVED_VISA_DOC_TYPE } from "@/lib/docs/documentTypes";
-import { GenerateItineraryButton } from "@/app/dashboard/GenerateItineraryButton";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
@@ -162,13 +161,6 @@ export default async function ClientApplicationDetail({
             ? t("dashboard.evisaDescription")
             : t("dashboard.documentsDescription")}
         </p>
-        {app.destination_country === "Japan" &&
-          app.travel_start_date &&
-          app.travel_end_date && (
-            <div className="mb-4">
-              <GenerateItineraryButton applicationId={id} />
-            </div>
-          )}
         <div className="space-y-2">
           {(docs ?? []).map((d) => {
             // The issued visa is the thing they came for — make it obvious
