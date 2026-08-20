@@ -106,6 +106,14 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
           )}
           {signedIn ? (
             <>
+              <Link
+                href="/dashboard/applications"
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+                  dark ? "text-cyan-300 hover:text-cyan-200" : "text-blue-700 hover:text-blue-800"
+                }`}
+              >
+                📄 {t("nav.results")}
+              </Link>
               <form action={signOut}>
                 <button
                   type="submit"
@@ -179,6 +187,13 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
             )}
             {signedIn ? (
               <>
+                <Link
+                  href="/dashboard/applications"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-2 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                >
+                  📄 {t("nav.results")}
+                </Link>
                 <Link
                   href="/dashboard"
                   onClick={() => setOpen(false)}
