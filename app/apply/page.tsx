@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackToDashboardLink } from "@/app/apply/BackToDashboardLink";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -281,9 +282,7 @@ export default async function ApplyPage({
       <div className="mx-auto max-w-4xl">
         <div className="mb-8">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/dashboard" className="text-sm font-semibold text-blue-700">
-              ← {t("apply.backDashboard")}
-            </Link>
+<BackToDashboardLink label={t("apply.backDashboard")} />
             <LanguageSelector />
           </div>
           <h1 className="text-sky-gradient mt-3 text-4xl font-extrabold">{t("apply.title")}</h1>

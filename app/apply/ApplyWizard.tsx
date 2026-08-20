@@ -74,6 +74,7 @@ import { TAIWAN_MARITAL_OPTIONS } from "@/app/apply/fields";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { CountryAmbience, CountryBanner } from "@/app/apply/CountryAmbience";
 import { SubmitSuccess } from "@/app/apply/SubmitSuccess";
+import { LeaveGuard } from "@/app/apply/LeaveGuard";
 
 // Japan AND Taiwan use the same richer step sequence (Phase 2a/3: steps 1–4 +
 // Documents + Guidance). Other destinations keep the generic stepsForOutcome()
@@ -1085,6 +1086,7 @@ export function ApplyWizard({
     // No card frame around the wizard: the form sits straight on the page so
     // the destination's ambience stays visible behind the fields.
     <div>
+      <LeaveGuard />
       <CountryAmbience destination={form.destination_country} />
       <CountryBanner destination={form.destination_country} />
       <Stepper steps={steps} step={stepIndex} />
