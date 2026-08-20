@@ -246,7 +246,7 @@ export function KoreaStatusStep({
               inputMode="tel"
             />
             <Input
-              label={`${orgLabel} — ${t("japan.status.address")}`}
+              label={`${orgLabel} — ${t("japan.status.orgAddress")}`}
               value={form.employer_or_school_address}
               onChange={(v) => set("employer_or_school_address", v)}
               required={orgRequired}
