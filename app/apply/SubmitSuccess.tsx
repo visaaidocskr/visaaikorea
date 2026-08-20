@@ -14,7 +14,8 @@ export function SubmitSuccess() {
       <svg
         aria-hidden="true"
         viewBox="0 0 120 120"
-        className="mx-auto h-28 w-28"
+        className="mx-auto"
+        style={{ width: 96, height: 96 }}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -73,13 +74,13 @@ export function SubmitSuccess() {
         {t("apply.successBody")}
       </p>
       <p className="mx-auto mt-4 inline-flex max-w-md items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-800">
-        <span aria-hidden>⏱</span>
+        <span aria-hidden className="hourglass text-base">⏳</span>
         {t("apply.successEta")}
       </p>
 
       <div className="mt-8">
         <Link
-          href="/dashboard/applications"
+          href="/"
           className="btn-glow inline-flex items-center gap-2 rounded-2xl px-8 py-4 text-lg font-bold text-white"
         >
           <span aria-hidden className="sparkle text-cyan-200">✦</span>

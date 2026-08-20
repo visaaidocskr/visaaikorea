@@ -492,6 +492,14 @@ body {
     animation: auth-comet-fly 13s cubic-bezier(.45, .05, .35, .95) .3s infinite;
   }
 }
+/* Hourglass that keeps turning while the decision is on its way. */
+@keyframes hourglass-flip {
+  0%, 42% { transform: rotate(0deg); }
+  50%, 92% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+.hourglass { display: inline-block; animation: hourglass-flip 2.6s ease-in-out infinite; }
+
 /* Submit-success: ring and check draw themselves in. */
 @keyframes draw-stroke {
   to { stroke-dashoffset: 0; }
