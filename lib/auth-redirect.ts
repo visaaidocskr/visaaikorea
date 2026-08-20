@@ -10,7 +10,7 @@
 // asks for passport details. Backslashes are rejected for the same reason —
 // some browsers normalise "/\evil.com" the same way.
 
-const DEFAULT_PATH = "/dashboard";
+const DEFAULT_PATH = "/";
 
 // Written as escapes rather than literal characters, so this file stays
 // readable text rather than being treated as binary by grep and diffs.

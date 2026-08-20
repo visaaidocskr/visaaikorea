@@ -41,7 +41,7 @@ function Problem({ text }: { text?: string }) {
   );
 }
 
-export function EmailCodeForm({ next = "/dashboard" }: { next?: string }) {
+export function EmailCodeForm({ next = "/" }: { next?: string }) {
   const { t } = useLocale();
   const [sendState, sendAction] = useActionState<CodeState, FormData>(
     sendEmailCode,

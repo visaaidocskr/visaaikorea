@@ -100,7 +100,7 @@ function GoogleButtonInner() {
  * applicants will complete: no password to invent, no confirmation email to
  * go and find.
  */
-export function GoogleButton({ next = "/dashboard" }: { next?: string }) {
+export function GoogleButton({ next = "/" }: { next?: string }) {
   const [state, action] = useActionState<AuthState, FormData>(signInWithGoogle, {});
   const { t } = useLocale();
   return (

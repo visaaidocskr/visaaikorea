@@ -78,7 +78,7 @@ export async function updateSession(request: NextRequest) {
   // Signed-in users shouldn't see the auth pages.
   if (user && (pathname === "/login" || pathname === "/signup")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 

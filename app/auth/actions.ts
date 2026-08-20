@@ -52,7 +52,7 @@ export async function signUp(
     options: {
       // Passed into the new-user trigger via raw_user_meta_data.
       data: { full_name: fullName, phone },
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=/dashboard`,
+      emailRedirectTo: `${siteUrl()}/auth/callback?next=/`,
     },
   });
 
