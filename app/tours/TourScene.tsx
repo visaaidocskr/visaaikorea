@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useLocale } from "@/app/components/LocaleProvider";
 
 // Golden-hour panel for the tours page: the same lightweight rules as the
@@ -96,10 +95,7 @@ export function TourScene() {
 
         {/* Copy — kept in the darker top half of the sky for contrast. */}
         <div className="relative z-10">
-          <Link href="/services" className="text-sm font-semibold text-orange-200/90 transition-colors hover:text-white">
-            ← {t("action.allServices")}
-          </Link>
-          <p className="mt-6 inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-amber-300">
+          <p className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-amber-300">
             <span aria-hidden className="sparkle">✦</span>
             {t("tour.eyebrow")}
           </p>
