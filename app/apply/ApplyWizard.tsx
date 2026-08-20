@@ -460,12 +460,19 @@ export function ApplyWizard({
   const koreaAddressValid =
     !hasNonLatinScript(form.current_korea_address) &&
     isCompleteAddress(form.current_korea_address);
+  // Occupation is the basis of stay only for students (field of study) and
+  // workers. F-series residents, job seekers (D-10), G-1 and the rest may
+  // leave it blank — embassies accept an empty/None occupation for them.
+  const occupationValid =
+    japanEmploymentKind === "university" || japanEmploymentKind === "employer"
+      ? form.occupation.trim() !== ""
+      : true;
   const koreaBaseValid =
     form.korean_visa_status !== "" &&
     koreaAddressValid &&
     emailValid &&
     form.client_phone.trim() !== "" &&
-    form.occupation.trim() !== "";
+    occupationValid;
   const orgFieldsFilled =
     form.employer_or_school_name.trim() !== "" &&
     form.employer_phone.trim() !== "" &&
@@ -488,7 +495,7 @@ export function ApplyWizard({
   // genuinely new fields KoreaStatusStep adds to that flow — occupation and
   // the employer/university block — belong here.
   const koreaOrgValid =
-    form.occupation.trim() !== "" &&
+    occupationValid &&
     (japanEmploymentKind === "university"
       ? orgFieldsFilled
       : japanEmploymentKind === "employer"

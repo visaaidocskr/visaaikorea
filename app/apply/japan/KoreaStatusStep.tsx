@@ -194,6 +194,7 @@ export function KoreaStatusStep({
                 label={t("japan.status.study")}
                 value={studySelectValue}
                 onChange={onStudyChange}
+                required
                 options={[...FIELDS_OF_STUDY, OTHER_FIELD].map((value) => ({ value, label: value === OTHER_FIELD ? t("japan.status.other") : value }))}
               />
               {studyOther && (
@@ -210,7 +211,8 @@ export function KoreaStatusStep({
                 label={t("japan.status.occupation")}
                 value={form.occupation}
                 onChange={(v) => set("occupation", v)}
-                helpText={kind === "other" ? t("japan.status.occupationHelp") : undefined}
+                required={kind === "employer"}
+                helpText={kind === "employer" ? undefined : t("japan.status.occupationHelp")}
               />
               <Input
                 label={t("japan.status.position")}
