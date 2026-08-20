@@ -187,7 +187,6 @@ export function FlightSearchForm() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
   const [baggage, setBaggage] = useState<"included" | "not_needed" | "unsure">("unsure");
   const [notes, setNotes] = useState("");
 
@@ -224,7 +223,7 @@ export function FlightSearchForm() {
       const response = await submitServiceEnquiry({
         kind: "flight",
         fullName,
-        residentialAddress: address,
+        residentialAddress: "",
         email,
         phone,
         originCountry: primary.from!.country,
@@ -472,10 +471,6 @@ export function FlightSearchForm() {
         <label className="block">
           <span className="text-sm font-semibold text-slate-800">{t("form.phone")} <span className="text-red-500">*</span></span>
           <input required value={phone} onChange={(e) => setPhone(e.target.value)} className={`${inputBase} mt-1 border-slate-300`} autoComplete="tel" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-semibold text-slate-800">{t("form.address")} <span className="text-red-500">*</span></span>
-          <input required value={address} onChange={(e) => setAddress(e.target.value)} className={`${inputBase} mt-1 border-slate-300`} autoComplete="street-address" />
         </label>
         <label className="block">
           <span className="text-sm font-semibold text-slate-800">{t("form.baggage")}</span>

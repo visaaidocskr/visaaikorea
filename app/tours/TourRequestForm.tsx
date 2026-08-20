@@ -183,7 +183,6 @@ export function TourRequestForm() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
 
   const tourOk = Boolean(destination && from && depart);
@@ -214,7 +213,7 @@ export function TourRequestForm() {
       const response = await submitServiceEnquiry({
         kind: "tour",
         fullName,
-        residentialAddress: address,
+        residentialAddress: "",
         email,
         phone,
         originCountry: from!.country,
@@ -461,10 +460,6 @@ export function TourRequestForm() {
         <label className="block">
           <span className="text-sm font-semibold text-slate-800">{t("form.phone")} <span className="text-red-500">*</span></span>
           <input required value={phone} onChange={(e) => setPhone(e.target.value)} className={`${inputBase} mt-1 border-slate-300`} autoComplete="tel" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-semibold text-slate-800">{t("form.address")} <span className="text-red-500">*</span></span>
-          <input required value={address} onChange={(e) => setAddress(e.target.value)} className={`${inputBase} mt-1 border-slate-300`} autoComplete="street-address" />
         </label>
         <label className="block sm:col-span-2">
           <span className="text-sm font-semibold text-slate-800">{t("form.notes")}</span>

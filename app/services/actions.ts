@@ -36,7 +36,6 @@ const trim = (value: string) => value.trim();
 function validate(input: ServiceEnquiryInput): string | null {
   const required: Array<[string, string]> = [
     [input.fullName, "Please enter your full name."],
-    [input.residentialAddress, "Please enter your full residential address."],
     [input.email, "Please enter your email address."],
     [input.phone, "Please enter your phone number."],
     [input.originCountry, "Please select your departure country."],
@@ -76,7 +75,7 @@ export async function submitServiceEnquiry(input: ServiceEnquiryInput): Promise<
       user_id: session?.user.id ?? null,
       kind: input.kind,
       full_name: trim(input.fullName),
-      residential_address: trim(input.residentialAddress),
+      residential_address: trim(input.residentialAddress) || "—",
       email,
       phone: trim(input.phone),
       origin_country: trim(input.originCountry),
