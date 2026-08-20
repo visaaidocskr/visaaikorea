@@ -177,6 +177,8 @@ export function TourRequestForm() {
   const [stars, setStars] = useState<"any" | 3 | 4 | 5>("any");
   const [budget, setBudget] = useState<"" | "b1" | "b2" | "b3" | "b4" | "b0">("");
   const [styles, setStyles] = useState<string[]>([]);
+  const [pickup, setPickup] = useState(false);
+  const [esim, setEsim] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -201,6 +203,9 @@ export function TourRequestForm() {
       `Party: ${adults} ${t("ts.adults").toLowerCase()}${children ? ` + ${children} ${t("ts.children").toLowerCase()}` : ""}`,
       `Hotel: ${stars === "any" ? t("ts.hotelAny") : `${stars}★`}`,
       styleText ? `Style: ${styleText}` : "",
+      pickup || esim
+        ? `Extras: ${[pickup && "airport pick-up", esim && "eSIM"].filter(Boolean).join(", ")}`
+        : "",
       budget ? `Budget pp: ${t(`ts.${budget}`)}` : "",
       flexible ? "Dates flexible ±3 days" : "",
     ].filter(Boolean);
@@ -416,6 +421,24 @@ export function TourRequestForm() {
               {t(`ts.${s.key}`)}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Extras */}
+      <div className="space-y-3">
+        <span className={sectionTitle}>
+          <span aria-hidden className="sparkle text-amber-500">✦</span>
+          {t("ts.extras")}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => setPickup((v) => !v)} className={chip(pickup)}>
+            <span aria-hidden>🚐</span>
+            {t("ts.pickup")}
+          </button>
+          <button type="button" onClick={() => setEsim((v) => !v)} className={chip(esim)}>
+            <span aria-hidden>📶</span>
+            {t("ts.esim")}
+          </button>
         </div>
       </div>
 
