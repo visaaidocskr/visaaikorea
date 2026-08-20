@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { COUNTRIES, localizeCountryContent, type CountryContent } from "@/lib/visa/countryContent";
 import { Modal } from "@/app/components/Modal";
 import { Reveal } from "@/app/components/Reveal";
@@ -85,6 +86,14 @@ function CountryPanel({ c }: { c: CountryContent }) {
         <p className="mt-1 font-medium text-slate-600">{localized.visaType}</p>
         <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-sm font-semibold text-slate-700 backdrop-blur">
           ⏱ {localized.processingTime}
+        </div>
+        <div className="mt-3">
+          <Link
+            href={`/destinations/${localized.key}`}
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 transition-colors hover:text-blue-800"
+          >
+            {t("countries.fullGuide")} →
+          </Link>
         </div>
       </div>
 
