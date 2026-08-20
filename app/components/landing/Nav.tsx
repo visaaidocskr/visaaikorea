@@ -114,19 +114,6 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
           )}
           {signedIn ? (
             <>
-              <Link
-                href="/dashboard/applications"
-                className={`relative rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
-                  dark ? "text-cyan-300 hover:text-cyan-200" : "text-blue-700 hover:text-blue-800"
-                }`}
-              >
-                📄 {t("nav.results")}
-                {resultsBadge > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white shadow-md shadow-red-500/40">
-                    {resultsBadge > 9 ? "9+" : resultsBadge}
-                  </span>
-                )}
-              </Link>
               <form action={signOut}>
                 <button
                   type="submit"
@@ -138,10 +125,15 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
                 </button>
               </form>
               <Link
-                href="/dashboard"
-                className="btn-glow rounded-xl px-4 py-2 text-sm font-semibold text-white"
+                href="/dashboard/applications"
+                className="btn-glow relative rounded-xl px-4 py-2 text-sm font-semibold text-white"
               >
-                {t("nav.dashboard")}
+                📄 {t("nav.results")}
+                {resultsBadge > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white shadow-md shadow-red-500/40">
+                    {resultsBadge > 9 ? "9+" : resultsBadge}
+                  </span>
+                )}
               </Link>
             </>
           ) : (
@@ -203,21 +195,14 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
                 <Link
                   href="/dashboard/applications"
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-blue-700 px-2 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                 >
                   📄 {t("nav.results")}
                   {resultsBadge > 0 && (
-                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
                       {resultsBadge > 9 ? "9+" : resultsBadge}
                     </span>
                   )}
-                </Link>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg bg-blue-700 px-2 py-2 text-center text-sm font-semibold text-white hover:bg-blue-800"
-                >
-                  {t("nav.dashboard")}
                 </Link>
                 <form action={signOut}>
                   <button
