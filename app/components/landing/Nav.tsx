@@ -17,7 +17,36 @@ const LINKS = [
 export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // Shown only when the signed-in visitor's profile carries the admin role.
+  // The check never hardcodes an identity into the shipped bundle: the
+  // browser asks Supabase for its own profile row (RLS returns only your
+  // own), so anonymous visitors and ordinary clients never see the link.
+  const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useLocale();
+
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || cancelled) return;
+        const { data } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+        if (!cancelled && data?.role === "admin") setIsAdmin(true);
+      } catch {
+        // Signed out or Supabase unreachable: simply no admin link.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -62,6 +91,16 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+                dark ? "text-amber-300 hover:text-amber-200" : "text-amber-600 hover:text-amber-700"
+              }`}
+            >
+              ⚙ {t("nav.admin")}
+            </Link>
+          )}
           <Link
             href="/login"
             className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
@@ -103,6 +142,15 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
                 {t(l.labelKey)}
               </Link>
             ))}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-2 py-2 text-sm font-semibold text-amber-600 hover:bg-amber-50"
+              >
+                ⚙ {t("nav.admin")}
+              </Link>
+            )}
             <Link
               href="/login"
               onClick={() => setOpen(false)}
