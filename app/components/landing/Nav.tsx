@@ -5,6 +5,7 @@ import Link from "next/link";
 import { GenerateButton } from "@/app/components/GenerateButton";
 import { LanguageSelector } from "@/app/components/LanguageSelector";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { signOut } from "@/app/auth/actions";
 
 // Only the sections that actually exist on the page — the Services and
 // Pricing sections were removed, so their anchors went with them.
@@ -22,6 +23,7 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
   // browser asks Supabase for its own profile row (RLS returns only your
   // own), so anonymous visitors and ordinary clients never see the link.
   const [isAdmin, setIsAdmin] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const { t } = useLocale();
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
         if (!session || cancelled) return;
+        setSignedIn(true);
         const { data } = await supabase
           .from("profiles")
           .select("role")
@@ -101,20 +104,43 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
               ⚙ {t("nav.admin")}
             </Link>
           )}
-          <Link
-            href="/login"
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
-              dark ? "text-slate-200 hover:text-white" : "text-slate-700 hover:text-blue-700"
-            }`}
-          >
-            {t("nav.signIn")}
-          </Link>
-          <Link
-            href="/signup"
-            className="btn-glow rounded-xl px-4 py-2 text-sm font-semibold text-white"
-          >
-            {t("nav.signUp")}
-          </Link>
+          {signedIn ? (
+            <>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                    dark ? "text-slate-200 hover:text-white" : "text-slate-700 hover:text-blue-700"
+                  }`}
+                >
+                  {t("nav.logout")}
+                </button>
+              </form>
+              <Link
+                href="/dashboard"
+                className="btn-glow rounded-xl px-4 py-2 text-sm font-semibold text-white"
+              >
+                {t("nav.dashboard")}
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                  dark ? "text-slate-200 hover:text-white" : "text-slate-700 hover:text-blue-700"
+                }`}
+              >
+                {t("nav.signIn")}
+              </Link>
+              <Link
+                href="/signup"
+                className="btn-glow rounded-xl px-4 py-2 text-sm font-semibold text-white"
+              >
+                {t("nav.signUp")}
+              </Link>
+            </>
+          )}
           <LanguageSelector />
         </div>
 
@@ -151,20 +177,42 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
                 ⚙ {t("nav.admin")}
               </Link>
             )}
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className="rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-            >
-              {t("nav.signIn")}
-            </Link>
-            <Link
-              href="/signup"
-              onClick={() => setOpen(false)}
-              className="rounded-lg bg-blue-700 px-2 py-2 text-center text-sm font-semibold text-white hover:bg-blue-800"
-            >
-              {t("nav.signUp")}
-            </Link>
+            {signedIn ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg bg-blue-700 px-2 py-2 text-center text-sm font-semibold text-white hover:bg-blue-800"
+                >
+                  {t("nav.dashboard")}
+                </Link>
+                <form action={signOut}>
+                  <button
+                    type="submit"
+                    className="w-full rounded-lg px-2 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    {t("nav.logout")}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-2 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  {t("nav.signIn")}
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg bg-blue-700 px-2 py-2 text-center text-sm font-semibold text-white hover:bg-blue-800"
+                >
+                  {t("nav.signUp")}
+                </Link>
+              </>
+            )}
             <LanguageSelector />
             <GenerateButton full size="md" />
           </div>
