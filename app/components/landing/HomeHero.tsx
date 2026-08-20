@@ -21,6 +21,7 @@ export function HomeHero() {
     ["🇯🇵", t("auth.scene.japan")],
     ["🇹🇼", t("auth.scene.taiwan")],
     ["🇸🇬", t("auth.scene.singaporeCountry")],
+    ["🇻🇳", t("auth.scene.vietnam")],
     ["🇪🇸", t("auth.scene.spain")],
     ["🇰🇷", t("auth.scene.korea")],
   ];
