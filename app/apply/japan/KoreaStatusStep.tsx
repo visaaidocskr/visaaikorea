@@ -210,6 +210,7 @@ export function KoreaStatusStep({
                 label={t("japan.status.occupation")}
                 value={form.occupation}
                 onChange={(v) => set("occupation", v)}
+                helpText={kind === "other" ? t("japan.status.occupationHelp") : undefined}
               />
               <Input
                 label={t("japan.status.position")}
