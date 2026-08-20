@@ -100,6 +100,15 @@ const RELATIONSHIP_LABELS: Record<
   other: "Other",
 };
 
+// One-tap destination chips (same setters as the select below them).
+const DEST_FLAGS: Record<string, string> = {
+  Japan: "🇯🇵",
+  Taiwan: "🇹🇼",
+  Singapore: "🇸🇬",
+  Spain: "🇪🇸",
+  Vietnam: "🇻🇳",
+};
+
 const RICH_APPLICATION_STEPS = [
   "Destination",
   "Identity Documents",
@@ -1075,12 +1084,33 @@ export function ApplyWizard({
         </p>
       )}
 
-      <div className="mt-8">
+      <div key={current} className="animate-fade-in mt-8">
         {current === "Destination" && (
           <div className="space-y-6">
             <p className="text-slate-600">
               {t("apply.destinationIntro")}
             </p>
+            <div className="flex flex-wrap gap-2">
+              {ruleset.destinations.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => {
+                    set("destination_country", d);
+                    set("destination_city", "");
+                    set("korea_region", "");
+                  }}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                    form.destination_country === d
+                      ? "border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/30"
+                      : "border-slate-300 bg-white text-slate-700 hover:border-blue-400"
+                  }`}
+                >
+                  <span aria-hidden>{DEST_FLAGS[d] ?? "🌍"}</span>
+                  {d}
+                </button>
+              ))}
+            </div>
             <div className="grid gap-6 md:grid-cols-2">
               <Select
                 label={t("apply.nationality")}
@@ -1136,7 +1166,7 @@ export function ApplyWizard({
             {bookingsRequired && (
               <div className="space-y-5 rounded-2xl border border-slate-200 p-5">
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">{t("apply.flightHotelBookings")}</h3>
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900"><span aria-hidden className="sparkle text-cyan-500">✦</span>{t("apply.flightHotelBookings")}</h3>
                   <p className="mt-1 text-sm text-slate-600">
                     {t("apply.bookingsIntro")}
                   </p>
@@ -1175,7 +1205,7 @@ export function ApplyWizard({
 
         {current === "Identity Documents" && (
           <div>
-            <h3 className="text-xl font-bold">{t("generic.identityTitle")}</h3>
+            <h3 className="flex items-center gap-2 text-xl font-bold"><span aria-hidden className="sparkle text-cyan-500">✦</span>{t("generic.identityTitle")}</h3>
             <p className="mt-1 text-sm text-slate-600">
               {t("generic.identityIntro")}
             </p>
@@ -1317,7 +1347,7 @@ export function ApplyWizard({
                 mirrors the rich (Japan/Taiwan) flow, where identity documents
                 are their own first step for the same reason. */}
             <section>
-              <h3 className="text-xl font-bold">{t("generic.identityTitle")}</h3>
+              <h3 className="flex items-center gap-2 text-xl font-bold"><span aria-hidden className="sparkle text-cyan-500">✦</span>{t("generic.identityTitle")}</h3>
               <p className="mt-1 text-sm text-slate-600">
                 {t("generic.identityIntro")}
               </p>
@@ -1358,7 +1388,7 @@ export function ApplyWizard({
 
             <section className="space-y-6 border-t border-slate-200 pt-8">
               <div>
-                <h3 className="text-xl font-bold text-slate-900">
+                <h3 className="flex items-center gap-2 text-xl font-bold text-slate-900"><span aria-hidden className="sparkle text-cyan-500">✦</span>
                   {t("generic.applicantTitle")}
                 </h3>
                 <p className="mt-1 text-sm text-slate-600">
@@ -1499,7 +1529,7 @@ export function ApplyWizard({
 
             <section className="space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-xl font-bold text-slate-900">{t("generic.travelDates")}</h3>
+                <h3 className="flex items-center gap-2 text-xl font-bold text-slate-900"><span aria-hidden className="sparkle text-cyan-500">✦</span>{t("generic.travelDates")}</h3>
                 {rule && (
                   <button
                     type="button"
@@ -1622,7 +1652,7 @@ export function ApplyWizard({
             {isVietnam && (
               <div className="space-y-6 border-t border-slate-200 pt-8">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900">
+                  <h3 className="flex items-center gap-2 text-xl font-bold text-slate-900"><span aria-hidden className="sparkle text-cyan-500">✦</span>
                     Vietnam e-Visa details
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">
@@ -2196,7 +2226,7 @@ function CompanionsStep({
 
   return (
     <div>
-      <h3 className="text-xl font-bold">{t("companions.title")}</h3>
+      <h3 className="flex items-center gap-2 text-xl font-bold"><span aria-hidden className="sparkle text-cyan-500">✦</span>{t("companions.title")}</h3>
       <p className="mt-2 text-slate-600">
         {t("companions.description")}
       </p>
@@ -2344,7 +2374,7 @@ function GuidanceConsentStep({
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-xl font-bold">
+        <h3 className="flex items-center gap-2 text-xl font-bold"><span aria-hidden className="sparkle text-cyan-500">✦</span>
           {form.destination_country || t("review.destination")} {t("guidance.title")}
         </h3>
 
@@ -2429,7 +2459,7 @@ function GuidanceConsentStep({
       </div>
 
       <div>
-        <h3 className="text-xl font-bold">{t("guidance.review")}</h3>
+        <h3 className="flex items-center gap-2 text-xl font-bold"><span aria-hidden className="sparkle text-cyan-500">✦</span>{t("guidance.review")}</h3>
         <p className="mt-1 text-sm text-slate-600">
           {t("guidance.reviewHelp")}
         </p>
