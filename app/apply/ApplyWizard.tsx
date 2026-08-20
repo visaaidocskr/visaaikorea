@@ -73,6 +73,7 @@ import { TaiwanBackgroundStep } from "@/app/apply/taiwan/TaiwanBackgroundStep";
 import { TAIWAN_MARITAL_OPTIONS } from "@/app/apply/fields";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { CountryAmbience, CountryBanner } from "@/app/apply/CountryAmbience";
+import { SubmitSuccess } from "@/app/apply/SubmitSuccess";
 
 // Japan AND Taiwan use the same richer step sequence (Phase 2a/3: steps 1–4 +
 // Documents + Guidance). Other destinations keep the generic stepsForOutcome()
@@ -174,6 +175,7 @@ export function ApplyWizard({
   const [consent, setConsent] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [saving, startSaving] = useTransition();
+  const [submitted, setSubmitted] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(
     null
   );
@@ -406,15 +408,19 @@ export function ApplyWizard({
     form.flight_booked === false ||
     (form.flight_booked === true &&
       fl.airline.trim() !== "" &&
+      fl.flight_number.trim() !== "" &&
       form.port_of_entry.trim() !== "" &&
-      fl.arrival_date !== "");
+      fl.arrival_date !== "" &&
+      Boolean(uploads["flight_reservation"]));
   const accommodationValid =
     form.accommodation_booked === false ||
     (form.accommodation_booked === true &&
+      Boolean(uploads["hotel_booking"]) &&
       form.accommodations.length > 0 &&
       form.accommodations.every(
         (a) =>
           a.name.trim() !== "" &&
+          a.phone.trim() !== "" &&
           a.address.trim() !== "" &&
           !hasNonLatinScript(a.address) &&
           a.check_in !== "" &&
@@ -1060,7 +1066,8 @@ export function ApplyWizard({
         if (!saved.ok) return setNotice({ kind: "err", text: saved.error });
         const res = await submitApplication(applicationId, consent);
         if (!res.ok) return setNotice({ kind: "err", text: res.error });
-        router.push("/dashboard");
+        setSubmitted(true);
+        window.scrollTo({ top: 0 });
       } catch {
         setNotice({
           kind: "err",
@@ -1068,6 +1075,10 @@ export function ApplyWizard({
         });
       }
     });
+  }
+
+  if (submitted) {
+    return <SubmitSuccess />;
   }
 
   return (

@@ -123,10 +123,11 @@ export function JapanGuidanceStep({
       <div className="rounded-2xl border border-slate-200 p-5">
         <h4 className="font-bold text-slate-900">Prepared documents</h4>
         <p className="mt-2 text-sm text-slate-600">
-          No documents have been generated yet. After you submit, our team reviews
-          your application and prepares your {countryLabel} visa document package.
-          You&rsquo;ll be able to download the completed documents from your
-          dashboard once they are ready.
+          After you submit, our team reviews your application, prepares your{" "}
+          {countryLabel} visa document package and submits it to the embassy for
+          you — you don&rsquo;t need to print or deliver anything. Follow every
+          status update, and the visa decision itself (usually within 7–10
+          days), in <strong>My results</strong> on your dashboard.
         </p>
       </div>
 

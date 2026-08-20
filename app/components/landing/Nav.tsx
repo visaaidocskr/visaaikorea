@@ -6,6 +6,7 @@ import { GenerateButton } from "@/app/components/GenerateButton";
 import { LanguageSelector } from "@/app/components/LanguageSelector";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { signOut } from "@/app/auth/actions";
+import { countUnseen, type ResultRow } from "@/app/components/resultsSeen";
 
 // Only the sections that actually exist on the page — the Services and
 // Pricing sections were removed, so their anchors went with them.
@@ -24,6 +25,9 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
   // own), so anonymous visitors and ordinary clients never see the link.
   const [isAdmin, setIsAdmin] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  // App-icon-style badge: applications the admin has updated since the
+  // client last opened My results.
+  const [resultsBadge, setResultsBadge] = useState(0);
   const { t } = useLocale();
 
   useEffect(() => {
@@ -42,6 +46,10 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
           .eq("id", session.user.id)
           .single();
         if (!cancelled && data?.role === "admin") setIsAdmin(true);
+        const { data: apps } = await supabase
+          .from("applications")
+          .select("id, status, client_message");
+        if (!cancelled && apps) setResultsBadge(countUnseen(apps as ResultRow[]));
       } catch {
         // Signed out or Supabase unreachable: simply no admin link.
       }
@@ -108,11 +116,16 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
             <>
               <Link
                 href="/dashboard/applications"
-                className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
+                className={`relative rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${
                   dark ? "text-cyan-300 hover:text-cyan-200" : "text-blue-700 hover:text-blue-800"
                 }`}
               >
                 📄 {t("nav.results")}
+                {resultsBadge > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white shadow-md shadow-red-500/40">
+                    {resultsBadge > 9 ? "9+" : resultsBadge}
+                  </span>
+                )}
               </Link>
               <form action={signOut}>
                 <button
@@ -190,9 +203,14 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
                 <Link
                   href="/dashboard/applications"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg px-2 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
+                  className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                 >
                   📄 {t("nav.results")}
+                  {resultsBadge > 0 && (
+                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold text-white">
+                      {resultsBadge > 9 ? "9+" : resultsBadge}
+                    </span>
+                  )}
                 </Link>
                 <Link
                   href="/dashboard"

@@ -69,10 +69,11 @@ export function BackgroundStep({
         ))}
       </div>
 
+      {anyYes && (
       <div>
         <label className="mb-2 block text-sm font-semibold text-slate-700">
           {t("japan.background.remarks")}
-          {anyYes ? <span className="text-red-500"> *</span> : null}
+          <span className="text-red-500"> *</span>
         </label>
         <textarea
           value={form.remarks}
@@ -85,12 +86,13 @@ export function BackgroundStep({
           }
           className="w-full rounded-xl border border-slate-300 px-4 py-3 text-slate-900 transition hover:border-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
         />
-        {anyYes && form.remarks.trim() === "" && (
+        {form.remarks.trim() === "" && (
           <p className="mt-1 text-xs font-semibold text-red-500">
             {t("japan.background.requiredDetails")}
           </p>
         )}
       </div>
+      )}
     </div>
   );
 }

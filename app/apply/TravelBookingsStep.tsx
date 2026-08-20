@@ -207,7 +207,7 @@ export function TravelBookingsStep({
                 userId={userId}
                 fileType="flight_reservation"
                 label={t("booking.flightUpload")}
-                required={false}
+                required
                 initialFilename={uploads["flight_reservation"]}
                 onUploaded={onUploaded}
               />
@@ -225,8 +225,6 @@ export function TravelBookingsStep({
                 label={t("booking.flightNumber")}
                 value={f.flight_number}
                 onChange={(v) => setFlight({ flight_number: v })}
-                required={false}
-                helpText={t("booking.optionalFlight")}
               />
               <Select
                 label={t("booking.portEntry").replace("{country}", countryLabel)}
@@ -271,7 +269,7 @@ export function TravelBookingsStep({
                 userId={userId}
                 fileType="hotel_booking"
                 label={t("booking.hotelUpload")}
-                required={false}
+                required
                 initialFilename={uploads["hotel_booking"]}
                 onUploaded={onUploaded}
               />
@@ -315,7 +313,6 @@ export function TravelBookingsStep({
                       label={t("booking.phone")}
                       value={a.phone}
                       onChange={(v) => updateAcc(i, { phone: v })}
-                      required={false}
                       inputMode="tel"
                     />
                     <Input
