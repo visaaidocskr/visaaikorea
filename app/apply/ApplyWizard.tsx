@@ -72,6 +72,7 @@ import { TaiwanTripStep } from "@/app/apply/taiwan/TaiwanTripStep";
 import { TaiwanBackgroundStep } from "@/app/apply/taiwan/TaiwanBackgroundStep";
 import { TAIWAN_MARITAL_OPTIONS } from "@/app/apply/fields";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { CountryAmbience, CountryBanner } from "@/app/apply/CountryAmbience";
 
 // Japan AND Taiwan use the same richer step sequence (Phase 2a/3: steps 1–4 +
 // Documents + Guidance). Other destinations keep the generic stepsForOutcome()
@@ -1055,6 +1056,8 @@ export function ApplyWizard({
 
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 md:p-10">
+      <CountryAmbience destination={form.destination_country} />
+      <CountryBanner destination={form.destination_country} />
       <Stepper steps={steps} step={stepIndex} />
 
       {notice && (
