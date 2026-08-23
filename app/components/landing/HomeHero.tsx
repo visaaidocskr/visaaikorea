@@ -79,30 +79,30 @@ export function HomeHero() {
       </div>
 
       <div className="relative mx-auto max-w-5xl">
-        <Reveal>
+        <Reveal immediate>
           <div className="ai-chip mx-auto inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-cyan-100">
             <span aria-hidden className="sparkle text-cyan-300">✦</span>
             {t("hero.badge")}
           </div>
         </Reveal>
-        <Reveal delay={80}>
+        <Reveal immediate delay={80}>
           <h1 className="mt-7 text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-7xl">
             {t("hero.title1")}
             <br />
             <span className="text-sky-gradient">{t("hero.title2")}</span>
           </h1>
         </Reveal>
-        <Reveal delay={160}>
+        <Reveal immediate delay={160}>
           <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl">
             {t("hero.description")}
           </p>
         </Reveal>
-        <Reveal delay={200}>
+        <Reveal immediate delay={200}>
           <p className="mt-4 text-sm font-medium text-slate-400">
             {t("hero.by")} <span className="font-semibold text-slate-200">Vitamin Travel</span>
           </p>
         </Reveal>
-        <Reveal delay={240}>
+        <Reveal immediate delay={240}>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
             <GenerateButton size="lg" className="btn-shine-auto" />
             <a
@@ -113,7 +113,7 @@ export function HomeHero() {
             </a>
           </div>
         </Reveal>
-        <Reveal delay={320}>
+        <Reveal immediate delay={320}>
           <div className="mx-auto mt-9 flex max-w-2xl flex-wrap justify-center gap-3 text-sm">
             {[t("hero.prices"), t("hero.drafts"), t("hero.support")].map((line) => (
               <span
@@ -129,7 +129,7 @@ export function HomeHero() {
       </div>
 
       {/* Destination marquee: where our clients are flying. */}
-      <Reveal delay={380}>
+      <Reveal immediate delay={380}>
         <div className="marquee relative mx-auto mt-14 max-w-4xl" aria-hidden>
           <div className="marquee-track items-center gap-10 pr-10">
             {[...stops, ...stops].map(([flag, name], i) => (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LocaleProvider } from "@/app/components/LocaleProvider";
+import { FloatingContact } from "@/app/components/FloatingContact";
 import { getRequestLocale } from "@/lib/locale-server";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
@@ -52,7 +53,12 @@ export default async function RootLayout({
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><LocaleProvider initialLocale={locale}>{children}</LocaleProvider></body>
+      <body className="min-h-full flex flex-col">
+        <LocaleProvider initialLocale={locale}>
+          {children}
+          <FloatingContact />
+        </LocaleProvider>
+      </body>
     </html>
   );
 }
