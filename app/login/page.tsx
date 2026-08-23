@@ -6,7 +6,7 @@ import { safeNextPath } from "@/lib/auth-redirect";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Sign In · VisaAI Korea" };
+export const metadata: Metadata = { title: "Sign In" };
 
 // Next 16: searchParams is a Promise.
 export default async function LoginPage({

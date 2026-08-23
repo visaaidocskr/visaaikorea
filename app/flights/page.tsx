@@ -3,7 +3,7 @@ import { Nav } from "@/app/components/landing/Nav";
 import { FlightSearchForm } from "@/app/flights/FlightSearchForm";
 import { FlightScene } from "@/app/flights/FlightScene";
 
-export const metadata: Metadata = { title: "Flight quotation · VisaAI Korea" };
+export const metadata: Metadata = { title: "Flight quotation" };
 
 export default function FlightsPage() {
   return (

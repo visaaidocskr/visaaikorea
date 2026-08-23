@@ -6,7 +6,7 @@ import { SignOutButton } from "@/app/dashboard/SignOutButton";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Dashboard · VisaAI Korea" };
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
   const { user, profile } = await requireUser();

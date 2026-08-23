@@ -4,7 +4,7 @@ import { BUSINESS } from "@/lib/business";
 import { LEGAL_COPY } from "@/lib/legal-content";
 import { getRequestLocale } from "@/lib/locale-server";
 
-export const metadata: Metadata = { title: "Refund Policy · VisaAI Korea" };
+export const metadata: Metadata = { title: "Refund Policy" };
 
 export default async function RefundsPage() {
   const copy = LEGAL_COPY[await getRequestLocale()];

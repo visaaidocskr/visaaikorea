@@ -4,7 +4,7 @@ import { BUSINESS } from "@/lib/business";
 import { LEGAL_COPY } from "@/lib/legal-content";
 import { getRequestLocale } from "@/lib/locale-server";
 
-export const metadata: Metadata = { title: "Terms of Service · VisaAI Korea" };
+export const metadata: Metadata = { title: "Terms of Service" };
 
 export default async function TermsPage() {
   const copy = LEGAL_COPY[await getRequestLocale()];

@@ -5,7 +5,7 @@ import { ForgotPasswordForm } from "@/app/auth/AuthForms";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Reset Password · VisaAI Korea" };
+export const metadata: Metadata = { title: "Reset Password" };
 
 export default async function ForgotPasswordPage() {
   const locale = await getRequestLocale();

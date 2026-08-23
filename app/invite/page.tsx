@@ -10,7 +10,7 @@ import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "Invite family to Korea · VisaAI Korea",
+  title: "Invite family to Korea",
 };
 
 export default async function InvitePage() {

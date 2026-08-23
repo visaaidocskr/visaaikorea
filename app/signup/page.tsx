@@ -5,7 +5,7 @@ import { SignupForm, GoogleButton } from "@/app/auth/AuthForms";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Create Account · VisaAI Korea" };
+export const metadata: Metadata = { title: "Create Account" };
 
 export default async function SignupPage() {
   const locale = await getRequestLocale();

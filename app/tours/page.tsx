@@ -3,7 +3,7 @@ import { Nav } from "@/app/components/landing/Nav";
 import { TourRequestForm } from "@/app/tours/TourRequestForm";
 import { TourScene } from "@/app/tours/TourScene";
 
-export const metadata: Metadata = { title: "Tour quotation · VisaAI Korea" };
+export const metadata: Metadata = { title: "Tour quotation" };
 
 export default function ToursPage() {
   return (

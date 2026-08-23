@@ -4,7 +4,7 @@ import { BUSINESS } from "@/lib/business";
 import { LEGAL_COPY } from "@/lib/legal-content";
 import { getRequestLocale } from "@/lib/locale-server";
 
-export const metadata: Metadata = { title: "Privacy Policy · VisaAI Korea" };
+export const metadata: Metadata = { title: "Privacy Policy" };
 
 export default async function PrivacyPage() {
   const copy = LEGAL_COPY[await getRequestLocale()];

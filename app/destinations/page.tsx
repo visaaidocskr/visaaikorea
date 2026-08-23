@@ -7,7 +7,7 @@ import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "Destinations · VisaAI Korea",
+  title: "Destinations",
   description:
     "Tourist visa guides for foreigners living in Korea: Japan, Taiwan, Singapore, Spain and Vietnam — documents, embassy notes and processing times.",
 };

@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { STATUS_LABELS, STATUS_BADGE, APPLICATION_STATUSES } from "@/lib/visa/status";
 
-export const metadata: Metadata = { title: "Admin · VisaAI Korea" };
+export const metadata: Metadata = { title: "Admin" };
 
 export default async function AdminHome() {
   // Defense in depth: the layout and proxy guard /admin, and this page

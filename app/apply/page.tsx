@@ -63,7 +63,7 @@ async function loadDraftData(supabase: SupabaseServerClient, id: string) {
   };
 }
 
-export const metadata: Metadata = { title: "New Application · VisaAI Korea" };
+export const metadata: Metadata = { title: "New Application" };
 
 function SetupNotice() {
   return (

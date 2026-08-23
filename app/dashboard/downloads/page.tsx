@@ -7,7 +7,7 @@ import { DownloadButton } from "@/app/dashboard/DownloadButton";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Downloads · VisaAI Korea" };
+export const metadata: Metadata = { title: "Downloads" };
 
 type Row = {
   id: string;

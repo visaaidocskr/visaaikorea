@@ -10,7 +10,7 @@ import { APPROVED_VISA_DOC_TYPE } from "@/lib/docs/documentTypes";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "Application · VisaAI Korea" };
+export const metadata: Metadata = { title: "Application" };
 
 export default async function ClientApplicationDetail({
   params,

@@ -8,7 +8,7 @@ import type { ApplicationStatus } from "@/lib/visa/types";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
-export const metadata: Metadata = { title: "My Applications · VisaAI Korea" };
+export const metadata: Metadata = { title: "My Applications" };
 
 export default async function MyApplicationsPage() {
   await requireUser();

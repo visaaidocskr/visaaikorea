@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const raw = COUNTRIES.find((c) => c.key === country);
   if (!raw) return {};
   return {
-    title: `${raw.country} Tourist Visa from Korea · VisaAI Korea`,
+    title: `${raw.country} Tourist Visa from Korea`,
     description: `${raw.visaType} — ${raw.tagline} Documents, embassy notes and processing times for foreigners living in South Korea.`,
   };
 }
