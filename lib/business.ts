@@ -12,6 +12,9 @@ export const BUSINESS = {
   whatsapp: "https://wa.me/821033964499",
   address:
     "4-home, Yashlik Street, Tashkent MFY, Jomboy District, Samarkand Region, Uzbekistan",
+  // Official registration number of the operating company. Shown in the
+  // footer only once filled in — an empty string hides the line entirely.
+  registrationNumber: "",
 } as const;
 
 export type VisaPrice = {

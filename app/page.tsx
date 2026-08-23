@@ -6,8 +6,10 @@ import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { CountriesSection } from "@/app/components/landing/CountriesSection";
 import { InviteSection } from "@/app/components/landing/InviteSection";
 import { HowItWorks } from "@/app/components/landing/HowItWorks";
+import { FaqSection } from "@/app/components/landing/FaqSection";
 import { HomeHero } from "@/app/components/landing/HomeHero";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { BUSINESS } from "@/lib/business";
 
 // Deliberately kept to three sections: Hero → Destinations → How it works.
 // The old stats strip, Services section, Pricing tiers and bottom CTA were
@@ -23,6 +25,7 @@ export default function Home() {
       <CountriesSection />
       <InviteSection />
       <HowItWorks />
+      <FaqSection />
       <Footer />
     </div>
   );
@@ -75,8 +78,12 @@ function SocialLinks() {
 
 function Footer() {
   const { t } = useLocale();
+  const waHref = BUSINESS.whatsapp;
+  const tgHref = BUSINESS.telegram;
+  const colTitle = "text-xs font-bold uppercase tracking-widest text-slate-400";
+  const link = "transition-colors hover:text-cyan-300";
   return (
-    <footer className="relative overflow-hidden bg-slate-950 px-6 py-14">
+    <footer className="relative overflow-hidden bg-slate-950 px-6 pb-10 pt-16 text-sm text-slate-300">
       {/* The same night sky the journey started under. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="glow-orb absolute -left-24 bottom-0 h-72 w-72 [--orb-c:rgba(37,99,235,0.2)]" />
@@ -100,28 +107,86 @@ function Footer() {
       </div>
 
       <div className="relative mx-auto max-w-6xl">
-        <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-          <span className="text-lg font-extrabold tracking-tight text-white">
-            VisaAI <span className="text-cyan-300">Korea</span>
-          </span>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-semibold text-slate-300">
-            <Link href="/services" className="transition-colors hover:text-cyan-300">{t("footer.services")}</Link>
-            <Link href="/privacy" className="transition-colors hover:text-cyan-300">{t("footer.privacy")}</Link>
-            <Link href="/terms" className="transition-colors hover:text-cyan-300">{t("footer.terms")}</Link>
-            <Link href="/refunds" className="transition-colors hover:text-cyan-300">{t("footer.refunds")}</Link>
-            <Link href="/login" className="transition-colors hover:text-cyan-300">{t("nav.signIn")}</Link>
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
+          {/* Company */}
+          <div>
+            <span className="text-xl font-extrabold tracking-tight text-white">
+              VisaAI <span className="text-cyan-300">Korea</span>
+            </span>
+            <p className="mt-3 max-w-xs leading-relaxed text-slate-400">
+              {t("footer.operatedBy")} <span className="font-semibold text-slate-200">{BUSINESS.legalName}</span>
+            </p>
+            <address className="mt-3 max-w-xs not-italic leading-relaxed text-slate-400">
+              {BUSINESS.address}
+            </address>
+            {BUSINESS.registrationNumber && (
+              <p className="mt-2 text-slate-400">
+                {t("footer.registration")}: <span className="text-slate-200">{BUSINESS.registrationNumber}</span>
+              </p>
+            )}
+            <div className="mt-5">
+              <SocialLinks />
+            </div>
+          </div>
+
+          {/* Explore */}
+          <div>
+            <p className={colTitle}>{t("footer.explore")}</p>
+            <ul className="mt-4 space-y-2.5 font-medium">
+              <li><Link href="/services" className={link}>{t("footer.services")}</Link></li>
+              <li><Link href="/destinations" className={link}>{t("nav.destinations")}</Link></li>
+              <li><Link href="/flights" className={link}>{t("nav.flights")}</Link></li>
+              <li><Link href="/tours" className={link}>{t("nav.tours")}</Link></li>
+              <li><Link href="/invite" className={link}>{t("nav.invite")}</Link></li>
+              <li><a href="#faq" className={link}>{t("footer.faq")}</a></li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <p className={colTitle}>{t("footer.legal")}</p>
+            <ul className="mt-4 space-y-2.5 font-medium">
+              <li><Link href="/privacy" className={link}>{t("footer.privacy")}</Link></li>
+              <li><Link href="/terms" className={link}>{t("footer.terms")}</Link></li>
+              <li><Link href="/refunds" className={link}>{t("footer.refunds")}</Link></li>
+              <li><Link href="/login" className={link}>{t("nav.signIn")}</Link></li>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <p className={colTitle}>{t("footer.contact")}</p>
+            <ul className="mt-4 space-y-2.5 font-medium">
+              <li>
+                <a href={`mailto:${BUSINESS.email}`} className={`${link} break-all`}>{BUSINESS.email}</a>
+              </li>
+              <li>
+                <a href={`tel:${BUSINESS.phones.korea.replace(/\s/g, "")}`} className={link}>
+                  🇰🇷 {BUSINESS.phones.korea}
+                </a>
+              </li>
+              <li>
+                <a href={`tel:${BUSINESS.phones.uzbekistan.replace(/\s/g, "")}`} className={link}>
+                  🇺🇿 {BUSINESS.phones.uzbekistan}
+                </a>
+              </li>
+              <li className="flex gap-3 pt-1">
+                <a href={waHref} target="_blank" rel="noopener noreferrer" className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-bold text-emerald-300 transition-colors hover:bg-emerald-400/20">WhatsApp</a>
+                <a href={tgHref} target="_blank" rel="noopener noreferrer" className="rounded-full border border-sky-400/30 bg-sky-400/10 px-3 py-1 text-xs font-bold text-sky-300 transition-colors hover:bg-sky-400/20">Telegram</a>
+              </li>
+            </ul>
+            <p className="mt-4 text-xs text-slate-500">{t("footer.replyTime")}</p>
           </div>
         </div>
 
-        <div className="mt-8">
-          <SocialLinks />
+        <div className="mt-12 border-t border-white/10 pt-6">
+          <p className="mx-auto max-w-3xl text-center text-xs leading-relaxed text-slate-500">
+            {t("footer.disclaimer")}
+          </p>
+          <p className="mt-4 text-center text-xs text-slate-500">
+            {t("footer.copyright")}
+          </p>
         </div>
-        <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-relaxed text-slate-500">
-          {t("footer.disclaimer")}
-        </p>
-        <p className="mt-4 text-center text-xs text-slate-500">
-          {t("footer.copyright")}
-        </p>
       </div>
     </footer>
   );
