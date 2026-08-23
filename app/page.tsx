@@ -7,15 +7,15 @@ import { CountriesSection } from "@/app/components/landing/CountriesSection";
 import { InviteSection } from "@/app/components/landing/InviteSection";
 import { HowItWorks } from "@/app/components/landing/HowItWorks";
 import { FaqSection } from "@/app/components/landing/FaqSection";
+import { SampleSection } from "@/app/components/landing/SampleSection";
 import { HomeHero } from "@/app/components/landing/HomeHero";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { BUSINESS } from "@/lib/business";
 
-// Deliberately kept to three sections: Hero → Destinations → How it works.
-// The old stats strip, Services section, Pricing tiers and bottom CTA were
-// removed — they repeated the same message, and the pricing tiers listed no
-// actual prices, which raises the visitor's first question without answering
-// it. Pricing returns once the destination list is final.
+// Hero → Destinations → Invite → How it works → What you receive → FAQ.
+// The old stats strip, Services section and Pricing tiers were removed —
+// they repeated the same message without answering the visitor's first
+// question. Each section here answers a different one.
 export default function Home() {
   return (
     <div className="relative text-slate-900">
@@ -25,6 +25,7 @@ export default function Home() {
       <CountriesSection />
       <InviteSection />
       <HowItWorks />
+      <SampleSection />
       <FaqSection />
       <Footer />
     </div>
