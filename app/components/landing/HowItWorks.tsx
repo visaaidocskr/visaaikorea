@@ -188,6 +188,24 @@ function DownloadPreview() {
       <div className="rounded-xl bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-800">
         {t("how.reviewed")}
       </div>
+      {/* Two delivery routes: for Japan and Vietnam our agents submit, so the
+          client downloads nothing; for the rest the client self-submits. */}
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3.5 py-3">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-blue-800">
+            <span aria-hidden>🤝</span>
+            {t("how.routeAgent")}
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-blue-700/80">{t("how.routeAgentBody")}</p>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+          <p className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+            <span aria-hidden>⬇️</span>
+            {t("how.routeSelf")}
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-600">{t("how.routeSelfBody")}</p>
+        </div>
+      </div>
       {files.map((f) => (
         <div
           key={f.name}
