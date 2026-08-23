@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AuthShell } from "@/app/auth/AuthShell";
-import { SignInMethods, GoogleButton } from "@/app/auth/AuthForms";
+import { SignInMethods, GoogleButton, ConsentNote } from "@/app/auth/AuthForms";
 import { safeNextPath } from "@/lib/auth-redirect";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
@@ -50,6 +50,7 @@ export default async function LoginPage({
       )}
       <GoogleButton next={safeNext} />
       <SignInMethods next={safeNext} />
+      <div className="mt-6"><ConsentNote /></div>
     </AuthShell>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { EmailCodeForm } from "@/app/auth/EmailCodeForm";
@@ -177,6 +178,38 @@ export function LoginForm({ next }: { next: string }) {
   );
 }
 
+// Links to the policies, for the "by continuing you agree" line and the
+// signup checkbox. Word order differs by language, so the sentence is built
+// from before/after fragments around the two links.
+function PolicyLinks() {
+  const { t } = useLocale();
+  const cls = "font-semibold text-blue-700 underline-offset-4 hover:underline";
+  return (
+    <>
+      <Link href="/terms" className={cls} target="_blank">{t("auth.termsLink")}</Link>
+      {t("auth.consentAnd")}
+      <Link href="/privacy" className={cls} target="_blank">{t("auth.privacyLink")}</Link>
+    </>
+  );
+}
+
+/**
+ * Shown under every sign-in method. Google and the email code create an
+ * account without a form to tick, so the agreement is expressed the way the
+ * large platforms do it: continuing is accepting. The password signup form
+ * additionally asks for an explicit tick.
+ */
+export function ConsentNote() {
+  const { t } = useLocale();
+  return (
+    <p className="text-center text-xs leading-relaxed text-slate-500">
+      {t("auth.consentBefore")}
+      <PolicyLinks />
+      {t("auth.consentAfter")}
+    </p>
+  );
+}
+
 export function SignupForm() {
   const [state, action] = useActionState<AuthState, FormData>(signUp, {});
   const { t } = useLocale();
@@ -206,6 +239,19 @@ export function SignupForm() {
         </label>
         <input id="password" name="password" type="password" required minLength={8} className={inputClass} placeholder={t("auth.passwordHint")} />
       </div>
+      <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-700">
+        <input
+          name="consent"
+          type="checkbox"
+          required
+          className="mt-0.5 h-4 w-4 flex-none rounded border-slate-300 accent-blue-600"
+        />
+        <span>
+          {t("auth.checkboxBefore")}
+          <PolicyLinks />
+          {t("auth.checkboxAfter")}
+        </span>
+      </label>
       <Feedback state={state} />
       <SubmitButton label={t("auth.createAccount")} />
     </form>

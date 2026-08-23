@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AuthShell } from "@/app/auth/AuthShell";
-import { SignupForm, GoogleButton } from "@/app/auth/AuthForms";
+import { SignupForm, GoogleButton, ConsentNote } from "@/app/auth/AuthForms";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
@@ -25,6 +25,7 @@ export default async function SignupPage() {
     >
       <GoogleButton />
       <SignupForm />
+      <div className="mt-6"><ConsentNote /></div>
     </AuthShell>
   );
 }

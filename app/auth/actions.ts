@@ -44,6 +44,11 @@ export async function signUp(
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
   }
+  // The checkbox is `required` in the form; this is the server's own copy of
+  // that rule, so a hand-built request can't skip the agreement.
+  if (formData.get("consent") !== "on") {
+    return { error: "Please confirm that you have read the Terms of Service and Privacy Policy." };
+  }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({
