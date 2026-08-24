@@ -5,6 +5,7 @@ import { DatePicker } from "@/app/apply/DatePicker";
 import { submitServiceEnquiry } from "@/app/services/actions";
 import { searchCities, type CityEntry } from "@/lib/travel/airports";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { RatingPrompt } from "@/app/components/reviews/RatingPrompt";
 
 // Tour builder in the golden-hour tone: one-tap popular destinations, a
 // city autocomplete backed by the same directory the flights page uses,
@@ -165,6 +166,7 @@ export function TourRequestForm() {
   const { t } = useLocale();
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<string | null>(null);
+  const [enquiryId, setEnquiryId] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
 
   const [destination, setDestination] = useState<Place | null>(null);
@@ -228,6 +230,7 @@ export function TourRequestForm() {
         notes: [lines.join("\n"), notes.trim()].filter(Boolean).join("\n\n"),
       });
       setResult(response.ok ? t("form.success") : response.error);
+      setEnquiryId(response.ok ? response.id : null);
     });
   }
 
@@ -263,6 +266,9 @@ export function TourRequestForm() {
         >
           {result}
         </p>
+      )}
+      {enquiryId && (
+        <RatingPrompt context="tour_request" subjectId={enquiryId} />
       )}
 
       {/* Where to */}

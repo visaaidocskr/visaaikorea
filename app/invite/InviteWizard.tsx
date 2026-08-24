@@ -16,6 +16,7 @@ import {
 import { EMPTY_INVITEE, type InviteFormData, type InviteeInput } from "@/lib/invite/types";
 import { saveInvitation, submitInvitation } from "@/app/invite/actions";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { RatingPrompt } from "@/app/components/reviews/RatingPrompt";
 
 const STEPS = ["About you", "Who you're inviting", "The visit", "Documents", "Review"] as const;
 type Step = (typeof STEPS)[number];
@@ -172,6 +173,11 @@ export function InviteWizard({
         <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-emerald-800">
           {t("invite.wizard.receivedDescription").replace("{count}", String(form.invitees.length))}
         </p>
+        <RatingPrompt
+          context="invite_request"
+          subjectId={invitationId}
+          className="mx-auto mt-6 max-w-md text-left"
+        />
         <a
           href="/dashboard"
           className="mt-6 inline-flex rounded-xl bg-emerald-700 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-800"

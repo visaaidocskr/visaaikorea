@@ -594,3 +594,19 @@ body {
   .float-slow,
   .aurora { animation: none; }
 }
+
+/* ---- Rating stars --------------------------------------------------------- */
+.rate-star {
+  transition: transform .18s cubic-bezier(.34, 1.56, .64, 1);
+}
+.rate-star:hover { transform: scale(1.18); }
+.rate-star[data-chosen="true"] svg { animation: star-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes star-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.35) rotate(-8deg); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rate-star, .rate-star:hover { transform: none; }
+  .rate-star[data-chosen="true"] svg { animation: none; }
+}

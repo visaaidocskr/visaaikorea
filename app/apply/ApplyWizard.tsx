@@ -1079,7 +1079,7 @@ export function ApplyWizard({
   }
 
   if (submitted) {
-    return <SubmitSuccess />;
+    return <SubmitSuccess applicationId={applicationId} />;
   }
 
   return (

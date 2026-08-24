@@ -5,6 +5,7 @@ import { DatePicker } from "@/app/apply/DatePicker";
 import { submitServiceEnquiry } from "@/app/services/actions";
 import { searchCities, type CityEntry } from "@/lib/travel/airports";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { RatingPrompt } from "@/app/components/reviews/RatingPrompt";
 
 // Trip.com-style flight request: typed letters resolve to cities and their
 // airports, the trip can be one-way / round-trip / multi-city, and the whole
@@ -169,6 +170,7 @@ export function FlightSearchForm() {
   const { t } = useLocale();
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<string | null>(null);
+  const [enquiryId, setEnquiryId] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
 
   const [tripType, setTripType] = useState<"round" | "oneway" | "multi">("round");
@@ -237,6 +239,7 @@ export function FlightSearchForm() {
         notes: [lines.join("\n"), notes.trim()].filter(Boolean).join("\n\n"),
       });
       setResult(response.ok ? t("form.success") : response.error);
+      setEnquiryId(response.ok ? response.id : null);
     });
   }
 
@@ -275,6 +278,9 @@ export function FlightSearchForm() {
         >
           {result}
         </p>
+      )}
+      {enquiryId && (
+        <RatingPrompt context="flight_request" subjectId={enquiryId} />
       )}
 
       {/* Trip type */}

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useLocale } from "@/app/components/LocaleProvider";
+import { RatingPrompt } from "@/app/components/reviews/RatingPrompt";
 
 // Shown in place of the wizard the moment an application is submitted.
 // A drawn checkmark, a plane lifting off, and a promise: we take it from
 // here — watch My results for the decision.
-export function SubmitSuccess() {
+export function SubmitSuccess({ applicationId }: { applicationId?: string }) {
   const { t } = useLocale();
   return (
     <div className="animate-scale-in mx-auto max-w-xl py-10 text-center">
@@ -77,6 +78,14 @@ export function SubmitSuccess() {
         <span aria-hidden className="hourglass text-base">⏳</span>
         {t("apply.successEta")}
       </p>
+
+      {applicationId && (
+        <RatingPrompt
+          context="visa_application"
+          subjectId={applicationId}
+          className="mx-auto mt-8 max-w-md text-left"
+        />
+      )}
 
       <div className="mt-8">
         <Link
