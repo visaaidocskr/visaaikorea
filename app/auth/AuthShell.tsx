@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TravelAuthScene } from "@/app/auth/TravelAuthScene";
+import { LanguageSelector } from "@/app/components/LanguageSelector";
 
 // Shared visual wrapper for the auth pages (server component).
 //
@@ -20,6 +21,9 @@ export function AuthShell({
 }) {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-5 py-8 text-slate-900 sm:px-6 sm:py-14">
+      <div className="absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
+        <LanguageSelector compact />
+      </div>
       <div className="glow-orb absolute -left-40 top-0 h-96 w-96 [--orb-c:rgba(219,234,254,0.8)]" />
       <div className="glow-orb absolute -right-40 bottom-0 h-96 w-96 [--orb-c:rgba(207,250,254,0.7)]" />
       <div className="relative grid w-full max-w-5xl items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">

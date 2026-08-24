@@ -3,6 +3,7 @@ import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
+import { LanguageSelector } from "@/app/components/LanguageSelector";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
@@ -22,6 +23,7 @@ export default async function DashboardPage() {
           VisaAI Korea
         </Link>
         <div className="flex items-center gap-4">
+          <LanguageSelector compact />
           {profile?.role === "admin" && (
             <Link href="/admin" className="text-sm font-semibold text-blue-700">
               {t("dashboard.admin")}

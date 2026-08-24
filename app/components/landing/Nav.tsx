@@ -155,15 +155,20 @@ export function Nav({ overDark = false }: { overDark?: boolean } = {}) {
           <LanguageSelector />
         </div>
 
-        <button
-          onClick={() => setOpen((v) => !v)}
-          aria-label={t("nav.menu")}
-          className={`flex h-10 w-10 items-center justify-center rounded-xl border lg:hidden ${
-            dark ? "border-white/25 text-white" : "border-slate-200 text-slate-700"
-          }`}
-        >
-          {open ? "✕" : "☰"}
-        </button>
+        {/* Phone header: language first, then the menu — switching language
+            must never require opening the hamburger. */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <LanguageSelector compact dark={dark} />
+          <button
+            onClick={() => setOpen((v) => !v)}
+            aria-label={t("nav.menu")}
+            className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
+              dark ? "border-white/25 text-white" : "border-slate-200 text-slate-700"
+            }`}
+          >
+            {open ? "✕" : "☰"}
+          </button>
+        </div>
       </nav>
 
       {open && (

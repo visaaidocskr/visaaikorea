@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { requireUser } from "@/lib/auth";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
+import { LanguageSelector } from "@/app/components/LanguageSelector";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 import { DeletionForm, PasswordForm, ProfileForm } from "./SettingsForms";
@@ -22,6 +23,7 @@ export default async function SettingsPage() {
           VisaAI Korea
         </Link>
         <div className="flex items-center gap-4">
+          <LanguageSelector compact />
           <Link href="/dashboard" className="text-sm font-semibold text-blue-700">
             {t("settings.back")}
           </Link>
