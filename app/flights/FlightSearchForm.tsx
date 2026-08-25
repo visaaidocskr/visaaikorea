@@ -269,10 +269,12 @@ export function FlightSearchForm() {
   return (
     <form
       onSubmit={submit}
-      className="enquiry-card relative space-y-6 overflow-hidden rounded-3xl p-6 shadow-xl shadow-blue-200/40 sm:p-8 [--edge-a:#93C5FD] [--edge-b:#A5B4FC]"
+      className="enquiry-card relative space-y-6 rounded-3xl p-6 shadow-xl shadow-blue-200/40 sm:p-8 [--edge-a:#93C5FD] [--edge-b:#A5B4FC]"
     >
-      <span aria-hidden className="pointer-events-none absolute -right-3 -top-4 select-none text-8xl opacity-[.07]">
-        ✈️
+      {/* Watermark clipped by its own layer, so the card itself can let the
+          calendar popup escape its rounded corners. */}
+      <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+        <span className="absolute -right-3 -top-4 select-none text-8xl opacity-[.07]">✈️</span>
       </span>
 
       <div>
