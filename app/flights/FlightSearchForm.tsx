@@ -5,7 +5,7 @@ import { DatePicker } from "@/app/apply/DatePicker";
 import { submitServiceEnquiry } from "@/app/services/actions";
 import { searchCities, type CityEntry } from "@/lib/travel/airports";
 import { useLocale } from "@/app/components/LocaleProvider";
-import { RatingPrompt } from "@/app/components/reviews/RatingPrompt";
+import { EnquirySuccess } from "@/app/components/reviews/EnquirySuccess";
 
 // Trip.com-style flight request: typed letters resolve to cities and their
 // airports, the trip can be one-way / round-trip / multi-city, and the whole
@@ -253,6 +253,19 @@ export function FlightSearchForm() {
       checked ? "text-blue-700" : "text-slate-600 hover:text-slate-900"
     }`;
 
+  if (enquiryId) {
+    return (
+      <EnquirySuccess
+        context="flight_request"
+        enquiryId={enquiryId}
+        onReset={() => {
+          setEnquiryId(null);
+          setResult(null);
+        }}
+      />
+    );
+  }
+
   return (
     <form
       onSubmit={submit}
@@ -269,19 +282,12 @@ export function FlightSearchForm() {
         <p className="mt-2 text-sm leading-relaxed text-slate-600">{t("form.intro")}</p>
       </div>
 
-      {result && (
-        <p
-          role="status"
-          className={`rounded-xl px-4 py-3 text-sm font-semibold ${
-            result.startsWith("✓") ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"
-          }`}
-        >
+      {result && !result.startsWith("✓") && (
+        <p role="status" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {result}
         </p>
       )}
-      {enquiryId && (
-        <RatingPrompt context="flight_request" subjectId={enquiryId} />
-      )}
+
 
       {/* Trip type */}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">

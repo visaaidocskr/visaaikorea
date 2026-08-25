@@ -5,7 +5,7 @@ import { DatePicker } from "@/app/apply/DatePicker";
 import { submitServiceEnquiry } from "@/app/services/actions";
 import { searchCities, type CityEntry } from "@/lib/travel/airports";
 import { useLocale } from "@/app/components/LocaleProvider";
-import { RatingPrompt } from "@/app/components/reviews/RatingPrompt";
+import { EnquirySuccess } from "@/app/components/reviews/EnquirySuccess";
 
 // Tour builder in the golden-hour tone: one-tap popular destinations, a
 // city autocomplete backed by the same directory the flights page uses,
@@ -241,6 +241,19 @@ export function TourRequestForm() {
         : "border-slate-300 bg-white text-slate-700 hover:border-amber-400"
     }`;
 
+  if (enquiryId) {
+    return (
+      <EnquirySuccess
+        context="tour_request"
+        enquiryId={enquiryId}
+        onReset={() => {
+          setEnquiryId(null);
+          setResult(null);
+        }}
+      />
+    );
+  }
+
   return (
     <form
       onSubmit={submit}
@@ -257,19 +270,12 @@ export function TourRequestForm() {
         <p className="mt-2 text-sm leading-relaxed text-slate-600">{t("form.intro")}</p>
       </div>
 
-      {result && (
-        <p
-          role="status"
-          className={`rounded-xl px-4 py-3 text-sm font-semibold ${
-            result.startsWith("✓") ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"
-          }`}
-        >
+      {result && !result.startsWith("✓") && (
+        <p role="status" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {result}
         </p>
       )}
-      {enquiryId && (
-        <RatingPrompt context="tour_request" subjectId={enquiryId} />
-      )}
+
 
       {/* Where to */}
       <div className="space-y-3">
