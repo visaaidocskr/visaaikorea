@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { VISA_SUBMISSIONS_OPEN } from "@/lib/launch";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
 import { documentsForStatus } from "@/lib/visa/config";
@@ -505,6 +506,12 @@ export async function submitApplication(
   applicationId: string,
   consent: boolean
 ): Promise<ActionResult> {
+  // Submissions are closed until the payment system passes bank review; the
+  // UI shows a launch notice, and this is the server's own copy of that rule.
+  if (!VISA_SUBMISSIONS_OPEN) {
+    return { ok: false, error: "Submissions open soon — your application is saved as a draft." };
+  }
+
   const session = await getSessionUser();
   if (!session) return { ok: false, error: "Not signed in." };
 

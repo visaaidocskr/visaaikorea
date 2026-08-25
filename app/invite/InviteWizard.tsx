@@ -17,6 +17,8 @@ import { EMPTY_INVITEE, type InviteFormData, type InviteeInput } from "@/lib/inv
 import { saveInvitation, submitInvitation } from "@/app/invite/actions";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { RatingPrompt } from "@/app/components/reviews/RatingPrompt";
+import { ComingSoonModal } from "@/app/components/ComingSoonModal";
+import { INVITE_SUBMISSIONS_OPEN } from "@/lib/launch";
 
 const STEPS = ["About you", "Who you're inviting", "The visit", "Documents", "Review"] as const;
 type Step = (typeof STEPS)[number];
@@ -47,6 +49,7 @@ export function InviteWizard({
   const [form, setForm] = useState<InviteFormData>(initialForm);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [comingSoon, setComingSoon] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -149,6 +152,12 @@ export function InviteWizard({
   }
 
   async function submit() {
+    // Payments are still under bank review — see lib/launch.ts.
+    if (!INVITE_SUBMISSIONS_OPEN) {
+      persist();
+      setComingSoon(true);
+      return;
+    }
     setError(null);
     setBusy(true);
     const saved = await persist();
@@ -165,6 +174,10 @@ export function InviteWizard({
     setDone(true);
     router.refresh();
   }
+
+  const comingSoonModal = (
+    <ComingSoonModal open={comingSoon} onClose={() => setComingSoon(false)} />
+  );
 
   if (done) {
     return (
@@ -189,6 +202,8 @@ export function InviteWizard({
   }
 
   return (
+    <>
+    {comingSoonModal}
     <div>
       {/* Progress */}
       <ol className="mb-8 flex flex-wrap gap-2">
@@ -707,6 +722,7 @@ export function InviteWizard({
         </div>
       </div>
     </div>
+    </>
   );
 }
 

@@ -1,5 +1,7 @@
 "use server";
 
+import { INVITE_SUBMISSIONS_OPEN } from "@/lib/launch";
+
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionUser } from "@/lib/auth";
@@ -139,6 +141,11 @@ export async function saveInvitation(
 export async function submitInvitation(
   invitationId: string
 ): Promise<ActionResult> {
+  // Same launch gate as the UI — see lib/launch.ts.
+  if (!INVITE_SUBMISSIONS_OPEN) {
+    return { ok: false, error: "Submissions open soon — your invitation is saved as a draft." };
+  }
+
   const session = await getSessionUser();
   if (!session) return { ok: false, error: "Not signed in." };
 

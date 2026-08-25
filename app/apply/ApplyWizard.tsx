@@ -74,6 +74,8 @@ import { TAIWAN_MARITAL_OPTIONS } from "@/app/apply/fields";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { CountryAmbience, CountryBanner } from "@/app/apply/CountryAmbience";
 import { SubmitSuccess } from "@/app/apply/SubmitSuccess";
+import { ComingSoonModal } from "@/app/components/ComingSoonModal";
+import { VISA_SUBMISSIONS_OPEN } from "@/lib/launch";
 import { LeaveGuard } from "@/app/apply/LeaveGuard";
 
 // Japan AND Taiwan use the same richer step sequence (Phase 2a/3: steps 1–4 +
@@ -177,6 +179,7 @@ export function ApplyWizard({
   const [acknowledged, setAcknowledged] = useState(false);
   const [saving, startSaving] = useTransition();
   const [submitted, setSubmitted] = useState(false);
+  const [comingSoon, setComingSoon] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(
     null
   );
@@ -1060,6 +1063,13 @@ export function ApplyWizard({
     persist(() => setNotice({ kind: "ok", text: "Draft saved." }));
   }
   function submit() {
+    // Payments are still under bank review: the finished application stays
+    // saved, and the button explains instead of submitting.
+    if (!VISA_SUBMISSIONS_OPEN) {
+      persist(() => {});
+      setComingSoon(true);
+      return;
+    }
     setNotice(null);
     startSaving(async () => {
       try {
@@ -1087,6 +1097,7 @@ export function ApplyWizard({
     // the destination's ambience stays visible behind the fields.
     <div>
       <LeaveGuard />
+      <ComingSoonModal open={comingSoon} onClose={() => setComingSoon(false)} />
       <CountryAmbience destination={form.destination_country} />
       <CountryBanner destination={form.destination_country} />
       <Stepper steps={steps} step={stepIndex} />
