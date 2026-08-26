@@ -1,7 +1,6 @@
 "use client";
 
 import { Reveal } from "@/app/components/Reveal";
-import { GenerateButton } from "@/app/components/GenerateButton";
 import { useLocale } from "@/app/components/LocaleProvider";
 
 // "What do I actually get?" is the question a visitor cannot answer before
@@ -134,9 +133,6 @@ export function SampleSection() {
             {t("sample.more")}
           </p>
           <p className="mt-4 text-xs text-slate-400">{t("sample.note")}</p>
-          <div className="mt-8 flex justify-center">
-            <GenerateButton size="lg" className="btn-shine-auto" />
-          </div>
         </Reveal>
       </div>
     </section>

@@ -9,7 +9,6 @@ import { SampleSection } from "@/app/components/landing/SampleSection";
 import { TrustStrip } from "@/app/components/landing/TrustStrip";
 import { WhySection } from "@/app/components/landing/WhySection";
 import { MoreServices } from "@/app/components/landing/MoreServices";
-import { FinalCta } from "@/app/components/landing/FinalCta";
 import { Footer } from "@/app/components/landing/Footer";
 import { HomeHero } from "@/app/components/landing/HomeHero";
 
@@ -31,7 +30,6 @@ export default function Home() {
       <WhySection />
       <MoreServices />
       <FaqSection />
-      <FinalCta />
       <Footer />
     </div>
   );

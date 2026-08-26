@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Reveal } from "@/app/components/Reveal";
-import { GenerateButton } from "@/app/components/GenerateButton";
 import { useLocale } from "@/app/components/LocaleProvider";
 
 export function HowItWorks() {
@@ -228,7 +227,6 @@ function DownloadPreview() {
       <div className="rounded-xl bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-500">
         {t("how.print")}
       </div>
-      <GenerateButton full size="md" />
     </div>
   );
 }
