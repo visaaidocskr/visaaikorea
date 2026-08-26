@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Footer } from "@/app/components/landing/Footer";
 import Link from "next/link";
 import { Nav } from "@/app/components/landing/Nav";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
@@ -52,7 +53,9 @@ export default async function DestinationsPage() {
                   <div className="mt-4 flex flex-wrap gap-1.5 text-xs font-semibold">
                     {price && (
                       <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
-                        ${totalVisaPrice(price)}
+                        {price.embassyFeeUsd
+                          ? `$${totalVisaPrice(price)}`
+                          : `${t("countries.from")} $${totalVisaPrice(price)}`}
                       </span>
                     )}
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
@@ -69,6 +72,7 @@ export default async function DestinationsPage() {
           })}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Footer } from "@/app/components/landing/Footer";
 import { Nav } from "@/app/components/landing/Nav";
 import { TourRequestForm } from "@/app/tours/TourRequestForm";
 import { TourScene } from "@/app/tours/TourScene";
@@ -28,6 +29,7 @@ export default function ToursPage() {
         <TourScene />
         <TourRequestForm />
       </main>
+      <Footer />
     </div>
   );
 }

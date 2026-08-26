@@ -61,7 +61,9 @@ export function CountriesSection() {
                   <div className="mt-4 flex flex-wrap gap-1.5 text-xs font-semibold">
                     {price && (
                       <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
-                        ${totalVisaPrice(price)}
+                        {price.embassyFeeUsd
+                          ? `$${totalVisaPrice(price)}`
+                          : `${t("countries.from")} $${totalVisaPrice(price)}`}
                       </span>
                     )}
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">

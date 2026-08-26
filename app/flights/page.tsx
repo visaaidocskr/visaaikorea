@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Footer } from "@/app/components/landing/Footer";
 import { Nav } from "@/app/components/landing/Nav";
 import { FlightSearchForm } from "@/app/flights/FlightSearchForm";
 import { FlightScene } from "@/app/flights/FlightScene";
@@ -28,6 +29,7 @@ export default function FlightsPage() {
         <FlightScene />
         <FlightSearchForm />
       </main>
+      <Footer />
     </div>
   );
 }

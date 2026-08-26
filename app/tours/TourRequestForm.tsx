@@ -267,7 +267,7 @@ export function TourRequestForm() {
 
       <div>
         <h2 className="text-sunset-gradient text-2xl font-extrabold">
-          {t("form.request")} {t("service.tour").toLowerCase()}
+          {t("ts.formTitle")}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">{t("form.intro")}</p>
       </div>

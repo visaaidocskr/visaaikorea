@@ -279,7 +279,7 @@ export function FlightSearchForm() {
 
       <div>
         <h2 className="text-sky-gradient text-2xl font-extrabold">
-          {t("form.request")} {t("service.flight").toLowerCase()}
+          {t("fs.formTitle")}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">{t("form.intro")}</p>
       </div>

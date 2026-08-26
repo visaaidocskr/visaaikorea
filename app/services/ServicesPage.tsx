@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Footer } from "@/app/components/landing/Footer";
 import { Nav } from "@/app/components/landing/Nav";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { BUSINESS, VISA_PRICES, totalVisaPrice } from "@/lib/business";
@@ -68,6 +69,7 @@ export function ServicesPage() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

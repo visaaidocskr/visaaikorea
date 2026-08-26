@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/app/components/landing/Footer";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
@@ -78,6 +79,7 @@ export default async function InvitePage() {
   };
 
   return (
+    <>
     <main className="relative min-h-screen px-6 py-12 text-slate-900">
       <AuroraBackdrop />
       <div className="mx-auto max-w-4xl">
@@ -94,5 +96,7 @@ export default async function InvitePage() {
         <InviteWizard invitationId={invitationId} initialForm={initialForm} />
       </div>
     </main>
+      <Footer />
+    </>
   );
 }

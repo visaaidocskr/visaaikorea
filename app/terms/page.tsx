@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Footer } from "@/app/components/landing/Footer";
 import type { Metadata } from "next";
 import { BUSINESS } from "@/lib/business";
 import { LEGAL_COPY } from "@/lib/legal-content";
@@ -9,6 +10,7 @@ export const metadata: Metadata = { title: "Terms of Service" };
 export default async function TermsPage() {
   const copy = LEGAL_COPY[await getRequestLocale()];
   return (
+    <>
     <main className="mx-auto max-w-3xl px-6 py-16 text-slate-800">
       <Link href="/" className="text-sm font-semibold text-blue-700">← {copy.back}</Link>
       <p className="mt-8 text-sm font-bold uppercase tracking-widest text-blue-600">{copy.effective} 19 August 2026</p>
@@ -19,5 +21,7 @@ export default async function TermsPage() {
         <p><Link href="/refunds" className="font-semibold text-blue-700 hover:underline">{copy.refundLink}</Link></p>
       </div>
     </main>
+      <Footer />
+    </>
   );
 }

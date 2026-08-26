@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Footer } from "@/app/components/landing/Footer";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Nav } from "@/app/components/landing/Nav";
@@ -154,6 +155,7 @@ export default async function DestinationPage({ params }: { params: Params }) {
           <GenerateButton size="lg" label={t("action.generate")} className="btn-shine-auto" />
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
