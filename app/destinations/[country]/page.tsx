@@ -6,7 +6,7 @@ import { Nav } from "@/app/components/landing/Nav";
 import { GenerateButton } from "@/app/components/GenerateButton";
 import { CountryAmbience } from "@/app/apply/CountryAmbience";
 import { COUNTRIES, localizeCountryContent } from "@/lib/visa/countryContent";
-import { VISA_PRICES, totalVisaPrice } from "@/lib/business";
+import { VISA_PRICES, totalVisaPrice, formatKrw } from "@/lib/business";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
@@ -71,16 +71,18 @@ export default async function DestinationPage({ params }: { params: Params }) {
             <section className="mt-8 grid gap-3 sm:grid-cols-3">
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{t("services.officialFee")}</p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-900">{price.embassyFeeUsd ? `$${price.embassyFeeUsd}` : "—"}</p>
-                {!price.embassyFeeUsd && <p className="mt-0.5 text-xs text-slate-500">{t("services.paidSeparately")}</p>}
+                <p className="mt-1 text-2xl font-extrabold text-slate-900">{price.embassyFeeUsd ? formatKrw(price.embassyFeeUsd) : "—"}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{price.embassyFeeUsd ? `≈ $${price.embassyFeeUsd}` : t("services.paidSeparately")}</p>
               </div>
               <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{t("services.website")}</p>
-                <p className="mt-1 text-2xl font-extrabold text-slate-900">${price.serviceFeeUsd}</p>
+                <p className="mt-1 text-2xl font-extrabold text-slate-900">{formatKrw(price.serviceFeeUsd)}</p>
+                <p className="mt-0.5 text-xs text-slate-500">≈ ${price.serviceFeeUsd}</p>
               </div>
               <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 p-5 shadow-sm">
-                <p className="text-xs font-bold uppercase tracking-wide text-emerald-600">{t("services.total")}</p>
-                <p className="mt-1 text-2xl font-extrabold text-emerald-700">${totalVisaPrice(price)}</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-600">{price.embassyFeeUsd ? t("services.total") : t("services.packageTotal")}</p>
+                <p className="mt-1 text-2xl font-extrabold text-emerald-700">{formatKrw(totalVisaPrice(price))}</p>
+                <p className="mt-0.5 text-xs text-emerald-600/80">≈ ${totalVisaPrice(price)}</p>
               </div>
             </section>
           );

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Nav } from "@/app/components/landing/Nav";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { COUNTRIES, localizeCountryContent } from "@/lib/visa/countryContent";
-import { VISA_PRICES, totalVisaPrice } from "@/lib/business";
+import { VISA_PRICES, totalVisaPrice, formatKrw } from "@/lib/business";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
@@ -54,8 +54,8 @@ export default async function DestinationsPage() {
                     {price && (
                       <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
                         {price.embassyFeeUsd
-                          ? `$${totalVisaPrice(price)}`
-                          : `${t("countries.from")} $${totalVisaPrice(price)}`}
+                          ? formatKrw(totalVisaPrice(price))
+                          : `${t("countries.from")} ${formatKrw(totalVisaPrice(price))}`}
                       </span>
                     )}
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">

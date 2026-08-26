@@ -17,6 +17,21 @@ export const BUSINESS = {
   registrationNumber: "",
 } as const;
 
+// Clients live in Korea, so customer-facing prices display KRW-first. USD
+// stays the internal source of truth; this is the display rate, owned by the
+// operator — update this one number and every price on the site follows.
+// With integer USD fees the maths stays exact, so part prices always add up
+// to the shown total.
+export const KRW_PER_USD = 1400;
+
+export function usdToKrw(usd: number) {
+  return usd * KRW_PER_USD;
+}
+
+export function formatKrw(usd: number) {
+  return `₩${usdToKrw(usd).toLocaleString("en-US")}`;
+}
+
 export type VisaPrice = {
   destination: string;
   embassyFeeUsd: number;

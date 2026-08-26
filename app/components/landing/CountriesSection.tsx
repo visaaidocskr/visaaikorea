@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { COUNTRIES, localizeCountryContent, type CountryContent } from "@/lib/visa/countryContent";
-import { VISA_PRICES, totalVisaPrice } from "@/lib/business";
+import { VISA_PRICES, totalVisaPrice, formatKrw } from "@/lib/business";
 import { Modal } from "@/app/components/Modal";
 import { Reveal } from "@/app/components/Reveal";
 import { GenerateButton } from "@/app/components/GenerateButton";
@@ -62,8 +62,8 @@ export function CountriesSection() {
                     {price && (
                       <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
                         {price.embassyFeeUsd
-                          ? `$${totalVisaPrice(price)}`
-                          : `${t("countries.from")} $${totalVisaPrice(price)}`}
+                          ? formatKrw(totalVisaPrice(price))
+                          : `${t("countries.from")} ${formatKrw(totalVisaPrice(price))}`}
                       </span>
                     )}
                     <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">

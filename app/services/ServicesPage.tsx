@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Footer } from "@/app/components/landing/Footer";
 import { Nav } from "@/app/components/landing/Nav";
 import { useLocale } from "@/app/components/LocaleProvider";
-import { BUSINESS, VISA_PRICES, totalVisaPrice } from "@/lib/business";
+import { BUSINESS, VISA_PRICES, totalVisaPrice, formatKrw } from "@/lib/business";
 import { GenerateButton } from "@/app/components/GenerateButton";
 
 const PRICE_FLAGS: Record<string, string> = {
@@ -28,19 +28,19 @@ export function ServicesPage() {
               loudest number on the card. */}
           <div className="mt-6 hidden overflow-hidden rounded-3xl border border-slate-200 bg-white md:block">
             <div className="grid grid-cols-[1.2fr_.9fr_.9fr_.8fr] gap-3 border-b border-slate-200 bg-slate-50 px-5 py-3 text-xs font-bold uppercase tracking-wide text-slate-500"><span>{t("nav.destinations")}</span><span>{t("services.officialFee")}</span><span>{t("services.website")}</span><span>{t("services.total")}</span></div>
-            {VISA_PRICES.map((price) => <div key={price.destination} className="grid grid-cols-[1.2fr_.9fr_.9fr_.8fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm last:border-0"><div><strong>{PRICE_FLAGS[price.destination]} {price.destination}</strong>{price.note && <p className="mt-1 text-xs leading-relaxed text-slate-500">{price.note}</p>}</div><span>{price.embassyFeeUsd ? `$${price.embassyFeeUsd}` : t("services.paidSeparately")}</span><span>${price.serviceFeeUsd}</span><strong>${totalVisaPrice(price)}</strong></div>)}
+            {VISA_PRICES.map((price) => <div key={price.destination} className="grid grid-cols-[1.2fr_.9fr_.9fr_.8fr] gap-3 border-b border-slate-100 px-5 py-4 text-sm last:border-0"><div><strong>{PRICE_FLAGS[price.destination]} {price.destination}</strong>{price.note && <p className="mt-1 text-xs leading-relaxed text-slate-500">{price.note}</p>}</div><span>{price.embassyFeeUsd ? formatKrw(price.embassyFeeUsd) : t("services.paidSeparately")}</span><span>{formatKrw(price.serviceFeeUsd)}</span><strong>{formatKrw(totalVisaPrice(price))} <span className="font-normal text-slate-400">≈ ${totalVisaPrice(price)}</span></strong></div>)}
           </div>
           <div className="mt-6 space-y-4 md:hidden">
             {VISA_PRICES.map((price) => (
               <div key={price.destination} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <p className="text-lg font-extrabold">{PRICE_FLAGS[price.destination]} {price.destination}</p>
-                  <p className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-extrabold text-emerald-700">${totalVisaPrice(price)}</p>
+                  <p className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-extrabold text-emerald-700">{formatKrw(totalVisaPrice(price))}</p>
                 </div>
                 <dl className="mt-3 space-y-1.5 text-sm">
-                  <div className="flex justify-between gap-4"><dt className="text-slate-500">{t("services.officialFee")}</dt><dd className="font-semibold">{price.embassyFeeUsd ? `$${price.embassyFeeUsd}` : t("services.paidSeparately")}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-slate-500">{t("services.website")}</dt><dd className="font-semibold">${price.serviceFeeUsd}</dd></div>
-                  <div className="flex justify-between gap-4 border-t border-slate-100 pt-1.5"><dt className="font-bold text-slate-700">{t("services.total")}</dt><dd className="font-extrabold">${totalVisaPrice(price)}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-slate-500">{t("services.officialFee")}</dt><dd className="font-semibold">{price.embassyFeeUsd ? formatKrw(price.embassyFeeUsd) : t("services.paidSeparately")}</dd></div>
+                  <div className="flex justify-between gap-4"><dt className="text-slate-500">{t("services.website")}</dt><dd className="font-semibold">{formatKrw(price.serviceFeeUsd)}</dd></div>
+                  <div className="flex justify-between gap-4 border-t border-slate-100 pt-1.5"><dt className="font-bold text-slate-700">{price.embassyFeeUsd ? t("services.total") : t("services.packageTotal")}</dt><dd className="font-extrabold">{formatKrw(totalVisaPrice(price))} <span className="font-normal text-slate-400">≈ ${totalVisaPrice(price)}</span></dd></div>
                 </dl>
                 {price.note && <p className="mt-2 text-xs leading-relaxed text-slate-500">{price.note}</p>}
               </div>
@@ -51,7 +51,7 @@ export function ServicesPage() {
         </section>
 
         <section className="mt-14 grid gap-6 md:grid-cols-3">
-          <ServiceCard title={t("service.c31")} body={t("service.c31Body")} href="/invite" action={`C-3-1 · $35`} />
+          <ServiceCard title={t("service.c31")} body={t("service.c31Body")} href="/invite" action={`C-3-1 · ${formatKrw(35)}`} />
           <ServiceCard title={t("service.flight")} body={t("service.flightBody")} href="/flights" action={t("action.requestFlight")} />
           <ServiceCard title={t("service.tour")} body={t("service.tourBody")} href="/tours" action={t("action.planTour")} />
         </section>
