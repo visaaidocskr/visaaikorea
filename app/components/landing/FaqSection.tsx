@@ -5,6 +5,9 @@ import { Reveal } from "@/app/components/Reveal";
 import { useLocale } from "@/app/components/LocaleProvider";
 
 const COUNT = 9;
+// The homepage shows the six most-asked questions; the rest unfold on demand
+// so the page stays walkable.
+const VISIBLE = 6;
 
 // The questions clients ask in the first message, answered before they have
 // to ask. Native <details> keeps it accessible and keyboard-friendly; the
@@ -12,6 +15,7 @@ const COUNT = 9;
 export function FaqSection() {
   const { t } = useLocale();
   const [open, setOpen] = useState<number | null>(0);
+  const [showAll, setShowAll] = useState(false);
   const items = Array.from({ length: COUNT }, (_, i) => ({
     q: t(`faq.q${i + 1}`),
     a: t(`faq.a${i + 1}`),
@@ -46,7 +50,7 @@ export function FaqSection() {
         </Reveal>
 
         <div className="mx-auto mt-14 grid max-w-5xl gap-3 lg:grid-cols-2">
-          {items.map((it, i) => {
+          {(showAll ? items : items.slice(0, VISIBLE)).map((it, i) => {
             const isOpen = open === i;
             return (
               <Reveal key={i} delay={Math.min(i, 5) * 60}>
@@ -94,6 +98,19 @@ export function FaqSection() {
             );
           })}
         </div>
+
+        {items.length > VISIBLE && (
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => setShowAll((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-700"
+            >
+              {showAll ? t("faq.viewLess") : t("faq.viewAll")}
+              <span aria-hidden className={`transition-transform ${showAll ? "rotate-180" : ""}`}>⌄</span>
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

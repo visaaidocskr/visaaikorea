@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { COUNTRIES, localizeCountryContent, type CountryContent } from "@/lib/visa/countryContent";
+import { VISA_PRICES, totalVisaPrice } from "@/lib/business";
 import { Modal } from "@/app/components/Modal";
 import { Reveal } from "@/app/components/Reveal";
 import { GenerateButton } from "@/app/components/GenerateButton";
@@ -31,6 +32,7 @@ export function CountriesSection() {
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {COUNTRIES.map((country, i) => {
             const c = localizeCountryContent(country, locale);
+            const price = VISA_PRICES.find((v) => v.destination === country.country);
             return (
             <Reveal key={c.country} delay={i * 80}>
               <div className="h-full">
@@ -53,6 +55,19 @@ export function CountriesSection() {
                     {c.country}
                   </h3>
                   <p className="mt-1 text-sm text-slate-500">{c.tagline}</p>
+                  {/* The two facts a visitor actually compares: total price
+                      (embassy + service, nothing hidden) and how long the
+                      embassy usually takes. */}
+                  <div className="mt-4 flex flex-wrap gap-1.5 text-xs font-semibold">
+                    {price && (
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+                        ${totalVisaPrice(price)}
+                      </span>
+                    )}
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                      ⏱ {c.processingTime}
+                    </span>
+                  </div>
                   <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
                     {t("countries.details")}
                     <span className="transition-transform duration-200 group-hover:translate-x-1">

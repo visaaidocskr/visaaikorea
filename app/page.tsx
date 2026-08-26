@@ -4,29 +4,36 @@ import Link from "next/link";
 import { Nav } from "@/app/components/landing/Nav";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { CountriesSection } from "@/app/components/landing/CountriesSection";
-import { InviteSection } from "@/app/components/landing/InviteSection";
 import { HowItWorks } from "@/app/components/landing/HowItWorks";
 import { FaqSection } from "@/app/components/landing/FaqSection";
 import { SampleSection } from "@/app/components/landing/SampleSection";
+import { TrustStrip } from "@/app/components/landing/TrustStrip";
+import { WhySection } from "@/app/components/landing/WhySection";
+import { MoreServices } from "@/app/components/landing/MoreServices";
+import { FinalCta } from "@/app/components/landing/FinalCta";
 import { HomeHero } from "@/app/components/landing/HomeHero";
 import { useLocale } from "@/app/components/LocaleProvider";
 import { BUSINESS } from "@/lib/business";
 
-// Hero → Destinations → Invite → How it works → What you receive → FAQ.
-// The old stats strip, Services section and Pricing tiers were removed —
-// they repeated the same message without answering the visitor's first
-// question. Each section here answers a different one.
+// The conversion funnel, one question per section: Hero (what is this) →
+// Trust (can I trust it) → Destinations (where) → How it works (what happens)
+// → What you receive (what do I get) → Why VisaAI (why here) → secondary
+// services → FAQ → a single closing CTA. The old full-width Invite section
+// now lives inside MoreServices as a quiet product card.
 export default function Home() {
   return (
     <div className="relative text-slate-900">
       <AuroraBackdrop />
       <Nav overDark />
       <HomeHero />
+      <TrustStrip />
       <CountriesSection />
-      <InviteSection />
       <HowItWorks />
       <SampleSection />
+      <WhySection />
+      <MoreServices />
       <FaqSection />
+      <FinalCta />
       <Footer />
     </div>
   );
