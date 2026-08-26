@@ -55,7 +55,7 @@ export default async function DestinationPage({ params }: { params: Params }) {
               <span className="inline-flex items-center gap-2 rounded-full bg-white/75 px-4 py-1.5 text-sm font-bold text-slate-700">
                 ⏱ {c.processingTime}
               </span>
-              <GenerateButton label={`${t("countries.generate")} ${c.country}`} />
+              <GenerateButton label={t("action.generate")} />
             </div>
           </div>
         </section>
@@ -126,7 +126,7 @@ export default async function DestinationPage({ params }: { params: Params }) {
         {/* Disclaimer + CTA */}
         <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">{t("countries.approval")}</p>
         <div className="mt-6 flex justify-center pb-10">
-          <GenerateButton size="lg" label={`${t("countries.generate")} ${c.country}`} className="btn-shine-auto" />
+          <GenerateButton size="lg" label={t("action.generate")} className="btn-shine-auto" />
         </div>
       </main>
     </div>

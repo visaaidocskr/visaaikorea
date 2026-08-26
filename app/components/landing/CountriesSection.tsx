@@ -144,7 +144,7 @@ function CountryPanel({ c }: { c: CountryContent }) {
       </div>
 
       <div className="sticky bottom-0 border-t border-slate-100 bg-white/90 p-6 backdrop-blur">
-        <GenerateButton full label={`${t("countries.generate")} ${c.country}`} />
+        <GenerateButton full label={t("action.generate")} />
         <p className="mt-3 text-center text-xs text-slate-400">
           {t("countries.approval")}
         </p>
