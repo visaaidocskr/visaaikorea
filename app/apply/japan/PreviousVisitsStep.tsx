@@ -2,6 +2,7 @@
 
 import type { ApplyFormData, PreviousJapanVisit } from "@/lib/visa/types";
 import { DatePicker } from "@/app/apply/DatePicker";
+import { useLocale } from "@/app/components/LocaleProvider";
 import { Input, BooleanChoice } from "@/app/apply/fields";
 
 type Setter = <K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) => void;
@@ -21,6 +22,7 @@ export function PreviousVisitsStep({
   form: ApplyFormData;
   set: Setter;
 }) {
+  const { t } = useLocale();
   const list = form.previous_japan_visits;
   const today = new Date().toISOString().slice(0, 10);
 
@@ -41,14 +43,14 @@ export function PreviousVisitsStep({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold text-slate-900">Previous travel to Japan</h3>
+        <h3 className="text-xl font-bold text-slate-900">{t("jvisits.title")}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Prior visits can strengthen your application.
+{t("jvisits.intro")}
         </p>
       </div>
 
       <BooleanChoice
-        label="Have you visited Japan before?"
+        label={t("jvisits.question")}
         value={form.has_previous_japan_visits}
         onChange={onChange}
       />
@@ -58,32 +60,32 @@ export function PreviousVisitsStep({
           {list.map((v, i) => {
             const orderError =
               v.visited_from && v.visited_to && v.visited_to < v.visited_from
-                ? "The end date must be on or after the start date."
+                ? t("jvisits.order")
                 : undefined;
             return (
               <div key={i} className="rounded-2xl border border-slate-200 p-5">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-800">Visit {i + 1}</h4>
+                  <h4 className="text-sm font-bold text-slate-800">{t("jvisits.visit").replace("{n}", String(i + 1))}</h4>
                   {list.length > 1 && (
                     <button
                       type="button"
                       onClick={() => remove(i)}
                       className="text-xs font-semibold text-red-600 hover:underline"
                     >
-                      Remove
+                      {t("jvisits.remove")}
                     </button>
                   )}
                 </div>
                 <div className="mt-3 grid gap-6 md:grid-cols-3">
                   <DatePicker
-                    label="From"
+                    label={t("jvisits.from")}
                     value={v.visited_from}
                     onChange={(val) => update(i, { visited_from: val })}
                     maxISO={today}
                     showYearMonth
                   />
                   <DatePicker
-                    label="To"
+                    label={t("jvisits.to")}
                     value={v.visited_to}
                     onChange={(val) => update(i, { visited_to: val })}
                     minISO={v.visited_from || null}
@@ -92,11 +94,11 @@ export function PreviousVisitsStep({
                     showYearMonth
                   />
                   <Input
-                    label="Duration / notes"
+                    label={t("jvisits.duration")}
                     value={v.duration_note}
                     onChange={(val) => update(i, { duration_note: val })}
                     required={false}
-                    placeholder="e.g. 5 days, tourism"
+                    placeholder={t("jvisits.durationPh")}
                   />
                 </div>
               </div>
@@ -108,7 +110,7 @@ export function PreviousVisitsStep({
             onClick={add}
             className="rounded-xl border border-dashed border-slate-300 px-4 py-2 text-sm font-semibold text-slate-600 hover:border-blue-400 hover:text-blue-700"
           >
-            + Add another previous visit
+            {t("jvisits.add")}
           </button>
         </div>
       )}

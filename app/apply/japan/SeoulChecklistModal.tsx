@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { useLocale } from "@/app/components/LocaleProvider";
 import type { DocumentRequirement } from "@/lib/visa/types";
 
 type Route = "sticker" | "evisa";
@@ -25,6 +26,7 @@ type Props = {
 // registration / marriage certificate) can't be named precisely yet and is
 // described generically instead.
 export function SeoulChecklistModal({ open, route, statusDocs, onClose }: Props) {
+  const { t } = useLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
   const isSticker = route === "sticker";
 
@@ -76,15 +78,8 @@ export function SeoulChecklistModal({ open, route, statusDocs, onClose }: Props)
   const titleId = "japan-checklist-title";
 
   const preparedByUs = isSticker
-    ? [
-        "Daily Travel Itinerary",
-        "Japan Visa Application Form (PDF) — you print and sign this by hand; our agency then submits it together with your original passport to the consulate.",
-      ]
-    : [
-        "Daily Travel Itinerary",
-        "Personal Information document",
-        "Online Application — Declaration & Signature (you print and sign this by hand)",
-      ];
+    ? [t("jchk.itinerary"), t("jchk.formSticker")]
+    : [t("jchk.itinerary"), t("jchk.personalInfo"), t("jchk.declaration")];
 
   return (
     <div
@@ -104,15 +99,13 @@ export function SeoulChecklistModal({ open, route, statusDocs, onClose }: Props)
         {/* Header banner */}
         <div className="bg-gradient-to-br from-blue-700 to-indigo-700 px-6 py-6 text-white">
           <p className="text-xs font-bold uppercase tracking-widest text-blue-200">
-            {isSticker
-              ? "Consulate-General of Japan in Busan — Sticker Visa"
-              : "Embassy of Japan in Seoul — Electronic Visa"}
+            {isSticker ? t("jchk.bannerSticker") : t("jchk.bannerEvisa")}
           </p>
           <h2 id={titleId} className="mt-0.5 text-xl font-extrabold">
-            Prepare These Documents
+{t("jchk.title")}
           </h2>
           <p className="mt-1 text-sm font-medium text-blue-100">
-            Please start gathering these now — it will speed up your application.
+{t("jchk.subtitle")}
           </p>
         </div>
 
@@ -120,67 +113,57 @@ export function SeoulChecklistModal({ open, route, statusDocs, onClose }: Props)
         <div className="space-y-6 overflow-y-auto px-6 py-6">
           <section>
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-              Documents you need to prepare yourself
+{t("jchk.yourDocs")}
             </h3>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-700">
               <li>
-                {isSticker
-                  ? "Passport (original — this will be physically submitted; our agency arranges delivery to the consulate)"
-                  : "Passport"}
+                {isSticker ? t("jchk.passportSticker") : t("jchk.passport")}
               </li>
-              <li>Alien Registration Card (ARC) — front and back copy</li>
+              <li>{t("jchk.arc")}</li>
               <li>
-                {isSticker
-                  ? "1 recent photo (45 × 45 mm, white background)"
-                  : "2 recent photos (taken within the last 3 months; 3×5cm or 4×5cm, white background)"}
+                {isSticker ? t("jchk.photoSticker") : t("jchk.photoEvisa")}
               </li>
               {statusDocs.length > 0 ? (
                 statusDocs.map((d) => (
                   <li key={d.key}>
                     {d.labelEn}
                     {d.labelKo ? ` (${d.labelKo})` : ""}
-                    {!d.required && !/\(if /i.test(d.labelEn) ? " — optional" : ""}
+                    {!d.required && !/\(if /i.test(d.labelEn) ? t("jchk.optionalMark") : ""}
                     {d.hint && <span className="block text-xs text-slate-500">{d.hint}</span>}
                   </li>
                 ))
               ) : (
                 <li>
-                  A document proving your Korea visa status — for example, a
-                  Certificate of Enrollment (student visas), Certificate of
-                  Employment (working visas), or Business Registration
-                  Certificate (business-owner visas).
+{t("jchk.statusDocFallback")}
                   <span className="block text-xs text-slate-500">
-                    The exact document will be confirmed once you enter your Korea
-                    visa status in a later step.
+{t("jchk.statusDocNote")}
                   </span>
                 </li>
               )}
-              <li>Phone number and email address</li>
+              <li>{t("jchk.contact")}</li>
               <li>
-                Bank balance certificate — 1-day balance
+{t("jchk.bank")}
                 <span className="mt-1 block rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">
-                  ‼️ The 1-day balance must be at least ₩5,000,000 (5,000,000 KRW).
+{t("jchk.bankNote")}
                 </span>
               </li>
-              <li>Flight ticket reservation</li>
-              <li>Hotel booking reservation</li>
+              <li>{t("jchk.flight")}</li>
+              <li>{t("jchk.hotel")}</li>
             </ol>
           </section>
 
           <section className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
             <h3 className="flex items-center gap-2 text-sm font-bold text-blue-900">
-              <span aria-hidden>🤝</span> Optional — arranged by our official escort
+              <span aria-hidden>🤝</span> {t("jchk.escortTitle")}
             </h3>
             <p className="mt-1.5 text-sm leading-relaxed text-blue-800">
-              Not mandatory — only if you have your own documents. If you can&rsquo;t book the flight
-              ticket and hotel reservation yourself, our official escort can arrange both for a fee of
-              ₩12,000. Our escort will also advise you on the 1-day bank balance requirement.
+{t("jchk.escortBody")}
             </p>
           </section>
 
           <section>
             <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-slate-500">
-              <span aria-hidden>📄</span> Prepared for you by Vitamin VisaAI
+              <span aria-hidden>📄</span> {t("jchk.preparedTitle")}
             </h3>
             <ul className="mt-3 space-y-2">
               {preparedByUs.map((item) => (
@@ -202,7 +185,7 @@ export function SeoulChecklistModal({ open, route, statusDocs, onClose }: Props)
             onClick={onClose}
             className="rounded-2xl bg-blue-700 px-6 py-3 font-bold text-white transition hover:bg-blue-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
           >
-            I Understand — Continue
+{t("jchk.continue")}
           </button>
         </div>
       </div>

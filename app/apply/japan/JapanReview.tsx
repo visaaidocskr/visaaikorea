@@ -1,6 +1,7 @@
 "use client";
 
 import type { ApplyFormData } from "@/lib/visa/types";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 export type SectionStatus = "complete" | "attention" | "incomplete";
 
@@ -13,10 +14,11 @@ export type ReviewSection = {
 };
 
 function StatusBadge({ status }: { status: SectionStatus }) {
+  const { t } = useLocale();
   const map = {
-    complete: { icon: "✓", text: "Complete", cls: "bg-emerald-100 text-emerald-700" },
-    attention: { icon: "!", text: "Needs attention", cls: "bg-amber-100 text-amber-800" },
-    incomplete: { icon: "✕", text: "Incomplete", cls: "bg-red-100 text-red-700" },
+    complete: { icon: "✓", text: t("jrev.stComplete"), cls: "bg-emerald-100 text-emerald-700" },
+    attention: { icon: "!", text: t("jrev.stAttention"), cls: "bg-amber-100 text-amber-800" },
+    incomplete: { icon: "✕", text: t("jrev.stIncomplete"), cls: "bg-red-100 text-red-700" },
   } as const;
   const s = map[status];
   return (
@@ -57,6 +59,7 @@ export function JapanReview({
   acknowledged: boolean;
   onAcknowledge: (v: boolean) => void;
 }) {
+  const { t } = useLocale();
   const incomplete = sections.filter((s) => s.status === "incomplete");
   const completeCount = sections.filter((s) => s.status === "complete").length;
   return (
@@ -65,16 +68,17 @@ export function JapanReview({
         <div>
           <h3 className="flex items-center gap-2 text-xl font-bold text-slate-900">
             <span aria-hidden className="sparkle text-cyan-500">✦</span>
-            Review &amp; confirm
+{t("jrev.title")}
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            Check every section. Use <span className="font-semibold">Edit</span> to
-            make changes — your progress is kept.
+            {t("jrev.introA")}
+            <span className="font-semibold">{t("jrev.introEdit")}</span>
+            {t("jrev.introB")}
           </p>
         </div>
         <div className="min-w-44">
           <p className="text-right text-xs font-bold uppercase tracking-widest text-slate-400">
-            {completeCount}/{sections.length} complete
+            {t("jrev.complete").replace("{done}", String(completeCount)).replace("{total}", String(sections.length))}
           </p>
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
             <div
@@ -88,8 +92,12 @@ export function JapanReview({
       {incomplete.length > 0 && (
         <div className="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-700">
           <span aria-hidden>⚠️</span>
-          <span>{incomplete.length} section{incomplete.length === 1 ? "" : "s"} still need
-          required information: {incomplete.map((s) => s.title).join(", ")}.</span>
+          <span>
+            {t("jrev.warn")
+              .replace("{n}", String(incomplete.length))
+              .replace("{sectionWord}", incomplete.length === 1 ? t("jrev.section") : t("jrev.sections"))
+              .replace("{list}", incomplete.map((s) => s.title).join(", "))}
+          </span>
         </div>
       )}
 
@@ -122,7 +130,7 @@ export function JapanReview({
                 className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100"
               >
                 <span aria-hidden>✎</span>
-                Edit
+                {t("jrev.edit")}
               </button>
             </div>
             <dl className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
@@ -147,9 +155,7 @@ export function JapanReview({
           className="mt-0.5 h-5 w-5 rounded border-slate-300 accent-blue-600 focus:ring-blue-500"
         />
         <span className="text-sm text-slate-700">
-          I confirm that the information provided is accurate and complete to the
-          best of my knowledge. (This is an application review confirmation, not a
-          substitute for the official declaration questions.)
+{t("jrev.consent")}
         </span>
       </label>
     </div>

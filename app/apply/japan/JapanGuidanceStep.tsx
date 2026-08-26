@@ -1,15 +1,16 @@
 "use client";
 
 import type { ReviewSection } from "@/app/apply/japan/JapanReview";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 const REQUIRED_DOCS = [
-  { key: "passport", label: "Passport" },
-  { key: "arc_front", label: "ARC — front" },
-  { key: "arc_back", label: "ARC — back" },
+  { key: "passport", labelKey: "jsum.docPassport" },
+  { key: "arc_front", labelKey: "jsum.docArcFront" },
+  { key: "arc_back", labelKey: "jsum.docArcBack" },
 ];
 const OPTIONAL_DOCS = [
-  { key: "flight_reservation", label: "Flight reservation" },
-  { key: "hotel_booking", label: "Hotel booking" },
+  { key: "flight_reservation", labelKey: "jsum.docFlight" },
+  { key: "hotel_booking", labelKey: "jsum.docHotel" },
 ];
 
 // Japan Guidance = a concise, professional pre-submission summary. It does NOT
@@ -31,23 +32,23 @@ export function JapanGuidanceStep({
   // in the copy below changes.
   countryLabel?: string;
 }) {
+  const { t } = useLocale();
   const attention = sections.filter((s) => s.status !== "complete");
   const complete = sections.length - attention.length;
 
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-xl font-bold text-slate-900">Application summary</h3>
+        <h3 className="text-xl font-bold text-slate-900">{t("jsum.title")}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          A quick check before you submit. Our team prepares your documents after
-          submission.
+{t("jsum.intro")}
         </p>
       </div>
 
       {/* Completion */}
       <div className="rounded-2xl border border-slate-200 p-5">
         <div className="flex items-center justify-between">
-          <h4 className="font-bold text-slate-900">Application progress</h4>
+          <h4 className="font-bold text-slate-900">{t("jsum.progress")}</h4>
           <span
             className={`rounded-full px-3 py-1 text-xs font-bold ${
               attention.length === 0
@@ -55,16 +56,16 @@ export function JapanGuidanceStep({
                 : "bg-amber-100 text-amber-800"
             }`}
           >
-            {complete} of {sections.length} sections complete
+            {t("jsum.sectionsComplete").replace("{done}", String(complete)).replace("{total}", String(sections.length))}
           </span>
         </div>
         {attention.length === 0 ? (
           <p className="mt-3 text-sm text-emerald-700">
-            ✓ Everything looks complete. You&rsquo;re ready to submit.
+{t("jsum.allComplete")}
           </p>
         ) : (
           <div className="mt-3">
-            <p className="text-sm font-semibold text-slate-700">Needs attention</p>
+            <p className="text-sm font-semibold text-slate-700">{t("jsum.needsAttention")}</p>
             <ul className="mt-2 space-y-1">
               {attention.map((s) => (
                 <li key={s.key} className="flex items-center gap-2 text-sm">
@@ -77,7 +78,7 @@ export function JapanGuidanceStep({
                   </span>
                   <span className="text-slate-700">{s.title}</span>
                   <span className="text-xs text-slate-400">
-                    ({s.status === "incomplete" ? "required info missing" : "optional / not booked"})
+                    ({s.status === "incomplete" ? t("jsum.missingInfo") : t("jsum.optionalNote")})
                   </span>
                 </li>
               ))}
@@ -88,31 +89,31 @@ export function JapanGuidanceStep({
 
       {/* Uploaded documents */}
       <div className="rounded-2xl border border-slate-200 p-5">
-        <h4 className="font-bold text-slate-900">Uploaded documents</h4>
+        <h4 className="font-bold text-slate-900">{t("jsum.uploaded")}</h4>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {REQUIRED_DOCS.map((d) => (
             <li key={d.key} className="flex items-center justify-between text-sm">
               <span className="text-slate-700">
-                {d.label} <span className="text-red-500">*</span>
+                {t(d.labelKey)} <span className="text-red-500">*</span>
               </span>
               <span
                 className={
                   uploads[d.key] ? "font-semibold text-emerald-600" : "font-semibold text-red-500"
                 }
               >
-                {uploads[d.key] ? "Uploaded" : "Missing"}
+                {uploads[d.key] ? t("jsum.stUploaded") : t("jsum.stMissing")}
               </span>
             </li>
           ))}
           {OPTIONAL_DOCS.map((d) => (
             <li key={d.key} className="flex items-center justify-between text-sm">
-              <span className="text-slate-700">{d.label}</span>
+              <span className="text-slate-700">{t(d.labelKey)}</span>
               <span
                 className={
                   uploads[d.key] ? "font-semibold text-emerald-600" : "text-slate-400"
                 }
               >
-                {uploads[d.key] ? "Uploaded" : "Not provided"}
+                {uploads[d.key] ? t("jsum.stUploaded") : t("jsum.stNotProvided")}
               </span>
             </li>
           ))}
@@ -121,27 +122,23 @@ export function JapanGuidanceStep({
 
       {/* Generated documents */}
       <div className="rounded-2xl border border-slate-200 p-5">
-        <h4 className="font-bold text-slate-900">Prepared documents</h4>
+        <h4 className="font-bold text-slate-900">{t("jsum.prepared")}</h4>
         <p className="mt-2 text-sm text-slate-600">
-          After you submit, our team reviews your application, prepares your{" "}
-          {countryLabel} visa document package and submits it to the embassy for
-          you — you don&rsquo;t need to print or deliver anything. Follow every
-          status update, and the visa decision itself (usually within 7–10
-          days), in <strong>My results</strong> on your dashboard.
+          {(countryLabel === "Taiwan"
+            ? t("jsum.preparedSelf")
+            : t("jsum.preparedAgent")
+          ).replace("{country}", countryLabel ?? "Japan")}
         </p>
       </div>
 
       {/* Next step + consent */}
       <div className="rounded-2xl border border-slate-300 bg-slate-50 p-5">
-        <h4 className="font-bold text-slate-900">Next step</h4>
+        <h4 className="font-bold text-slate-900">{t("jsum.next")}</h4>
         <p className="mt-2 text-sm text-slate-600">
-          Submit your application below. You can still edit it from your dashboard
-          before our team begins preparing your documents.
+{t("jsum.nextBody")}
         </p>
         <p className="mt-4 text-xs leading-relaxed text-slate-500">
-          Vitamin VisaAI prepares documents based on the information you provide.
-          Visa approval is decided only by the embassy / consulate / immigration
-          authority. This service does not guarantee visa approval.
+{t("jsum.legal")}
         </p>
         <label className="mt-4 flex items-start gap-3 text-sm font-semibold text-slate-800">
           <input
@@ -150,7 +147,7 @@ export function JapanGuidanceStep({
             onChange={(e) => onConsentChange(e.target.checked)}
             className="mt-0.5 h-5 w-5"
           />
-          I have reviewed my application and understand the above.
+{t("jsum.consent")}
         </label>
       </div>
     </div>

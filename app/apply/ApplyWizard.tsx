@@ -93,16 +93,13 @@ import { LeaveGuard } from "@/app/apply/LeaveGuard";
 // them relevant (see "Application Details" below).
 // Vietnam's emergency-contact relationship options. Stored lowercase (matching
 // the DB check values); shown capitalised in the dropdown.
-const RELATIONSHIP_LABELS: Record<
-  Exclude<ApplyFormData["vietnam_family_member_relationship"], "">,
-  string
-> = {
-  father: "Father",
-  mother: "Mother",
-  brother: "Brother",
-  sister: "Sister",
-  other: "Other",
-};
+const RELATIONSHIP_VALUES = [
+  "father",
+  "mother",
+  "brother",
+  "sister",
+  "other",
+] as const;
 
 // One-tap destination chips (same setters as the select below them).
 const DEST_FLAGS: Record<string, string> = {
@@ -978,7 +975,7 @@ export function ApplyWizard({
       } catch {
         setNotice({
           kind: "err",
-          text: "Could not reach the server to save your progress.",
+          text: t("wiz.saveFail"),
         });
       }
     });
@@ -993,7 +990,7 @@ export function ApplyWizard({
       .catch(() => {
         setNotice({
           kind: "err",
-          text: "Progress could not be saved — the server is unreachable.",
+          text: t("wiz.saveFail2"),
         });
       });
   }
@@ -1030,7 +1027,7 @@ export function ApplyWizard({
       if (!scrollToFirstIncompleteField()) {
         setNotice({
           kind: "err",
-          text: "Some required information on this step is still missing.",
+          text: t("wiz.stepMissing"),
         });
       }
       return;
@@ -1060,7 +1057,7 @@ export function ApplyWizard({
     changeStep(Math.max(stepIndex - 1, 0));
   }
   function saveDraft() {
-    persist(() => setNotice({ kind: "ok", text: "Draft saved." }));
+    persist(() => setNotice({ kind: "ok", text: t("wiz.draftSaved") }));
   }
   function submit() {
     // Payments are still under bank review: the finished application stays
@@ -1082,7 +1079,7 @@ export function ApplyWizard({
       } catch {
         setNotice({
           kind: "err",
-          text: "Could not reach the server to submit. Please try again once you are back online.",
+          text: t("wiz.submitOffline"),
         });
       }
     });
@@ -1684,38 +1681,33 @@ export function ApplyWizard({
               <div className="space-y-6 border-t border-slate-200 pt-8">
                 <div>
                   <h3 className="flex items-center gap-2 text-xl font-bold text-slate-900"><span aria-hidden className="sparkle text-cyan-500">✦</span>
-                    Vietnam e-Visa details
+                    {t("vn.title")}
                   </h3>
                   <p className="mt-1 text-sm text-slate-600">
-                    A few extra questions the Vietnam e-Visa portal itself asks
-                    for.
+{t("vn.intro")}
                   </p>
                 </div>
 
                 <div className="rounded-2xl bg-slate-50 px-5 py-4">
                   <h4 className="text-sm font-bold text-slate-800">
-                    Emergency contact at home
+{t("vn.emgTitle")}
                   </h4>
                   <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                    Vietnam&rsquo;s e-Visa form asks for someone in your home
-                    country who can be reached if an emergency happens while
-                    you&rsquo;re in Vietnam — an accident, hospitalisation, a lost
-                    passport. It is not used for anything else, and they are not
-                    contacted as part of your application.
+{t("vn.emgBody")}
                   </p>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <Input
-                    label="Family member's full name (in your home country)"
+                    label={t("vn.famName")}
                     value={form.vietnam_family_member_name}
                     onChange={(v) =>
                       set("vietnam_family_member_name", formatName(v))
                     }
-                    helpText="Latin capitals, as written in their passport."
+                    helpText={t("vn.latinCaps")}
                   />
                   <Input
-                    label="Their phone number"
+                    label={t("vn.famPhone")}
                     value={form.vietnam_family_member_phone}
                     onChange={(v) => set("vietnam_family_member_phone", v)}
                     type="tel"
@@ -1723,83 +1715,79 @@ export function ApplyWizard({
                   />
                 </div>
                 <Input
-                  label="Their full home address"
+                  label={t("vn.famAddress")}
                   value={form.vietnam_family_member_address}
                   onChange={(v) => set("vietnam_family_member_address", v)}
                 />
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <Select
-                    label="Relationship to you"
-                    value={
-                      form.vietnam_family_member_relationship
-                        ? RELATIONSHIP_LABELS[
-                            form.vietnam_family_member_relationship
-                          ]
-                        : ""
-                    }
+                    label={t("vn.relationship")}
+                    value={form.vietnam_family_member_relationship}
                     onChange={(v) =>
                       set(
                         "vietnam_family_member_relationship",
-                        (v.toLowerCase() ||
-                          "") as ApplyFormData["vietnam_family_member_relationship"]
+                        v as ApplyFormData["vietnam_family_member_relationship"]
                       )
                     }
-                    options={Object.values(RELATIONSHIP_LABELS)}
+                    options={RELATIONSHIP_VALUES.map((value) => ({
+                      value,
+                      label: t(`vn.rel${value[0].toUpperCase()}${value.slice(1)}`),
+                    }))}
                   />
                   {form.vietnam_family_member_relationship === "other" && (
                     <Input
-                      label="Please specify"
+                      label={t("vn.specify")}
                       value={form.vietnam_family_member_relationship_other}
                       onChange={(v) =>
                         set("vietnam_family_member_relationship_other", v)
                       }
-                      placeholder="e.g. spouse, uncle, cousin"
+                      placeholder={t("vn.specifyPh")}
                     />
                   )}
                 </div>
 
                 <BooleanChoice
-                  label="Have you already bought travel insurance for this trip?"
+                  label={t("vn.insurance")}
                   value={form.vietnam_insurance_purchased}
                   onChange={(v) => set("vietnam_insurance_purchased", v)}
-                  helpText="Travel insurance isn't mandatory for the Vietnam e-Visa, but it's strongly recommended — it covers medical costs if you fall ill or have an accident there."
+                  helpText={t("vn.insuranceHelp")}
                 />
 
                 <ChoiceGroup
-                  label="Who is financing this trip?"
+                  label={t("vn.financing")}
                   value={form.vietnam_financing_source}
                   onChange={(v) =>
                     set("vietnam_financing_source", v as "personal" | "other")
                   }
                   options={[
-                    { value: "personal", label: "Personal" },
-                    { value: "other", label: "Someone else" },
+                    { value: "personal", label: t("vn.finPersonal") },
+                    { value: "other", label: t("vn.finOther") },
                   ]}
                 />
 
                 {form.vietnam_financing_source === "other" && (
                   <div className="grid gap-6 rounded-2xl border border-slate-200 p-5 md:grid-cols-2">
                     <Input
-                      label="Their full name"
+                      label={t("vn.finName")}
                       value={form.vietnam_financier_name}
                       onChange={(v) => set("vietnam_financier_name", formatName(v))}
-                      helpText="Latin capitals."
+                      helpText={t("vn.finNameHelp")}
                     />
                     <Input
-                      label="Relationship to you"
+                      label={t("vn.finRel")}
                       value={form.vietnam_financier_relationship}
                       onChange={(v) => set("vietnam_financier_relationship", v)}
                     />
                     <Input
-                      label="Their phone number"
+                      label={t("vn.finPhone")}
                       value={form.vietnam_financier_phone}
                       onChange={(v) => set("vietnam_financier_phone", v)}
                       type="tel"
                       inputMode="tel"
                     />
                     <Input
-                      label="Their address"
+                      label={t("vn.finAddress")}
                       value={form.vietnam_financier_address}
                       onChange={(v) => set("vietnam_financier_address", v)}
                     />
@@ -1813,31 +1801,25 @@ export function ApplyWizard({
                 <div className="space-y-4 rounded-2xl border border-slate-200 p-5">
                   <div>
                     <h4 className="text-lg font-bold text-slate-900">
-                      Need your visa urgently?
+{t("vn.expressTitle")}
                     </h4>
                     <p className="mt-1 text-sm leading-relaxed text-slate-600">
-                      Standard processing takes about 3–4 business days. If you
-                      can&rsquo;t wait that long, we can arrange an express e-Visa
-                      in about 10 hours instead.
+{t("vn.expressBody")}
                     </p>
                     <p className="mt-2 rounded-xl bg-amber-50 px-4 py-2.5 text-xs font-semibold leading-relaxed text-amber-800">
-                      Express costs extra — it&rsquo;s a separate paid service on top
-                      of the normal fee, because Vietnam charges more for urgent
-                      processing. Saying yes here doesn&rsquo;t commit you to
-                      anything: we&rsquo;ll tell you the exact price first, and you
-                      decide then.
+{t("vn.expressCost")}
                     </p>
                   </div>
                   <BooleanChoice
-                    label="Would you like the express service?"
+                    label={t("vn.expressAsk")}
                     value={form.vietnam_express_requested}
                     onChange={(v) => set("vietnam_express_requested", v)}
                     required={false}
                   />
                   {form.vietnam_express_requested === true && (
                     <SupportContactCard
-                      title="Let's arrange your express visa."
-                      message="Message our visa agent directly and we'll confirm the fee, the exact timing, and what we need from you."
+                      title={t("vn.expressCardTitle")}
+                      message={t("vn.expressCardMsg")}
                     />
                   )}
                 </div>

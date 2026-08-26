@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useLocale } from "@/app/components/LocaleProvider";
 
 // Accessible modal. variant="center" = centered dialog; variant="right" =
 // slide-over panel. Closes on Escape and backdrop click; locks body scroll.
@@ -15,6 +16,7 @@ export function Modal({
   variant?: "center" | "right";
   children: React.ReactNode;
 }) {
+  const { t } = useLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,7 +62,7 @@ export function Modal({
       >
         <button
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t("generic.close")}
           className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
         >
           ✕

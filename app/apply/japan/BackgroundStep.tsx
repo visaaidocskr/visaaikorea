@@ -9,28 +9,13 @@ type Setter = <K extends keyof ApplyFormData>(key: K, value: ApplyFormData[K]) =
 // The six page-2 declarations from the official form. These are legal
 // declarations — the applicant answers each explicitly; nothing is pre-selected
 // and nothing is ever answered automatically.
-const QUESTIONS: { key: keyof BackgroundAnswers; text: string }[] = [
-  { key: "crime", text: "Have you ever been convicted of a crime or offence in any country?" },
-  {
-    key: "imprisonment",
-    text: "Have you ever been sentenced to imprisonment for 1 year or more in any country?",
-  },
-  {
-    key: "drugs",
-    text: "Have you ever been convicted and sentenced for a drug offence (narcotics, marijuana, opium, stimulants or psychotropic substances) in any country?",
-  },
-  {
-    key: "deported",
-    text: "Have you ever been deported or removed from Japan or any country for overstaying a visa or violating any law or regulation?",
-  },
-  {
-    key: "prostitution",
-    text: "Have you ever engaged in prostitution, or in the intermediation or solicitation of a prostitute for others, or provided a place for prostitution, or any activity directly connected to prostitution?",
-  },
-  {
-    key: "trafficking",
-    text: "Have you ever committed trafficking in persons, or incited or aided another to commit such an offence?",
-  },
+const QUESTIONS: { key: keyof BackgroundAnswers; labelKey: string }[] = [
+  { key: "crime", labelKey: "jbg.crime" },
+  { key: "imprisonment", labelKey: "jbg.imprisonment" },
+  { key: "drugs", labelKey: "jbg.drugs" },
+  { key: "deported", labelKey: "jbg.deported" },
+  { key: "prostitution", labelKey: "jbg.prostitution" },
+  { key: "trafficking", labelKey: "jbg.trafficking" },
 ];
 
 // Step 9 — Background questions.
@@ -61,7 +46,7 @@ export function BackgroundStep({
         {QUESTIONS.map((q) => (
           <div key={q.key} className="border-b border-slate-100 pb-4 last:border-0">
             <BooleanChoice
-              label={q.text}
+              label={t(q.labelKey)}
               value={answers[q.key]}
               onChange={(v) => setAnswer(q.key, v)}
             />

@@ -7,6 +7,7 @@ import type {
   Recommendation,
 } from "@/lib/visa/destinations";
 import { DatePicker } from "@/app/apply/DatePicker";
+import { useLocale } from "@/app/components/LocaleProvider";
 import { Select, Textarea } from "@/app/apply/fields";
 import { submissionDateBlock, seoulTodayISO, type EmbassyClosure } from "@/lib/visa/japanEmbassy";
 
@@ -40,14 +41,14 @@ export function JapanTripStep({
   applyRecommendedDates: () => void;
   embassyClosures: EmbassyClosure[];
 }) {
+  const { t } = useLocale();
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-xl font-bold text-slate-900">Your Japan trip</h3>
+          <h3 className="text-xl font-bold text-slate-900">{t("jtrip.title")}</h3>
           <p className="mt-1 text-sm text-slate-600">
-            When and why you&rsquo;re travelling. Dates follow the Japan visa
-            timing rules.
+{t("jtrip.intro")}
           </p>
         </div>
         <button
@@ -56,23 +57,23 @@ export function JapanTripStep({
           className="shrink-0 rounded-full border border-slate-300 px-3 py-1 text-xs font-semibold text-slate-600 hover:border-blue-400 hover:text-blue-700"
           aria-label="Japan travel-date guidance"
         >
-          ⓘ Guidance
+          ⓘ {t("jtrip.guidance")}
         </button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Select
-          label="Purpose of visit"
+          label={t("jtrip.purpose")}
           value={form.travel_purpose === "Tourism" ? "Tourism" : ""}
           onChange={(v) => set("travel_purpose", v)}
-          options={PURPOSE_OPTIONS}
+          options={PURPOSE_OPTIONS.map((value) => ({ value, label: t("jtrip.purposeTourism") }))}
         />
       </div>
 
       <section className="space-y-4">
         <div className="space-y-1">
           <DatePicker
-            label="Planned submission date"
+            label={t("jtrip.submission")}
             value={form.planned_submission_date}
             onChange={(v) => set("planned_submission_date", v)}
             minISO={seoulTodayISO()}
@@ -81,14 +82,12 @@ export function JapanTripStep({
             blockedDate={(iso) => submissionDateBlock(iso, embassyClosures)}
           />
           <p className="text-xs text-slate-500">
-            Select a business day when the Embassy of Japan in Korea is open.
-            Weekends and embassy closure days cannot be selected. Closure dates
-            follow the published annual schedule and may be updated.
+{t("jtrip.submissionHelp")}
           </p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <DatePicker
-            label="Date of arrival (travel start)"
+            label={t("jtrip.arrival")}
             value={form.travel_start_date}
             onChange={(v) => set("travel_start_date", v)}
             minISO={startWindow.minISO}
@@ -97,7 +96,7 @@ export function JapanTripStep({
             onOpen={onDateFocus}
           />
           <DatePicker
-            label="Date of departure (travel end)"
+            label={t("jtrip.departure")}
             value={form.travel_end_date}
             onChange={(v) => set("travel_end_date", v)}
             minISO={form.travel_start_date || null}
@@ -109,16 +108,18 @@ export function JapanTripStep({
         {recommendation?.recommendedStartISO && (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3">
             <p className="text-sm text-blue-800">
-              Recommended: {recommendation.recommendedStartISO} to{" "}
-              {recommendation.recommendedEndISO} ({recommendation.stayMin}–
-              {recommendation.stayMax} days).
+              {t("jtrip.recommended")
+                .replace("{from}", recommendation.recommendedStartISO)
+                .replace("{to}", recommendation.recommendedEndISO ?? "")
+                .replace("{min}", String(recommendation.stayMin))
+                .replace("{max}", String(recommendation.stayMax))}
             </p>
             <button
               type="button"
               onClick={applyRecommendedDates}
               className="rounded-xl btn-glow px-4 py-2 text-sm font-bold text-white"
             >
-              Use recommended dates
+              {t("jtrip.useRecommended")}
             </button>
           </div>
         )}
@@ -133,20 +134,21 @@ export function JapanTripStep({
         )}
         {dateCheck.stayDays != null && !dateCheck.errors.stay && (
           <p className="text-sm font-semibold text-slate-600">
-            Planned stay: {dateCheck.stayDays} day
-            {dateCheck.stayDays === 1 ? "" : "s"}
-            {rule ? ` (max ${rule.maxStayDays}).` : "."}
+            {t("jtrip.stay")
+              .replace("{days}", String(dateCheck.stayDays))
+              .replace("{dayWord}", dateCheck.stayDays === 1 ? t("jtrip.day") : t("jtrip.days"))}
+            {rule ? t("jtrip.stayMax").replace("{max}", String(rule.maxStayDays)) : "."}
           </p>
         )}
       </section>
 
       <Textarea
-        label="Why did you choose Japan for your trip?"
+        label={t("jtrip.why")}
         value={form.trip_reason}
         onChange={(v) => set("trip_reason", v)}
         maxWords={150}
-        placeholder="In your own words — what made you want to visit Japan?"
-        helpText="Optional, but a fuller answer helps us write a stronger Travel Purpose Statement."
+        placeholder={t("jtrip.whyPh")}
+        helpText={t("jtrip.whyHelp")}
       />
     </div>
   );
