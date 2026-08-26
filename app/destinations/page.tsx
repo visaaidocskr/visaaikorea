@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Nav } from "@/app/components/landing/Nav";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import { COUNTRIES, localizeCountryContent } from "@/lib/visa/countryContent";
+import { VISA_PRICES, totalVisaPrice } from "@/lib/business";
 import { getRequestLocale } from "@/lib/locale-server";
 import { translate } from "@/lib/i18n";
 
@@ -35,6 +36,7 @@ export default async function DestinationsPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {COUNTRIES.map((raw) => {
             const c = localizeCountryContent(raw, locale);
+            const price = VISA_PRICES.find((v) => v.destination === raw.country);
             return (
               <Link
                 key={c.key}
@@ -46,8 +48,16 @@ export default async function DestinationsPage() {
                   <div className="text-5xl drop-shadow-sm">{c.flag}</div>
                   <h2 className="mt-5 text-2xl font-bold">{c.country}</h2>
                   <p className="mt-1 text-sm text-slate-500">{c.tagline}</p>
-                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                    ⏱ {c.processingTime}
+                  <p className="mt-2 text-sm font-medium text-slate-600">{c.visaType}</p>
+                  <div className="mt-4 flex flex-wrap gap-1.5 text-xs font-semibold">
+                    {price && (
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+                        ${totalVisaPrice(price)}
+                      </span>
+                    )}
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
+                      ⏱ {c.processingTime}
+                    </span>
                   </div>
                   <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
                     {t("countries.details")}

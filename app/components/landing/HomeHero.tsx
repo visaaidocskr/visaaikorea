@@ -23,7 +23,6 @@ export function HomeHero() {
     ["🇸🇬", t("auth.scene.singaporeCountry")],
     ["🇻🇳", t("auth.scene.vietnam")],
     ["🇪🇸", t("auth.scene.spain")],
-    ["🇰🇷", t("auth.scene.korea")],
   ];
   return (
     <section className="relative isolate -mt-[72px] overflow-hidden bg-slate-950 px-6 pb-20 pt-36 text-center sm:pt-44">
