@@ -4,7 +4,18 @@
 // application they own (admins may access all, per the applications policies).
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { renderJapanItineraryDocx } from "@/lib/docs/japanItinerary";
+// (Historical) the renderer this archive referenced was replaced by
+// lib/docs/generators.ts generateItineraryDoc; kept commented so the
+// archive still type-checks.
+// import { renderJapanItineraryDocx } from "@/lib/docs/japanItinerary";
+declare function renderJapanItineraryDocx(input: {
+  applicantName: string;
+  nationality: string;
+  destinationCity: string;
+  travelStart: string;
+  travelEnd: string;
+  seed: string;
+}): Buffer;
 
 export const runtime = "nodejs";
 
