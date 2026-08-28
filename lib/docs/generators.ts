@@ -18,6 +18,7 @@ import {
   ImageRun,
   BorderStyle,
   TableBorders,
+  TableLayoutType,
   VerticalAlign,
   HorizontalPositionAlign,
   HorizontalPositionRelativeFrom,
@@ -91,10 +92,25 @@ function line(text: string, opts?: { bold?: boolean }) {
 
 async function pack(
   children: Paragraph[] | (Paragraph | Table)[],
-  header?: Header
+  header?: Header,
+  opts?: { a4?: boolean }
 ): Promise<Buffer> {
   const doc = new Document({
-    sections: [{ children, headers: header ? { default: header } : undefined }],
+    sections: [
+      {
+        children,
+        headers: header ? { default: header } : undefined,
+        // A4 with 2cm side margins — what Korean/Japanese consulates print on.
+        properties: opts?.a4
+          ? {
+              page: {
+                size: { width: 11906, height: 16838 },
+                margin: { top: 1134, bottom: 1134, left: 1134, right: 1134 },
+              },
+            }
+          : undefined,
+      },
+    ],
   });
   return Packer.toBuffer(doc);
 }
@@ -175,13 +191,18 @@ function dotDate(iso: string): string {
   return iso.replaceAll("-", ".");
 }
 
+// Fixed widths in DXA (A4 minus margins ≈ 9,638 twips). Percentage-based
+// widths render fine in Word but collapse to slivers in several other
+// viewers/printers, so the schedule pins every column.
+const SCHEDULE_COLS = [1500, 4400, 1650, 2080] as const;
+
 function scheduleCell(
   paragraphs: Paragraph[],
-  widthPct: number,
+  widthDxa: number,
   opts?: { shaded?: boolean }
 ) {
   return new TableCell({
-    width: { size: widthPct, type: WidthType.PERCENTAGE },
+    width: { size: widthDxa, type: WidthType.DXA },
     verticalAlign: VerticalAlign.TOP,
     shading: opts?.shaded ? { fill: "F1F5F9" } : undefined,
     margins: { top: 120, bottom: 120, left: 140, right: 140 },
@@ -204,7 +225,7 @@ function smallBoldText(text: string) {
   return new Paragraph({ children: [new TextRun({ text, bold: true, size: 20 })] });
 }
 
-function headerCellPair(en: string, ko: string, widthPct: number) {
+function headerCellPair(en: string, ko: string, widthDxa: number) {
   return scheduleCell(
     [
       new Paragraph({
@@ -216,7 +237,7 @@ function headerCellPair(en: string, ko: string, widthPct: number) {
         children: [new TextRun({ text: ko, size: 18, color: "475569" })],
       }),
     ],
-    widthPct,
+    widthDxa,
     { shaded: true }
   );
 }
@@ -366,10 +387,10 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
   const headerRow = new TableRow({
     tableHeader: true,
     children: [
-      headerCellPair("Date", "날짜", 14),
-      headerCellPair("Activity plan", "여행 계획", 46),
-      headerCellPair("Contact number", "연락처", 17),
-      headerCellPair("Accommodations address", "숙소 명 및 주소", 23),
+      headerCellPair("Date", "날짜", SCHEDULE_COLS[0]),
+      headerCellPair("Activity plan", "여행 계획", SCHEDULE_COLS[1]),
+      headerCellPair("Contact number", "연락처", SCHEDULE_COLS[2]),
+      headerCellPair("Accommodations address", "숙소 명 및 주소", SCHEDULE_COLS[3]),
     ],
   });
 
@@ -401,10 +422,10 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
     return new TableRow({
       cantSplit: true,
       children: [
-        scheduleCell([smallText(dotDate(d.date))], 14),
-        scheduleCell(activityParagraphs(i), 46),
-        scheduleCell([smallText(phoneText)], 17),
-        scheduleCell(stayParagraphs, 23),
+        scheduleCell([smallText(dotDate(d.date))], SCHEDULE_COLS[0]),
+        scheduleCell(activityParagraphs(i), SCHEDULE_COLS[1]),
+        scheduleCell([smallText(phoneText)], SCHEDULE_COLS[2]),
+        scheduleCell(stayParagraphs, SCHEDULE_COLS[3]),
       ],
     });
   });
@@ -460,12 +481,17 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
     }),
     ...companionLines,
     new Paragraph({ text: "", spacing: { after: 120 } }),
-    new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [headerRow, ...dayRows] }),
+    new Table({
+      width: { size: SCHEDULE_COLS.reduce((a, b) => a + b, 0), type: WidthType.DXA },
+      columnWidths: [...SCHEDULE_COLS],
+      layout: TableLayoutType.FIXED,
+      rows: [headerRow, ...dayRows],
+    }),
   ];
 
   // No agency disclaimer here — this document is submitted to the embassy/
   // consulate as the applicant's own travel plan.
-  return pack(children);
+  return pack(children, undefined, { a4: true });
 }
 
 // --- Travel Purpose Statement ---------------------------------------------
