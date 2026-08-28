@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DashboardNav } from "@/app/dashboard/DashboardNav";
 import { MarkResultsSeen } from "@/app/dashboard/applications/MarkResultsSeen";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
@@ -23,6 +24,7 @@ export default async function MyApplicationsPage() {
   return (
     <>
     <MarkResultsSeen />
+    <DashboardNav />
     <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-extrabold">{t("dashboard.applications")}</h1>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DashboardNav } from "@/app/dashboard/DashboardNav";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
@@ -54,6 +55,8 @@ export default async function ClientApplicationDetail({
     : "Applicant";
 
   return (
+    <>
+    <DashboardNav />
     <main className="mx-auto max-w-3xl px-6 py-12">
       <Link href="/dashboard/applications" className="text-sm font-semibold text-blue-700">
         ← {t("dashboard.applications")}
@@ -195,5 +198,6 @@ export default async function ClientApplicationDetail({
         </div>
       </section>
     </main>
+    </>
   );
 }

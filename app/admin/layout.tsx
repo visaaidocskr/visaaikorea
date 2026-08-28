@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { SignOutButton } from "@/app/dashboard/SignOutButton";
 
 const NAV = [
+  { href: "/admin", label: "Overview" },
   { href: "/admin/applications", label: "Applications" },
   { href: "/admin/invitations", label: "Invitations" },
   { href: "/admin/service-requests", label: "Travel requests" },
@@ -24,7 +25,7 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <nav className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white px-6 py-4">
         <div className="flex items-center gap-6">
-          <Link href="/admin" className="text-lg font-extrabold text-blue-700">
+          <Link href="/" className="text-lg font-extrabold text-blue-700" title="Homepage">
             VisaAI · Admin
           </Link>
           <div className="flex gap-4 text-sm font-semibold text-slate-600">

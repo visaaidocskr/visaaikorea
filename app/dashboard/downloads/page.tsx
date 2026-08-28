@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DashboardNav } from "@/app/dashboard/DashboardNav";
 import { AuroraBackdrop } from "@/app/components/landing/AuroraBackdrop";
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
@@ -39,6 +40,8 @@ export default async function DownloadsPage() {
   const rows = (data ?? []) as unknown as Row[];
 
   return (
+    <>
+    <DashboardNav />
     <main className="relative mx-auto max-w-3xl px-6 py-12">
       <AuroraBackdrop />
       <h1 className="text-sky-gradient text-3xl font-extrabold">{t("dashboard.downloads")}</h1>
@@ -69,5 +72,6 @@ export default async function DownloadsPage() {
         )}
       </div>
     </main>
+    </>
   );
 }
