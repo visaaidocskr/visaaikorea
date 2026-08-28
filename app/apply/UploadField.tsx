@@ -73,10 +73,30 @@ export function UploadField({
     setStatus("uploading");
     setMessage("");
 
+    // Read the file fully in the browser BEFORE sending. A file dragged
+    // straight out of another app (Telegram, Mail) can be a lazy "file
+    // promise" Safari fails to materialise mid-request — the multipart body
+    // then truncates and the server sees "Unexpected end of form". Reading
+    // it here forces materialisation, catches unreadable files with a clear
+    // message, and sends a plain in-memory copy that cannot be yanked away.
+    let payload: Blob;
+    try {
+      payload = new Blob([await file.arrayBuffer()], { type: file.type });
+    } catch {
+      setStatus("error");
+      setMessage(t("upload.unreadable"));
+      return;
+    }
+    if (payload.size === 0) {
+      setStatus("error");
+      setMessage(t("upload.unreadable"));
+      return;
+    }
+
     // Upload to Storage via a server action (service-role — browser-side storage
     // uploads need a session that no longer exists while login is off).
     const fd = new FormData();
-    fd.append("file", file);
+    fd.append("file", payload, file.name);
     fd.append("applicationId", applicationId);
     fd.append("fileType", fileType);
     fd.append("required", String(required));
