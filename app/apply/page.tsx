@@ -193,9 +193,13 @@ export default async function ApplyPage({
           arrival_airport: flight.arrival_airport ?? "",
           departure_date: flight.departure_date ?? "",
           arrival_date: flight.arrival_date ?? "",
+          departure_time: flight.departure_time ?? "",
+          arrival_time: flight.arrival_time ?? "",
           return_airline: flight.return_airline ?? "",
           return_flight_number: flight.return_flight_number ?? "",
           return_date: flight.return_date ?? "",
+          return_departure_time: flight.return_departure_time ?? "",
+          return_arrival_time: flight.return_arrival_time ?? "",
         }
       : { ...EMPTY_FLIGHT },
 

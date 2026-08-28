@@ -133,6 +133,10 @@ export function TravelBookingsStep({
     if (fields.airline) patch.airline = fields.airline;
     if (fields.flightNumber) patch.flight_number = fields.flightNumber;
     if (fields.arrivalDate) patch.arrival_date = fields.arrivalDate;
+    if (fields.departureTime) patch.departure_time = fields.departureTime;
+    if (fields.arrivalTime) patch.arrival_time = fields.arrivalTime;
+    if (fields.returnDepartureTime) patch.return_departure_time = fields.returnDepartureTime;
+    if (fields.returnArrivalTime) patch.return_arrival_time = fields.returnArrivalTime;
     if (Object.keys(patch).length) setFlight(patch);
 
     if (fields.arrivalAirportCode) {
@@ -245,6 +249,22 @@ export function TravelBookingsStep({
                 onChange={(v) => setFlight({ arrival_date: v })}
                 minISO={tripStart}
                 showYearMonth
+              />
+              <Input
+                label={t("booking.arrivalTime")}
+                value={f.arrival_time}
+                onChange={(v) => setFlight({ arrival_time: v })}
+                required={false}
+                type="time"
+                helpText={t("booking.timeHelp")}
+              />
+              <Input
+                label={t("booking.returnDepTime")}
+                value={f.return_departure_time}
+                onChange={(v) => setFlight({ return_departure_time: v })}
+                required={false}
+                type="time"
+                helpText={t("booking.timeHelp")}
               />
             </div>
           </div>

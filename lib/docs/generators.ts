@@ -246,6 +246,17 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
     .map((v) => (v ?? "").trim())
     .filter(Boolean)
     .join(" ");
+  const departureTime = (flight?.departure_time ?? "").trim();
+  const arrivalTime = (flight?.arrival_time ?? "").trim();
+  const returnDepartureTime = (flight?.return_departure_time ?? "").trim();
+  const returnArrivalTime = (flight?.return_arrival_time ?? "").trim();
+  // "HH:MM" -> minutes since midnight, or null when unknown/invalid.
+  const toMinutes = (t: string): number | null => {
+    const m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(t);
+    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+  };
+  const arrivalMin = toMinutes(arrivalTime);
+  const returnDepMin = toMinutes(returnDepartureTime);
 
   // The hotel covering a given date; falls back to the first one so the
   // column never sits empty when dates were left loose.
@@ -294,21 +305,47 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
 
     if (first) {
       lines.push(
-        `Depart from ${departureAirportText} to ${arrivalAirportText}${outboundFlight ? ` — flight ${outboundFlight}` : ""}`
+        `Depart from ${departureAirportText}${departureTime ? ` (${departureTime})` : ""} to ${arrivalAirportText}${outboundFlight ? ` — flight ${outboundFlight}` : ""}`
       );
-      lines.push(`Arrive in ${city || country}`);
+      lines.push(`Arrive in ${city || country}${arrivalTime ? ` (${arrivalTime})` : ""}`);
       lines.push(`Transfer to hotel${hotelName ? ` (${hotelName})` : ""} and check-in`);
-      lines.push(`Afternoon: ${d.afternoon}`);
-      lines.push(`Evening: ${d.evening}, dinner at a local restaurant nearby`);
+      // Shape the rest of the arrival day around the landing time: a morning
+      // arrival leaves a full afternoon; a late-afternoon arrival leaves only
+      // the evening; an evening arrival is check-in and dinner, nothing more.
+      if (arrivalMin === null || arrivalMin < 14 * 60) {
+        lines.push(`Afternoon: ${d.afternoon}`);
+        lines.push(`Evening: ${d.evening}, dinner at a local restaurant nearby`);
+      } else if (arrivalMin < 18 * 60) {
+        lines.push(`Evening: ${d.evening}, dinner at a local restaurant nearby`);
+      } else {
+        lines.push("Evening: rest at the hotel, dinner at a local restaurant nearby");
+      }
       if (days.length === 1) {
         lines.push(`Transfer to ${arrivalAirportText} and depart for Incheon International Airport (ICN)`);
       }
     } else if (last) {
-      lines.push("Breakfast and check-out from hotel");
-      lines.push(`Free time: ${d.morning}`);
-      lines.push(`Transfer to ${arrivalAirportText}`);
+      // The departure day follows the return flight's clock: an early flight
+      // is checkout-and-transfer only; a midday flight allows a short walk;
+      // only an evening flight leaves room for real free time.
+      if (returnDepMin !== null && returnDepMin < 12 * 60) {
+        lines.push("Early breakfast and check-out from hotel");
+        lines.push(`Transfer to ${arrivalAirportText} (about 3 hours before departure)`);
+      } else if (returnDepMin !== null && returnDepMin < 17 * 60) {
+        lines.push("Breakfast and check-out from hotel");
+        lines.push("Short walk near the hotel");
+        lines.push(`Transfer to ${arrivalAirportText}`);
+      } else if (returnDepMin !== null) {
+        lines.push("Breakfast and check-out from hotel");
+        lines.push(`Free time: ${d.morning}`);
+        lines.push(`Transfer to ${arrivalAirportText}`);
+      } else {
+        // Unknown flight time — stay conservative rather than promising a
+        // sightseeing morning the ticket may not allow.
+        lines.push("Breakfast and check-out from hotel");
+        lines.push(`Transfer to ${arrivalAirportText}`);
+      }
       lines.push(
-        `Depart ${city || country} → Arrive Incheon International Airport (ICN)${returnFlight ? ` — flight ${returnFlight}` : ""}`
+        `Depart ${city || country}${returnDepartureTime ? ` (${returnDepartureTime})` : ""} → Arrive Incheon International Airport (ICN)${returnArrivalTime ? ` (${returnArrivalTime})` : ""}${returnFlight ? ` — flight ${returnFlight}` : ""}`
       );
     } else {
       lines.push("Breakfast at hotel");
@@ -348,6 +385,7 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
     prevStay = stay;
 
     return new TableRow({
+      cantSplit: true,
       children: [
         scheduleCell([smallText(dotDate(d.date))], 14),
         scheduleCell(activityParagraphs(i), 46),

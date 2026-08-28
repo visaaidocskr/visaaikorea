@@ -116,6 +116,30 @@ export function FlightScanPanel({
                 <dd className="font-semibold text-slate-900">{fields.arrivalDate}</dd>
               </div>
             )}
+            {fields.departureTime && (
+              <div className="flex justify-between gap-3 text-sm">
+                <dt className="text-slate-500">{t("scan.depTime")}</dt>
+                <dd className="font-semibold text-slate-900">{fields.departureTime}</dd>
+              </div>
+            )}
+            {fields.arrivalTime && (
+              <div className="flex justify-between gap-3 text-sm">
+                <dt className="text-slate-500">{t("scan.arrTime")}</dt>
+                <dd className="font-semibold text-slate-900">{fields.arrivalTime}</dd>
+              </div>
+            )}
+            {fields.returnDepartureTime && (
+              <div className="flex justify-between gap-3 text-sm">
+                <dt className="text-slate-500">{t("scan.retDepTime")}</dt>
+                <dd className="font-semibold text-slate-900">{fields.returnDepartureTime}</dd>
+              </div>
+            )}
+            {fields.returnArrivalTime && (
+              <div className="flex justify-between gap-3 text-sm">
+                <dt className="text-slate-500">{t("scan.retArrTime")}</dt>
+                <dd className="font-semibold text-slate-900">{fields.returnArrivalTime}</dd>
+              </div>
+            )}
           </dl>
         </div>
       )}

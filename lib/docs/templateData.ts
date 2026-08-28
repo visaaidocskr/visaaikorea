@@ -45,9 +45,13 @@ export type FlightRow = {
   departure_airport: string | null;
   arrival_airport: string | null;
   departure_date: string | null;
+  departure_time?: string | null;
+  arrival_time?: string | null;
   return_airline: string | null;
   return_flight_number: string | null;
   return_date: string | null;
+  return_departure_time?: string | null;
+  return_arrival_time?: string | null;
 } | null;
 
 export type AccommodationRow = {

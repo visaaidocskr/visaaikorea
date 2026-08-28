@@ -116,7 +116,101 @@ export type FlightReservationFields = {
   flightNumber: string;
   arrivalAirportCode: string;
   arrivalDate: string; // YYYY-MM-DD, "" if not found
+  // "HH:MM" 24h, "" if not found. Round trips list two legs; the first
+  // departure/arrival pair belongs to the outbound leg, the last pair to
+  // the return leg.
+  departureTime: string;
+  arrivalTime: string;
+  returnDepartureTime: string;
+  returnArrivalTime: string;
 };
+
+// ---- times -----------------------------------------------------------------
+// "10:55", "9:05 PM", "21:40", compact "2140" only when glued to a
+// dep/arr label. Normalized to 24h "HH:MM".
+const TIME_RE = /\b([01]?\d|2[0-3]):([0-5]\d)\s*(AM|PM)?\b/i;
+
+function normalizeTime(h: number, min: number, ampm?: string): string {
+  if (ampm) {
+    const up = ampm.toUpperCase();
+    if (up === "PM" && h < 12) h += 12;
+    if (up === "AM" && h === 12) h = 0;
+  }
+  return `${pad2(h)}:${pad2(min)}`;
+}
+
+function timesOnLine(line: string): string[] {
+  const out: string[] = [];
+  const re = new RegExp(TIME_RE.source, "gi");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(line))) {
+    out.push(normalizeTime(Number(m[1]), Number(m[2]), m[3]));
+  }
+  return out;
+}
+
+/**
+ * Extracts departure/arrival times for up to two legs.
+ *
+ * Strategy, most-reliable first:
+ *  1. Lines labeled DEPART…/ARRIV… — first labeled departure is the outbound
+ *     leg, the last one the return leg (same for arrivals).
+ *  2. Fallback: every time in the document, in order. Two times → one leg
+ *     (dep, arr). Four or more → first two are the outbound leg, last two
+ *     the return leg. Anything else is too ambiguous — return nothing
+ *     rather than guess.
+ */
+function parseFlightTimes(text: string): {
+  departureTime: string;
+  arrivalTime: string;
+  returnDepartureTime: string;
+  returnArrivalTime: string;
+} {
+  const ls = lines(text);
+  const depTimes: string[] = [];
+  const arrTimes: string[] = [];
+  for (const l of ls) {
+    // A line mentioning both DEP and ARR (e.g. "DEP 07:30  ARR 10:55")
+    // contributes its first time to departures and last to arrivals.
+    const isDep = /\bDEP(ART(URE)?)?\b|\bETD\b|출발/i.test(l);
+    const isArr = /\bARR(IV(AL|E|ES)?)?\b|\bETA\b|도착/i.test(l);
+    if (!isDep && !isArr) continue;
+    const found = timesOnLine(l);
+    if (found.length === 0) continue;
+    if (isDep && isArr && found.length >= 2) {
+      depTimes.push(found[0]);
+      arrTimes.push(found[found.length - 1]);
+    } else if (isDep) {
+      depTimes.push(found[0]);
+    } else {
+      arrTimes.push(found[0]);
+    }
+  }
+
+  if (depTimes.length > 0 || arrTimes.length > 0) {
+    return {
+      departureTime: depTimes[0] ?? "",
+      arrivalTime: arrTimes[0] ?? "",
+      returnDepartureTime: depTimes.length > 1 ? depTimes[depTimes.length - 1] : "",
+      returnArrivalTime: arrTimes.length > 1 ? arrTimes[arrTimes.length - 1] : "",
+    };
+  }
+
+  const all: string[] = [];
+  for (const l of ls) all.push(...timesOnLine(l));
+  if (all.length === 2) {
+    return { departureTime: all[0], arrivalTime: all[1], returnDepartureTime: "", returnArrivalTime: "" };
+  }
+  if (all.length >= 4) {
+    return {
+      departureTime: all[0],
+      arrivalTime: all[1],
+      returnDepartureTime: all[all.length - 2],
+      returnArrivalTime: all[all.length - 1],
+    };
+  }
+  return { departureTime: "", arrivalTime: "", returnDepartureTime: "", returnArrivalTime: "" };
+}
 
 export function parseFlightReservation(rawText: string): FlightReservationFields {
   const text = rawText.toUpperCase();
@@ -181,8 +275,9 @@ export function parseFlightReservation(rawText: string): FlightReservationFields
   // a document listing both departure and arrival dates doesn't grab the
   // departure date by mistake.
   const arrivalDate = dateNear(rawText, [[/ARRIV/i], [/DATE/i]]);
+  const times = parseFlightTimes(rawText);
 
-  return { airline, flightNumber, arrivalAirportCode, arrivalDate };
+  return { airline, flightNumber, arrivalAirportCode, arrivalDate, ...times };
 }
 
 // ---- hotel -------------------------------------------------------------

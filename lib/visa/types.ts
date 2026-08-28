@@ -52,9 +52,15 @@ export type FlightBooking = {
   arrival_airport: string;
   departure_date: string;
   arrival_date: string;
+  // "HH:MM" 24h, local. Optional — used to shape the Schedule of Stay's
+  // first and last day realistically.
+  departure_time: string;
+  arrival_time: string;
   return_airline: string;
   return_flight_number: string;
   return_date: string;
+  return_departure_time: string;
+  return_arrival_time: string;
 };
 
 export type AccommodationInput = {
@@ -258,9 +264,13 @@ export const EMPTY_FLIGHT: FlightBooking = {
   arrival_airport: "",
   departure_date: "",
   arrival_date: "",
+  departure_time: "",
+  arrival_time: "",
   return_airline: "",
   return_flight_number: "",
   return_date: "",
+  return_departure_time: "",
+  return_arrival_time: "",
 };
 
 export const EMPTY_HOST: JapanHostInput = {

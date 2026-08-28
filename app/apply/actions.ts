@@ -295,9 +295,13 @@ async function saveJapanChildren(
       arrival_airport: nullIfEmpty(form.flight.arrival_airport),
       departure_date: nullIfEmpty(form.flight.departure_date),
       arrival_date: nullIfEmpty(form.flight.arrival_date),
+      departure_time: nullIfEmpty(form.flight.departure_time),
+      arrival_time: nullIfEmpty(form.flight.arrival_time),
       return_airline: nullIfEmpty(form.flight.return_airline),
       return_flight_number: nullIfEmpty(form.flight.return_flight_number),
       return_date: nullIfEmpty(form.flight.return_date),
+      return_departure_time: nullIfEmpty(form.flight.return_departure_time),
+      return_arrival_time: nullIfEmpty(form.flight.return_arrival_time),
     },
     { onConflict: "application_id" }
   );
