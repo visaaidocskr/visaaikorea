@@ -200,6 +200,10 @@ function smallText(text: string) {
   return new Paragraph({ children: [new TextRun({ text, size: 20 })] });
 }
 
+function smallBoldText(text: string) {
+  return new Paragraph({ children: [new TextRun({ text, bold: true, size: 20 })] });
+}
+
 function headerCellPair(en: string, ko: string, widthPct: number) {
   return scheduleCell(
     [
@@ -374,15 +378,25 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
   const dayRows = days.map((d, i) => {
     const acc = accommodationFor(d.date);
     const phone = (acc?.phone ?? "").trim() || "—";
-    const stay = [acc?.name, acc?.address]
-      .map((v) => (v ?? "").trim())
-      .filter(Boolean)
-      .join("\n") || "—";
+    const stayName = (acc?.name ?? "").trim();
+    const stayAddr = (acc?.address ?? "").trim();
+    const stay = [stayName, stayAddr].filter(Boolean).join("\n") || "—";
 
     const phoneText = phone === prevPhone ? "Same as above" : phone;
-    const stayText = stay === prevStay ? "Same as above" : stay;
+    const stayRepeat = stay === prevStay;
     prevPhone = phone;
     prevStay = stay;
+
+    // Hotel name in bold above the plain-text address, mirroring the bold
+    // column header — repeated rows collapse to "Same as above".
+    const stayParagraphs = stayRepeat
+      ? [smallText("Same as above")]
+      : stayName || stayAddr
+        ? [
+            ...(stayName ? [smallBoldText(stayName)] : []),
+            ...(stayAddr ? [smallText(stayAddr)] : []),
+          ]
+        : [smallText("—")];
 
     return new TableRow({
       cantSplit: true,
@@ -390,12 +404,7 @@ export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
         scheduleCell([smallText(dotDate(d.date))], 14),
         scheduleCell(activityParagraphs(i), 46),
         scheduleCell([smallText(phoneText)], 17),
-        scheduleCell(
-          stayText === "Same as above"
-            ? [smallText("Same as above")]
-            : stayText.split("\n").map((part) => smallText(part)),
-          23
-        ),
+        scheduleCell(stayParagraphs, 23),
       ],
     });
   });
