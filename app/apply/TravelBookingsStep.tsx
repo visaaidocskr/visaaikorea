@@ -92,6 +92,7 @@ export function TravelBookingsStep({
 
   const PORTS_OF_ENTRY =
     PORTS_OF_ENTRY_BY_COUNTRY[countryLabel] ?? PORTS_OF_ENTRY_BY_COUNTRY.Japan;
+  const cityName = form.destination_city || countryLabel;
 
   // Port of entry — reuses the shared port_of_entry field; "Other" → free text.
   const [portOther, setPortOther] = useState(
@@ -256,7 +257,7 @@ export function TravelBookingsStep({
                 onChange={(v) => setFlight({ arrival_time: v })}
                 required={false}
                 type="time"
-                helpText={t("booking.timeHelp")}
+                helpText={t("booking.arrivalTimeHelp").replace("{city}", cityName)}
               />
               <Input
                 label={t("booking.returnDepTime")}
@@ -264,7 +265,7 @@ export function TravelBookingsStep({
                 onChange={(v) => setFlight({ return_departure_time: v })}
                 required={false}
                 type="time"
-                helpText={t("booking.timeHelp")}
+                helpText={t("booking.returnDepTimeHelp").replace("{city}", cityName)}
               />
             </div>
           </div>
