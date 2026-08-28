@@ -39,10 +39,33 @@ export type CompanionRow = {
   is_family_member: boolean | null;
 };
 
+export type FlightRow = {
+  airline: string | null;
+  flight_number: string | null;
+  departure_airport: string | null;
+  arrival_airport: string | null;
+  departure_date: string | null;
+  return_airline: string | null;
+  return_flight_number: string | null;
+  return_date: string | null;
+} | null;
+
+export type AccommodationRow = {
+  name: string | null;
+  address: string | null;
+  phone: string | null;
+  check_in: string | null;
+  check_out: string | null;
+};
+
 export type GenBundle = {
   application: AppRow;
   details: DetailRow;
   companions: CompanionRow[];
+  // Optional: the Schedule of Stay uses these when present (flight lines on
+  // the first/last day, hotel name + phone per day).
+  flight?: FlightRow;
+  accommodations?: AccommodationRow[];
 };
 
 export type TemplateData = {

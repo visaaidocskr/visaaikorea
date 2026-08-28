@@ -137,46 +137,287 @@ function infoTable(rows: [string, string][]) {
   });
 }
 
-// --- Daily Travel Itinerary -----------------------------------------------
+// --- Schedule of Stay (체류일정표) ------------------------------------------
+// Mirrors the official embassy form: dated header, bilingual intro naming
+// the applicant and companion count, a companion list, and a four-column
+// table (Date / Activity plan / Contact number / Accommodations address).
+// Day plans come from the deterministic geography-aware engine — each day
+// stays inside one neighborhood cluster — framed by real flight and hotel
+// details from the application. "Same as above" repeats, exactly like a
+// hand-prepared agency schedule.
+
+const CITY_AIRPORTS: Record<string, { name: string; code: string }> = {
+  Tokyo: { name: "Narita International Airport", code: "NRT" },
+  Osaka: { name: "Kansai International Airport", code: "KIX" },
+  Fukuoka: { name: "Fukuoka Airport", code: "FUK" },
+  Taipei: { name: "Taoyuan International Airport", code: "TPE" },
+  Taichung: { name: "Taichung International Airport", code: "RMQ" },
+  Kaohsiung: { name: "Kaohsiung International Airport", code: "KHH" },
+  Singapore: { name: "Singapore Changi Airport", code: "SIN" },
+  Madrid: { name: "Adolfo Suárez Madrid–Barajas Airport", code: "MAD" },
+  Barcelona: { name: "Josep Tarradellas Barcelona–El Prat Airport", code: "BCN" },
+  Valencia: { name: "Valencia Airport", code: "VLC" },
+  Hanoi: { name: "Noi Bai International Airport", code: "HAN" },
+  "Ho Chi Minh City": { name: "Tan Son Nhat International Airport", code: "SGN" },
+  "Da Nang": { name: "Da Nang International Airport", code: "DAD" },
+};
+
+const COUNTRY_KO: Record<string, string> = {
+  Japan: "일본",
+  Taiwan: "대만",
+  Singapore: "싱가포르",
+  Spain: "스페인",
+  Vietnam: "베트남",
+};
+
+// "2026-09-01" -> "2026.09.01" (the format the embassy sample uses).
+function dotDate(iso: string): string {
+  return iso.replaceAll("-", ".");
+}
+
+function scheduleCell(
+  paragraphs: Paragraph[],
+  widthPct: number,
+  opts?: { shaded?: boolean }
+) {
+  return new TableCell({
+    width: { size: widthPct, type: WidthType.PERCENTAGE },
+    verticalAlign: VerticalAlign.TOP,
+    shading: opts?.shaded ? { fill: "F1F5F9" } : undefined,
+    margins: { top: 120, bottom: 120, left: 140, right: 140 },
+    children: paragraphs,
+  });
+}
+
+function activityLine(text: string, last = false) {
+  return new Paragraph({
+    children: [new TextRun({ text, size: 20 })],
+    spacing: { after: last ? 0 : 140 },
+  });
+}
+
+function smallText(text: string) {
+  return new Paragraph({ children: [new TextRun({ text, size: 20 })] });
+}
+
+function headerCellPair(en: string, ko: string, widthPct: number) {
+  return scheduleCell(
+    [
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: en, bold: true, size: 20 })],
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: ko, size: 18, color: "475569" })],
+      }),
+    ],
+    widthPct,
+    { shaded: true }
+  );
+}
+
 export async function generateItineraryDoc(bundle: GenBundle): Promise<Buffer> {
   const data = buildTemplateData(bundle);
-  const cell = (text: string, bold = false) =>
-    new TableCell({
-      width: { size: 25, type: WidthType.PERCENTAGE },
-      children: [new Paragraph({ children: [new TextRun({ text, bold })] })],
+  const a = data.application;
+  const country = a.destination_country || "Japan";
+  const city = a.destination_city || "";
+  const flight = bundle.flight ?? null;
+  const accommodations = (bundle.accommodations ?? []).filter(
+    (acc) => (acc.name ?? "").trim() !== "" || (acc.address ?? "").trim() !== ""
+  );
+
+  const days = data.itinerary_days;
+  if (days.length === 0) {
+    throw new Error("Invalid travel dates: end date must be on or after start date.");
+  }
+
+  const airport = CITY_AIRPORTS[city] ?? CITY_AIRPORTS[country] ?? null;
+  const arrivalAirportText =
+    (flight?.arrival_airport ?? "").trim() ||
+    (airport ? `${airport.name} (${airport.code})` : `${city || country} international airport`);
+  const departureAirportText =
+    (flight?.departure_airport ?? "").trim() || "Incheon International Airport (ICN)";
+  const outboundFlight = [flight?.airline, flight?.flight_number]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+  const returnFlight = [flight?.return_airline, flight?.return_flight_number]
+    .map((v) => (v ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  // The hotel covering a given date; falls back to the first one so the
+  // column never sits empty when dates were left loose.
+  function accommodationFor(dateISO: string) {
+    const hit = accommodations.find((acc) => {
+      const ci = (acc.check_in ?? "").trim();
+      const co = (acc.check_out ?? "").trim();
+      if (!ci) return false;
+      return dateISO >= ci && (co === "" || dateISO < co || dateISO === ci);
     });
+    return hit ?? accommodations[0] ?? null;
+  }
 
-  const rows = [
-    new TableRow({
-      children: [cell("Date", true), cell("Morning", true), cell("Afternoon", true), cell("Evening", true)],
-    }),
-    ...data.itinerary_days.map(
-      (d) =>
-        new TableRow({
-          children: [cell(d.date), cell(d.morning), cell(d.afternoon), cell(d.evening)],
-        })
-    ),
-  ];
+  // Header: writing date, embassy style.
+  const now = new Date();
+  const seoul = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now); // YYYY-MM-DD
+  const [wy, wm, wd] = seoul.split("-");
 
-  const children: (Paragraph | Table)[] = [
-    heading("Daily Travel Itinerary"),
-    line(`Applicant: ${data.applicant.full_name || "—"}`),
-    line(`Destination: ${data.application.destination_country} ${data.application.destination_city}`.trim()),
-    line(`Travel period: ${data.application.travel_start_date} to ${data.application.travel_end_date}`),
-    new Paragraph({ text: "", spacing: { after: 100 } }),
-    new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows }),
-  ];
+  const applicantName = (data.applicant.full_name || "—").toUpperCase();
+  const companions = data.companions;
+  const othersCount = companions.length;
+  const koCountry = COUNTRY_KO[country] ?? country;
 
-  if (data.companions.length > 0) {
-    children.push(sub("Companions"));
-    data.companions.forEach((c, i) =>
-      children.push(line(`${i + 1}. ${c.full_name}${c.relationship ? ` — ${c.relationship}` : ""}${c.nationality ? ` (${c.nationality})` : ""}`))
+  const introEn =
+    othersCount > 0
+      ? `The schedules of stay in ${country} of the visa applicant ${applicantName} and ${othersCount} other${othersCount === 1 ? "" : "s"} are as follows:`
+      : `The schedule of stay in ${country} of the visa applicant ${applicantName} is as follows:`;
+  const introKo =
+    othersCount > 0
+      ? `신청인인 ${applicantName} 외 ${othersCount}명의 ${koCountry} 체류일정표는 다음과 같습니다.`
+      : `신청인인 ${applicantName}의 ${koCountry} 체류일정표는 다음과 같습니다.`;
+
+  // --- Activity plans per day ---------------------------------------------
+  function activityParagraphs(dayIndex: number): Paragraph[] {
+    const d = days[dayIndex];
+    const first = dayIndex === 0;
+    const last = dayIndex === days.length - 1 && days.length > 1;
+    const acc = accommodationFor(d.date);
+    const hotelName = (acc?.name ?? "").trim();
+    const lines: string[] = [];
+
+    if (first) {
+      lines.push(
+        `Depart from ${departureAirportText} to ${arrivalAirportText}${outboundFlight ? ` — flight ${outboundFlight}` : ""}`
+      );
+      lines.push(`Arrive in ${city || country}`);
+      lines.push(`Transfer to hotel${hotelName ? ` (${hotelName})` : ""} and check-in`);
+      lines.push(`Afternoon: ${d.afternoon}`);
+      lines.push(`Evening: ${d.evening}, dinner at a local restaurant nearby`);
+      if (days.length === 1) {
+        lines.push(`Transfer to ${arrivalAirportText} and depart for Incheon International Airport (ICN)`);
+      }
+    } else if (last) {
+      lines.push("Breakfast and check-out from hotel");
+      lines.push(`Free time: ${d.morning}`);
+      lines.push(`Transfer to ${arrivalAirportText}`);
+      lines.push(
+        `Depart ${city || country} → Arrive Incheon International Airport (ICN)${returnFlight ? ` — flight ${returnFlight}` : ""}`
+      );
+    } else {
+      lines.push("Breakfast at hotel");
+      lines.push(`Morning: ${d.morning}`);
+      lines.push("Lunch at a local restaurant nearby");
+      lines.push(`Afternoon: ${d.afternoon}`);
+      lines.push(`Evening: ${d.evening}`);
+      lines.push("Return to hotel");
+    }
+    return lines.map((text, i) => activityLine(text, i === lines.length - 1));
+  }
+
+  // --- Table rows -----------------------------------------------------------
+  const headerRow = new TableRow({
+    tableHeader: true,
+    children: [
+      headerCellPair("Date", "날짜", 14),
+      headerCellPair("Activity plan", "여행 계획", 46),
+      headerCellPair("Contact number", "연락처", 17),
+      headerCellPair("Accommodations address", "숙소 명 및 주소", 23),
+    ],
+  });
+
+  let prevPhone: string | null = null;
+  let prevStay: string | null = null;
+  const dayRows = days.map((d, i) => {
+    const acc = accommodationFor(d.date);
+    const phone = (acc?.phone ?? "").trim() || "—";
+    const stay = [acc?.name, acc?.address]
+      .map((v) => (v ?? "").trim())
+      .filter(Boolean)
+      .join("\n") || "—";
+
+    const phoneText = phone === prevPhone ? "Same as above" : phone;
+    const stayText = stay === prevStay ? "Same as above" : stay;
+    prevPhone = phone;
+    prevStay = stay;
+
+    return new TableRow({
+      children: [
+        scheduleCell([smallText(dotDate(d.date))], 14),
+        scheduleCell(activityParagraphs(i), 46),
+        scheduleCell([smallText(phoneText)], 17),
+        scheduleCell(
+          stayText === "Same as above"
+            ? [smallText("Same as above")]
+            : stayText.split("\n").map((part) => smallText(part)),
+          23
+        ),
+      ],
+    });
+  });
+
+  // --- Companions block -----------------------------------------------------
+  const companionLines: Paragraph[] = [];
+  for (let i = 0; i < Math.max(5, companions.length); i++) {
+    const c = companions[i];
+    const text = c
+      ? `${i + 1}. ${c.full_name.toUpperCase()}${c.relationship ? ` — ${c.relationship}` : ""}`
+      : `${i + 1}.`;
+    companionLines.push(
+      new Paragraph({ children: [new TextRun({ text, size: 20 })], spacing: { after: 60 } })
     );
   }
+
+  const children: (Paragraph | Table)[] = [
+    new Paragraph({
+      alignment: AlignmentType.RIGHT,
+      children: [
+        new TextRun({ text: `${wy} (Year)  ${wm} (Month)  ${wd} (Day)`, size: 20 }),
+      ],
+      spacing: { after: 200 },
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: "Schedule of stay", bold: true, size: 32 })],
+      spacing: { after: 240 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: introEn, size: 20 })],
+      spacing: { after: 80 },
+    }),
+    new Paragraph({
+      children: [new TextRun({ text: introKo, size: 19, color: "475569" })],
+      spacing: { after: 200 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Name of companion and relationship with applicant", bold: true, size: 20 }),
+      ],
+      spacing: { after: 40 },
+    }),
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: "동행자 성명 및 신청인과의 관계(반드시 여권상 영문명으로 기재)",
+          size: 18,
+          color: "475569",
+        }),
+      ],
+      spacing: { after: 120 },
+    }),
+    ...companionLines,
+    new Paragraph({ text: "", spacing: { after: 120 } }),
+    new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: [headerRow, ...dayRows] }),
+  ];
+
   // No agency disclaimer here — this document is submitted to the embassy/
-  // consulate as the applicant's own travel plan. The service disclaimer
-  // belongs in client-facing places (site, emails, guidance step), not
-  // baked into paperwork that goes to the authorities.
+  // consulate as the applicant's own travel plan.
   return pack(children);
 }
 

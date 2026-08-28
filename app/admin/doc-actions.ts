@@ -49,13 +49,15 @@ async function loadBundle(
     .maybeSingle();
   if (!application) return null;
 
-  const [{ data: details }, { data: companions }] = await Promise.all([
+  const [{ data: details }, { data: companions }, { data: flight }, { data: accommodations }] = await Promise.all([
     supabase.from("applicant_details").select("*").eq("application_id", applicationId).maybeSingle(),
     supabase.from("companions").select("*").eq("application_id", applicationId),
+    supabase.from("flight_bookings").select("*").eq("application_id", applicationId).maybeSingle(),
+    supabase.from("accommodations").select("*").eq("application_id", applicationId).order("sort_order"),
   ]);
 
   return {
-    bundle: { application, details, companions: companions ?? [] },
+    bundle: { application, details, companions: companions ?? [], flight, accommodations: accommodations ?? [] },
     userId: application.user_id,
   };
 }
@@ -593,6 +595,8 @@ export async function generateJapanPackage(
       application,
       details,
       companions: companions ?? [],
+      flight,
+      accommodations: accommodations ?? [],
     });
     const err = await storeGeneratedDoc({
       userId,
