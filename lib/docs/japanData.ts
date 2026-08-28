@@ -16,6 +16,7 @@ export type JapanAppRow = {
   flight_booked?: boolean | null;
   accommodation_booked?: boolean | null;
   city_region_detected?: string | null;
+  destination_city?: string | null;
   // eVisa Personal-Information form only:
   client_email?: string | null;
   // The 6 page-2 Yes/No background declarations — applicant-answered only,
@@ -27,6 +28,7 @@ export type JapanAppRow = {
     deported?: boolean | null;
     prostitution?: boolean | null;
     trafficking?: boolean | null;
+    visa_denied?: boolean | null;
   } | null;
   remarks?: string | null;
 };
@@ -266,6 +268,10 @@ export type JapanDocumentData = {
   email: string;
   // Declaration answer — explicit applicant response only; null = unanswered.
   everDeportedOrDenied: boolean | null;
+  // Question 16 — explicit applicant response only; null = unanswered.
+  everVisaDenied: boolean | null;
+  // Question 9 — from the application's own destination city.
+  visitingAreas: string;
   // D-2/D-4 (student) applicants have no employer — the eVisa Personal
   // Information template's company/work-phone/work-address fields must stay
   // blank for them rather than being filled with school details.
@@ -295,7 +301,12 @@ export function getJapanDocumentData(bundle: {
   const email = s(bundle.application.client_email);
   const everDeportedOrDenied =
     bundle.application.background_answers?.deported ?? null;
+  const everVisaDenied =
+    bundle.application.background_answers?.visa_denied ?? null;
   const isStudent = isStudentStatus(bundle.application.korean_visa_status);
+  const destinationCity =
+    s(bundle.application.destination_city) || s(bundle.application.city_region_detected);
+  const visitingAreas = destinationCity ? `${destinationCity} and nearby areas` : "";
 
-  return { visa, needsAttention, email, everDeportedOrDenied, isStudent };
+  return { visa, needsAttention, email, everDeportedOrDenied, everVisaDenied, visitingAreas, isStudent };
 }

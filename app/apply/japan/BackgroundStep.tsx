@@ -16,6 +16,7 @@ const QUESTIONS: { key: keyof BackgroundAnswers; labelKey: string }[] = [
   { key: "deported", labelKey: "jbg.deported" },
   { key: "prostitution", labelKey: "jbg.prostitution" },
   { key: "trafficking", labelKey: "jbg.trafficking" },
+  { key: "visa_denied", labelKey: "jbg.visaDenied" },
 ];
 
 // Step 9 — Background questions.

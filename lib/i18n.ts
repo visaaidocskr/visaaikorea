@@ -31,6 +31,7 @@ export const TRANSLATIONS: Record<Locale, Dictionary> = {
     "invite.eyebrow": "Inviting family", "invite.title": "Bring your family to Korea", "invite.description": "If you live in Korea and want a parent or relative to visit, the invitation paperwork has to come from you. We write it.",
     "invite.cardTitle": "Invite your family to Korea", "invite.cardSubtitle": "Short-term visit · C-3-1", "invite.price": "Three professional invitation documents · ₩49,000 per invitee", "invite.explainer": "Your relative applies for the visa at the Korean embassy in Uzbekistan. What they cannot get there is the paperwork that has to be written by you, in Korea — and that is what this does.", "invite.writes": "We write, for each person you invite", "invite.invitation": "초청장 — the invitation letter", "invite.reason": "초청 사유서 — your statement of reasons", "invite.guarantee": "신원보증서 — the guarantee form (별지 제129호서식)", "invite.notice": "Everything else — your enrolment certificate, bank statement, the papers from your 주민센터, and what your relative gathers in Uzbekistan — you collect yourself. We show you the exact list for your visa status before you start.", "invite.fee": "The ₩49,000 service covers preparation of these three documents. Embassy fees and documents requested by the embassy are paid or collected separately.", "invite.start": "Prepare invitation documents", "invite.availability": "Currently for relatives applying in Uzbekistan.",
     "footer.services": "Pricing", "footer.privacy": "Privacy", "footer.terms": "Terms", "footer.refunds": "Refunds", "footer.copyright": "© 2026 Vitamin Travel · VisaAI Korea · Tourist visa document preparation",
+    "jbg.visaDenied": "Have you ever been denied a visa for Japan?",
     "services.packageTotal": "VisaAI package total",
     "fs.formTitle": "Request a flight quote", "ts.formTitle": "Request a tour & hotel quote", "countries.from": "from",
     "error.title": "Something went wrong on our side", "error.body": "Your data is safe and nothing was lost. Try again — if it keeps happening, message us and we’ll fix it quickly.", "error.retry": "Try again",
@@ -71,6 +72,7 @@ export const TRANSLATIONS: Record<Locale, Dictionary> = {
     "invite.eyebrow": "Oilani taklif qilish", "invite.title": "Oilanggizni Koreyaga taklif qiling", "invite.description": "Agar Koreyada yashasangiz va ota-ona yoki qarindoshingizni mehmon qilmoqchi bo‘lsangiz, taklif hujjatlarini siz tayyorlaysiz. Biz yozib beramiz.",
     "invite.cardTitle": "Oilanggizni Koreyaga taklif qiling", "invite.cardSubtitle": "Qisqa muddatli tashrif · C-3-1", "invite.price": "Uchta professional taklif hujjati · har bir taklif qilinuvchi uchun ₩49,000", "invite.explainer": "Qarindoshingiz O‘zbekistondagi Koreya elchixonasiga visa uchun o‘zi murojaat qiladi. U yerda olinmaydigan narsa — Koreyada siz yozishingiz kerak bo‘lgan hujjatlar. Biz shu hujjatlarni tayyorlaymiz.", "invite.writes": "Siz taklif qilgan har bir kishi uchun yozamiz", "invite.invitation": "초청장 — taklifnoma", "invite.reason": "초청 사유서 — taklif sabablari xati", "invite.guarantee": "신원보증서 — kafolatnoma (별지 제129호서식)", "invite.notice": "Qolgan narsalar — o‘qish sertifikati, bank hisoboti, 주민센터 hujjatlari va qarindoshingiz O‘zbekistonda yig‘adigan hujjatlar — sizning o‘zingiz tomonidan to‘planadi. Boshlashdan avval visa maqomingizga mos aniq ro‘yxatni ko‘rsatamiz.", "invite.fee": "₩49,000 xizmati ushbu uchta hujjatni tayyorlashni qoplaydi. Elchixona to‘lovlari va elchixona so‘ragan boshqa hujjatlar alohida to‘lanadi yoki yig‘iladi.", "invite.start": "Taklif hujjatlarini tayyorlash", "invite.availability": "Hozirda O‘zbekistondan topshirayotgan qarindoshlar uchun.",
     "footer.services": "Narxlar", "footer.privacy": "Maxfiylik", "footer.terms": "Shartlar", "footer.refunds": "Qaytarish qoidasi", "footer.copyright": "© 2026 Vitamin Travel · VisaAI Korea · Turist visa hujjatlarini tayyorlash",
+    "jbg.visaDenied": "Sizga Yaponiya vizasi berish rad etilganmi?",
     "services.packageTotal": "VisaAI to‘plami jami",
     "fs.formTitle": "Aviabilet uchun narx so‘rang", "ts.formTitle": "Tur va mehmonxona uchun narx so‘rang", "countries.from": "dan boshlab:",
     "error.title": "Biz tomonda xatolik yuz berdi", "error.body": "Ma’lumotlaringiz xavfsiz, hech narsa yo‘qolmadi. Qayta urinib ko‘ring — takrorlansa, bizga yozing, tezda tuzatamiz.", "error.retry": "Qayta urinish",
@@ -130,6 +132,7 @@ Object.assign(TRANSLATIONS.ru, TRANSLATIONS.en, {
     "error.title": "Что-то пошло не так на нашей стороне", "error.body": "Ваши данные в безопасности, ничего не потеряно. Попробуйте ещё раз — если повторится, напишите нам, и мы быстро исправим.", "error.retry": "Повторить",
     "fs.formTitle": "Запросить цену на авиабилет", "ts.formTitle": "Запросить цену на тур и отель", "countries.from": "от",
     "services.packageTotal": "Пакет VisaAI, итого",
+    "jbg.visaDenied": "Вам когда-либо отказывали в визе в Японию?",
 });
 Object.assign(TRANSLATIONS.ko, TRANSLATIONS.en, {
   "countries.fullGuide": "전체 가이드 보기", "countries.generate": "다음 국가 서류 준비:",
@@ -155,6 +158,7 @@ Object.assign(TRANSLATIONS.ko, TRANSLATIONS.en, {
     "error.title": "저희 쪽에서 문제가 발생했습니다", "error.body": "데이터는 안전하며 아무것도 잃지 않았습니다. 다시 시도해 주세요. 계속되면 문의해 주시면 빠르게 해결하겠습니다.", "error.retry": "다시 시도",
     "fs.formTitle": "항공권 견적 요청", "ts.formTitle": "투어 & 호텔 견적 요청", "countries.from": "최소",
     "services.packageTotal": "VisaAI 패키지 합계",
+    "jbg.visaDenied": "일본 비자 발급을 거부당한 적이 있습니까?",
 });
 
 // Shared application-wizard wording. Keeping it here means every language

@@ -95,6 +95,9 @@ export type BackgroundAnswers = {
   deported: boolean | null;
   prostitution: boolean | null;
   trafficking: boolean | null;
+  // The eVisa Personal Information form's question 16 — asked explicitly,
+  // never defaulted.
+  visa_denied: boolean | null;
 };
 
 export type HostType = "" | "none" | "inviter" | "guarantor";
@@ -281,6 +284,7 @@ export const EMPTY_BACKGROUND: BackgroundAnswers = {
   deported: null,
   prostitution: null,
   trafficking: null,
+  visa_denied: null,
 };
 
 export const EMPTY_TAIWAN_BACKGROUND: TaiwanBackgroundAnswers = {

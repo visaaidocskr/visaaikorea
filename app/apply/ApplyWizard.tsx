@@ -618,9 +618,10 @@ export function ApplyWizard({
     bg.drugs !== null &&
     bg.deported !== null &&
     bg.prostitution !== null &&
-    bg.trafficking !== null;
+    bg.trafficking !== null &&
+    bg.visa_denied !== null;
   const anyBackgroundYes = Boolean(
-    bg.crime || bg.imprisonment || bg.drugs || bg.deported || bg.prostitution || bg.trafficking
+    bg.crime || bg.imprisonment || bg.drugs || bg.deported || bg.prostitution || bg.trafficking || bg.visa_denied
   );
   const backgroundValid =
     backgroundAnswered && (!anyBackgroundYes || form.remarks.trim() !== "");

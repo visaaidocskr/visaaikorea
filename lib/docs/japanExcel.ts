@@ -105,13 +105,13 @@ export function fillJapanEvisaExcel(
     6: isStudent ? "" : v.employerPhone,
     7: isStudent ? "" : v.employerAddress,
     8: v.purposeOfVisit,
-    // 9 "Visiting areas to Japan" — not collected → left blank (manual).
+    9: doc.visitingAreas,
     10: v.arrivalDate, // scheduled departure for Japan (trip start)
     11: v.hotelName,
     12: v.hotelAddress,
     13: v.hotelPhone,
     14: v.previousJapanVisits,
-    // 16 "Denied a Japanese visa" — not collected → left blank (manual).
+    16: yesNo(doc.everVisaDenied) ?? "",
   };
 
   const required = requiredLabels(isStudent);
