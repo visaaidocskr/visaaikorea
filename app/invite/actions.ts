@@ -141,9 +141,19 @@ export async function saveInvitation(
 export async function submitInvitation(
   invitationId: string
 ): Promise<ActionResult> {
-  // Same launch gate as the UI — see lib/launch.ts.
+  // Same launch gate as the UI — see lib/launch.ts. The operator (admin
+  // role) may submit while the gate is closed.
   if (!INVITE_SUBMISSIONS_OPEN) {
-    return { ok: false, error: "Submissions open soon — your invitation is saved as a draft." };
+    const gateClient = await createClient();
+    const {
+      data: { user: gateUser },
+    } = await gateClient.auth.getUser();
+    const { data: gateProfile } = gateUser
+      ? await gateClient.from("profiles").select("role").eq("id", gateUser.id).maybeSingle()
+      : { data: null };
+    if (gateProfile?.role !== "admin") {
+      return { ok: false, error: "Submissions open soon — your invitation is saved as a draft." };
+    }
   }
 
   const session = await getSessionUser();

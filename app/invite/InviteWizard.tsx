@@ -39,9 +39,11 @@ function todayISO() {
 
 export function InviteWizard({
   invitationId,
+  isAdmin = false,
   initialForm,
 }: {
   invitationId: string;
+  isAdmin?: boolean;
   initialForm: InviteFormData;
 }) {
   const router = useRouter();
@@ -153,7 +155,7 @@ export function InviteWizard({
 
   async function submit() {
     // Payments are still under bank review — see lib/launch.ts.
-    if (!INVITE_SUBMISSIONS_OPEN) {
+    if (!INVITE_SUBMISSIONS_OPEN && !isAdmin) {
       persist();
       setComingSoon(true);
       return;

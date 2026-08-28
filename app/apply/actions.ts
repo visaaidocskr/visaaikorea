@@ -508,8 +508,19 @@ export async function submitApplication(
 ): Promise<ActionResult> {
   // Submissions are closed until the payment system passes bank review; the
   // UI shows a launch notice, and this is the server's own copy of that rule.
+  // The operator (admin role) may submit — they prepare client applications
+  // by hand while the gate is closed.
   if (!VISA_SUBMISSIONS_OPEN) {
-    return { ok: false, error: "Submissions open soon — your application is saved as a draft." };
+    const gateClient = await createClient();
+    const {
+      data: { user: gateUser },
+    } = await gateClient.auth.getUser();
+    const { data: gateProfile } = gateUser
+      ? await gateClient.from("profiles").select("role").eq("id", gateUser.id).maybeSingle()
+      : { data: null };
+    if (gateProfile?.role !== "admin") {
+      return { ok: false, error: "Submissions open soon — your application is saved as a draft." };
+    }
   }
 
   const session = await getSessionUser();

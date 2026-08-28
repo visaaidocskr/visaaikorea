@@ -95,7 +95,7 @@ export default async function ApplyPage({
   const t = (key: string) => translate(locale, key);
   if (!isSupabaseConfigured()) return <SetupNotice />;
 
-  const { user } = await requireUser();
+  const { user, profile } = await requireUser();
   const sp = await searchParams;
 
   // "New application" → create a fresh, EMPTY draft, then drop the query param
@@ -294,6 +294,7 @@ export default async function ApplyPage({
         <ApplyWizard
           applicationId={applicationId}
           userId={user.id}
+          isAdmin={profile?.role === "admin"}
           initialForm={initialForm}
           initialUploads={initialUploads}
           ruleset={ruleset}

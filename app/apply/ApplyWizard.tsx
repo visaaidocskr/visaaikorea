@@ -146,10 +146,14 @@ type Props = {
   // links like "fix the document we flagged". Ignored if the name isn't part
   // of this flow's step list.
   initialStepName?: string;
+  // The operator can submit while public submissions are gated (preparing a
+  // client's application by hand); clients see the launch notice instead.
+  isAdmin?: boolean;
 };
 
 export function ApplyWizard({
   applicationId,
+  isAdmin = false,
   userId,
   initialForm,
   initialUploads,
@@ -1062,7 +1066,7 @@ export function ApplyWizard({
   function submit() {
     // Payments are still under bank review: the finished application stays
     // saved, and the button explains instead of submitting.
-    if (!VISA_SUBMISSIONS_OPEN) {
+    if (!VISA_SUBMISSIONS_OPEN && !isAdmin) {
       persist(() => {});
       setComingSoon(true);
       return;

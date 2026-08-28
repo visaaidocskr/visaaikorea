@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export default async function InvitePage() {
-  const user = await requireUser();
+  const { user, profile } = await requireUser();
   const locale = await getRequestLocale();
   const t = (key: string) => translate(locale, key);
 
@@ -61,7 +61,7 @@ export default async function InvitePage() {
     reason_statement: inv?.reason_statement ?? "",
     reason_guarantee: inv?.reason_guarantee ?? "",
     requirements_ack: inv?.requirements_ack ?? false,
-    client_email: inv?.client_email ?? user.user.email ?? "",
+    client_email: inv?.client_email ?? user.email ?? "",
     invitees: (invitees ?? []).map(
       (p): InviteeInput => ({
         surname: p.surname ?? "",
@@ -93,7 +93,7 @@ export default async function InvitePage() {
           </p>
         </div>
 
-        <InviteWizard invitationId={invitationId} initialForm={initialForm} />
+        <InviteWizard invitationId={invitationId} initialForm={initialForm} isAdmin={profile?.role === "admin"} />
       </div>
     </main>
       <Footer />
