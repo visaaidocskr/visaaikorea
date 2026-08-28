@@ -17,6 +17,7 @@ export type JapanAppRow = {
   accommodation_booked?: boolean | null;
   city_region_detected?: string | null;
   destination_city?: string | null;
+  has_previous_japan_visits?: boolean | null;
   // eVisa Personal-Information form only:
   client_email?: string | null;
   // The 6 page-2 Yes/No background declarations — applicant-answered only,
@@ -171,13 +172,18 @@ export function toJapanVisaData(bundle: {
   const hostRole = s(host?.role).toLowerCase();
   const hostIsInviter = hostRole === "inviter";
 
-  const previousVisits = (bundle.previousVisits ?? [])
+  const visitRows = (bundle.previousVisits ?? [])
     .map((v) => {
       const range = [fmtDate(v.visited_from), fmtDate(v.visited_to)].filter(Boolean).join(" – ");
       return joinParts(range, s(v.duration_note));
     })
     .filter(Boolean)
     .join("; ");
+  // The applicant's explicit answer decides the record: visits listed when
+  // they said yes, a literal "No" when they said no, blank only while the
+  // question is genuinely unanswered.
+  const previousVisits =
+    visitRows || (bundle.application.has_previous_japan_visits === false ? "No" : "");
 
   return {
     surname: s(d?.surname),
